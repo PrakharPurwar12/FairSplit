@@ -41,7 +41,9 @@ In modern software teams, task distribution often suffers from human bias, leadi
 
 ### **Frontend (UI/UX)**
 - **Framework**: React.js (Bootstrapped with Vite for instant HMR)
-- **Styling**: Modern, responsive UI with modular CSS
+- **Styling**: Tailwind CSS v4
+- **Routing**: React Router v7
+- **Icons**: Lucide React
 - **Code Quality**: ESLint
 
 ---
@@ -59,8 +61,16 @@ FairSplit/
 │
 └── frontend/                  # ⚛️ React Application
     ├── src/                   
+    │   ├── assets/            # Static assets and images
     │   ├── components/        # Reusable UI components
-    │   └── assets/            # Static assets and icons
+    │   │   ├── common/        # Buttons, Inputs, Modals
+    │   │   ├── layout/        # Navbar, Sidebar, Containers
+    │   │   ├── dashboard/     # Dashboard specific components
+    │   │   ├── project/       # Project specific components
+    │   │   └── task/          # Task specific components
+    │   ├── pages/             # Route-level components (Landing, Login, Dashboard, etc.)
+    │   ├── App.jsx            # Main application router
+    │   └── main.jsx           # React entry point
     └── package.json           # Frontend dependencies
 ```
 
