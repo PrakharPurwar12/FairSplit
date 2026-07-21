@@ -1,7 +1,12 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Hero } from '../components/landing/hero/Hero';
+import { Features } from '../components/landing/features/Features';
+import { HowItWorks } from '../components/landing/howItWorks/HowItWorks';
+import { Modules } from '../components/landing/modules/Modules';
+import { Footer } from '../components/landing/footer/Footer';
+import { navigationData } from '../data/navigationData';
 
 const MouseGlow = () => {
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
@@ -40,6 +45,31 @@ const MouseGlow = () => {
 };
 
 const Home = () => {
+  const navigate = useNavigate();
+  
+  const handleNavClick = (e, href) => {
+    e.preventDefault();
+    
+    // If it's an anchor link
+    if (href.startsWith('#')) {
+      const targetId = href.replace('#', '');
+      const element = document.getElementById(targetId);
+      
+      if (element) {
+        const navbarHeight = document.querySelector('nav').offsetHeight;
+        const y = element.getBoundingClientRect().top + window.scrollY - navbarHeight;
+
+        window.scrollTo({
+          top: y,
+          behavior: 'smooth'
+        });
+      }
+    } else {
+      // For normal route links like /dashboard
+      navigate(href);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[#FAFAFC] text-[#111827] font-sans relative overflow-hidden selection:bg-blue-100 selection:text-blue-900">
       
@@ -68,10 +98,23 @@ const Home = () => {
           </div>
           
           <div className="hidden md:flex items-center gap-8 font-medium text-sm text-[#6B7280]">
-            <a href="#features" className="hover:text-[#111827] transition-colors">Features</a>
-            <a href="#how-it-works" className="hover:text-[#111827] transition-colors">How It Works</a>
-            <a href="#modules" className="hover:text-[#111827] transition-colors">Modules</a>
-            <Link to="/dashboard" className="hover:text-[#111827] transition-colors">Dashboard</Link>
+            {navigationData.map((item) => (
+              <a 
+                key={item.id} 
+                href={item.href}
+                onClick={(e) => handleNavClick(e, item.href)}
+                className="hover:text-[#111827] transition-colors"
+              >
+                {item.label}
+              </a>
+            ))}
+            <a 
+              href="/dashboard"
+              onClick={(e) => handleNavClick(e, '/dashboard')}
+              className="hover:text-[#111827] transition-colors"
+            >
+              Dashboard
+            </a>
           </div>
 
           <div className="flex items-center gap-4">
@@ -90,14 +133,10 @@ const Home = () => {
 
       {/* Main Sections */}
       <Hero />
-      
-      {/* Temporary spacing to demonstrate scrolling for the next section if needed */}
-      <section id="features" className="min-h-screen bg-white py-20 px-6 border-t border-gray-100 relative z-10">
-        <div className="max-w-7xl mx-auto text-center">
-          <h2 className="text-3xl font-bold text-gray-900 mb-4">Discover the Features</h2>
-          <p className="text-gray-500">Scroll down for more information...</p>
-        </div>
-      </section>
+      <Features />
+      <HowItWorks />
+      <Modules />
+      <Footer />
     </div>
   );
 };
