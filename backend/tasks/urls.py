@@ -1,0 +1,28 @@
+from django.urls import path
+
+from .views import (
+    TaskListCreateView,
+    TaskDetailView,
+    TaskSkillListCreateView,
+)
+
+urlpatterns = [
+
+    path(
+        "",
+        TaskListCreateView.as_view(),
+        name="tasks"
+    ),
+
+    path(
+        "<int:pk>/",
+        TaskDetailView.as_view(),
+        name="task-detail"
+    ),
+
+    path(
+        "<int:task_id>/skills/",
+        TaskSkillListCreateView.as_view(),
+        name="task-skills"
+    ),
+]
