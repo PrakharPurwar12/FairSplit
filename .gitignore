@@ -1,10 +1,29 @@
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+myenv/
+
+# Python
 __pycache__/
 *.py[cod]
+*$py.class
 *.pyo
 *.pyd
-db.sqlite3
+*.so
+
+# Django
 *.log
-*.env
-.venv/
-venv/
-.env
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+
+# Other
+.DS_Store
+.idea/
+.vscode/
+
