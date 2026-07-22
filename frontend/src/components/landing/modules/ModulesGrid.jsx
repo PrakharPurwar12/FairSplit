@@ -1,8 +1,9 @@
+import React from 'react';
 import { motion } from 'framer-motion';
-import { ModuleCard } from './ModuleCard';
+import ModuleCard from './ModuleCard';
 import { modulesData } from '../../../data/modulesData';
 
-export const ModulesGrid = () => {
+const ModulesGrid = () => {
   return (
     <motion.div
       initial="hidden"
@@ -17,11 +18,28 @@ export const ModulesGrid = () => {
           }
         }
       }}
-      className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-4 gap-6 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"
+      className="grid grid-cols-1 md:grid-cols-12 gap-6"
     >
-      {modulesData.map((module) => (
-        <ModuleCard key={module.id} module={module} />
-      ))}
+      {modulesData.map((module, index) => {
+        // Asymmetrical sizing: 12 columns total
+        // Pattern: 8 + 4, 4 + 8, etc.
+        const spanClasses = [
+          "md:col-span-8",
+          "md:col-span-4",
+          "md:col-span-5",
+          "md:col-span-7",
+          "md:col-span-6",
+          "md:col-span-6"
+        ];
+        const span = spanClasses[index % spanClasses.length];
+        return (
+          <div key={module.id} className={`${span} h-full`}>
+            <ModuleCard module={module} />
+          </div>
+        );
+      })}
     </motion.div>
   );
 };
+
+export default ModulesGrid;

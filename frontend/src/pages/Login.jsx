@@ -27,7 +27,7 @@ const Login = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4">
-      <div className="max-w-md w-full bg-white rounded-xl shadow-sm border border-gray-100 p-8">
+      <div className="max-w-md w-full bg-primary-brand text-white rounded-xl shadow-sm border border-gray-100 p-8">
         
         {/* Header section */}
         <div className="text-center mb-8">
@@ -96,7 +96,7 @@ const Login = () => {
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors disabled:opacity-70 disabled:cursor-not-allowed flex justify-center items-center"
+            className="w-full bg-blue-600 hover:bg-blue-700 text-primary font-medium py-2 px-4 rounded-lg transition-colors disabled:opacity-70 disabled:cursor-not-allowed flex justify-center items-center"
           >
             {isLoading ? 'Signing in...' : 'Sign in'}
           </button>

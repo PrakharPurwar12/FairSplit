@@ -3,7 +3,7 @@ import CountUpLib from 'react-countup';
 const CountUp = CountUpLib.default || CountUpLib;
 
 export const TeamBalanceCard = ({ teamBalance }) => (
-  <div className="bg-white rounded-[16px] p-4 border border-gray-100 shadow-sm flex flex-col justify-between">
+  <div className="bg-primary-brand text-white rounded-[16px] p-4 border border-gray-100 shadow-sm flex flex-col justify-between">
     <div>
       <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Team Balance</p>
       <div className="flex items-center justify-between">

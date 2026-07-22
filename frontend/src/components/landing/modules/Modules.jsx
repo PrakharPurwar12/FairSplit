@@ -1,19 +1,21 @@
-import { SectionHeader } from './SectionHeader';
-import { ModulesGrid } from './ModulesGrid';
+import React from 'react';
+import SectionHeader from './SectionHeader';
+import ModulesGrid from './ModulesGrid';
 
-export const Modules = () => {
+const Modules = () => {
   return (
-    <section id="modules" className="py-24 relative bg-white">
-      {/* Decorative subtle top border */}
-      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent opacity-50" />
-      
+    <section id="modules" className="pt-24 pb-32 relative z-10 bg-background dark:bg-transparent border-t border-gray-100 dark:border-transparent transition-colors duration-300">
       <SectionHeader 
-        badge="PLATFORM MODULES"
-        title="Everything You Need in One Intelligent Platform"
-        subtitle="FairSplit combines project management, AI automation, analytics, and collaboration into one unified workspace."
+        badge="Platform Modules"
+        title="Comprehensive Project Control"
+        description="Explore the core modules that make FairSplit the ultimate AI-powered project management platform."
       />
       
-      <ModulesGrid />
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-16">
+        <ModulesGrid />
+      </div>
     </section>
   );
 };
+
+export default Modules;

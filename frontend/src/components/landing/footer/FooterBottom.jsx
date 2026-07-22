@@ -1,3 +1,5 @@
+import React from 'react';
+
 const GithubIcon = ({ size = 20, className = "" }) => (
   <svg 
     xmlns="http://www.w3.org/2000/svg" 
@@ -34,14 +36,14 @@ const LinkedinIcon = ({ size = 20, className = "" }) => (
   </svg>
 );
 
-export const FooterBottom = () => {
+const FooterBottom = () => {
   return (
-    <div className="mt-16 pt-8 border-t border-gray-200/60 flex flex-col md:flex-row items-center justify-between gap-4">
-      <div className="text-sm text-[#6B7280]">
+    <div className="mt-16 pt-8 border-t border-gray-200 dark:border-border flex flex-col md:flex-row items-center justify-between gap-4">
+      <div className="text-sm text-gray-500 dark:text-text-muted font-medium dark:font-light">
         &copy; {new Date().getFullYear()} FairSplit. All rights reserved.
       </div>
       
-      <div className="text-sm text-[#6B7280] text-center">
+      <div className="text-sm text-gray-500 dark:text-text-muted text-center font-medium dark:font-light">
         Built with React, Django, PostgreSQL & Machine Learning.
       </div>
 
@@ -50,7 +52,7 @@ export const FooterBottom = () => {
           href="https://github.com" 
           target="_blank" 
           rel="noopener noreferrer"
-          className="text-[#6B7280] hover:text-[#111827] transition-colors hover:scale-110 transform duration-300"
+          className="text-gray-500 dark:text-text-muted hover:text-gray-900 dark:hover:text-text transition-colors hover:scale-110 transform duration-300"
         >
           <GithubIcon size={20} />
           <span className="sr-only">GitHub</span>
@@ -59,7 +61,7 @@ export const FooterBottom = () => {
           href="https://linkedin.com" 
           target="_blank" 
           rel="noopener noreferrer"
-          className="text-[#6B7280] hover:text-[#0A66C2] transition-colors hover:scale-110 transform duration-300"
+          className="text-gray-500 dark:text-text-muted hover:text-[#0A66C2] transition-colors hover:scale-110 transform duration-300"
         >
           <LinkedinIcon size={20} />
           <span className="sr-only">LinkedIn</span>
@@ -68,3 +70,5 @@ export const FooterBottom = () => {
     </div>
   );
 };
+
+export default FooterBottom;

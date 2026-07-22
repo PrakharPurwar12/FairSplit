@@ -88,11 +88,11 @@ const Home = () => {
       />
 
       {/* Navbar (Kept simple as per original Landing.jsx) */}
-      <nav className="absolute top-0 w-full z-50 bg-white/50 backdrop-blur-xl border-b border-white/20 h-16">
+      <nav className="absolute top-0 w-full z-50 bg-surface0 backdrop-blur-xl border-b border-white/20 h-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 bg-gradient-to-br from-[#2563EB] to-[#7C3AED] rounded-lg flex items-center justify-center shadow-md shadow-blue-500/20">
-              <span className="text-white font-bold text-lg leading-none">F</span>
+              <span className="text-primary font-bold text-lg leading-none">F</span>
             </div>
             <span className="font-bold text-lg tracking-tight">FairSplit</span>
           </div>
@@ -123,7 +123,7 @@ const Home = () => {
             </Link>
             <Link
               to="/register"
-              className="text-sm font-medium bg-[#111827] text-white px-4 py-2 rounded-full hover:bg-black transition-all shadow-[0_4px_14px_0_rgb(0,0,0,0.1)] hover:shadow-[0_6px_20px_rgba(0,0,0,0.15)]"
+              className="text-sm font-medium bg-[#111827] text-primary px-4 py-2 rounded-full hover:bg-black transition-all shadow-[0_4px_14px_0_rgb(0,0,0,0.1)] hover:shadow-[0_6px_20px_rgba(0,0,0,0.15)]"
             >
               Get Started
             </Link>

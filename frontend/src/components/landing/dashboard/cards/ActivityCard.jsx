@@ -37,7 +37,7 @@ export const ActivityCard = ({ activities, className = "" }) => {
           className={`py-3 px-4 shadow-xl border bg-white/95 rounded-[16px] backdrop-blur-md ${colorScheme}`}
         >
           <div className="flex gap-3 items-center">
-            <div className="w-8 h-8 rounded-full bg-white/50 flex items-center justify-center shrink-0 shadow-sm">
+            <div className="w-8 h-8 rounded-full bg-surface0 flex items-center justify-center shrink-0 shadow-sm">
               <Icon size={16} />
             </div>
             <div>

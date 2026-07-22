@@ -1,19 +1,21 @@
-import { SectionHeader } from './SectionHeader';
-import { WorkflowTimeline } from './WorkflowTimeline';
+import React from 'react';
+import SectionHeader from './SectionHeader';
+import WorkflowTimeline from './WorkflowTimeline';
 
-export const HowItWorks = () => {
+const HowItWorks = () => {
   return (
-    <section id="how-it-works" className="py-24 relative bg-[#FAFAFC]">
-      {/* Decorative subtle top border */}
-      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent opacity-50" />
-      
+    <section id="how-it-works" className="py-24 relative z-10 bg-surface dark:bg-surface transition-colors duration-300">
       <SectionHeader 
-        badge="HOW IT WORKS"
+        badge="Intelligent Workflow"
         title="How FairSplit Works"
         subtitle="A simple AI-powered workflow that helps teams plan projects, assign tasks intelligently, predict risks, and optimize workloads from start to finish."
       />
       
-      <WorkflowTimeline />
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-16">
+        <WorkflowTimeline />
+      </div>
     </section>
   );
 };
+
+export default HowItWorks;

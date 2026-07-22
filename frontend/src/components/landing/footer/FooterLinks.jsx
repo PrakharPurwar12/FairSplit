@@ -1,14 +1,12 @@
+import React from 'react';
 import { navigationData } from '../../../data/navigationData';
 
-export const FooterLinks = () => {
+const FooterLinks = () => {
   const handleNavClick = (e, targetId) => {
     e.preventDefault();
     const element = document.getElementById(targetId.replace('#', ''));
     if (element) {
-      // Use standard scrollIntoView since sections no longer have scroll-mt-24 
-      // wait, they do have custom programmatic scrolling on Home.jsx, 
-      // but in the footer, if we just want it to scroll up, we can use the same logic
-      const navbarHeight = 64; // nav height is 16 * 4 = 64px
+      const navbarHeight = 64; 
       const y = element.getBoundingClientRect().top + window.scrollY - navbarHeight;
       window.scrollTo({
         top: y,
@@ -26,9 +24,8 @@ export const FooterLinks = () => {
 
   return (
     <div className="grid grid-cols-2 md:grid-cols-3 gap-8 w-full">
-      {/* Quick Links */}
       <div>
-        <h3 className="font-bold text-[#111827] mb-4 text-sm tracking-wider uppercase">Quick Links</h3>
+        <h3 className="font-bold text-gray-900 dark:text-text mb-4 text-sm tracking-wider uppercase">Quick Links</h3>
         <ul className="space-y-3">
           <li>
             <a 
@@ -37,7 +34,7 @@ export const FooterLinks = () => {
                 e.preventDefault();
                 window.scrollTo({ top: 0, behavior: 'smooth' });
               }}
-              className="text-[#6B7280] hover:text-blue-600 transition-colors text-sm"
+              className="text-gray-600 dark:text-text-secondary hover:text-indigo-600 dark:hover:text-text transition-colors text-sm font-medium dark:font-light"
             >
               Home
             </a>
@@ -47,30 +44,29 @@ export const FooterLinks = () => {
               <a 
                 href={item.href}
                 onClick={(e) => handleNavClick(e, item.href)}
-                className="text-[#6B7280] hover:text-blue-600 transition-colors text-sm"
+                className="text-gray-600 dark:text-text-secondary hover:text-indigo-600 dark:hover:text-text transition-colors text-sm font-medium dark:font-light"
               >
                 {item.label}
               </a>
             </li>
           ))}
           <li>
-            <a href="/dashboard" className="text-[#6B7280] hover:text-blue-600 transition-colors text-sm">
+            <a href="/dashboard" className="text-gray-600 dark:text-text-secondary hover:text-indigo-600 dark:hover:text-text transition-colors text-sm font-medium dark:font-light">
               Dashboard
             </a>
           </li>
         </ul>
       </div>
 
-      {/* Product */}
       <div>
-        <h3 className="font-bold text-[#111827] mb-4 text-sm tracking-wider uppercase">Product</h3>
+        <h3 className="font-bold text-gray-900 dark:text-text mb-4 text-sm tracking-wider uppercase">Product</h3>
         <ul className="space-y-3">
           {productLinks.map((link, idx) => (
             <li key={idx}>
               <a 
                 href={link.href}
                 onClick={(e) => handleNavClick(e, link.href)}
-                className="text-[#6B7280] hover:text-blue-600 transition-colors text-sm"
+                className="text-gray-600 dark:text-text-secondary hover:text-indigo-600 dark:hover:text-text transition-colors text-sm font-medium dark:font-light"
               >
                 {link.label}
               </a>
@@ -79,12 +75,11 @@ export const FooterLinks = () => {
         </ul>
       </div>
 
-      {/* Contact */}
       <div className="col-span-2 md:col-span-1">
-        <h3 className="font-bold text-[#111827] mb-4 text-sm tracking-wider uppercase">Contact</h3>
-        <ul className="space-y-3 text-sm text-[#6B7280]">
+        <h3 className="font-bold text-gray-900 dark:text-text mb-4 text-sm tracking-wider uppercase">Contact</h3>
+        <ul className="space-y-3 text-sm text-gray-600 dark:text-text-secondary font-medium dark:font-light">
           <li>
-            <a href="mailto:support@fairsplit.ai" className="hover:text-blue-600 transition-colors">
+            <a href="mailto:support@fairsplit.ai" className="hover:text-indigo-600 dark:hover:text-text transition-colors">
               support@fairsplit.ai
             </a>
           </li>
@@ -94,3 +89,5 @@ export const FooterLinks = () => {
     </div>
   );
 };
+
+export default FooterLinks;

@@ -51,7 +51,7 @@ export const RecommendationCard = ({ recommendation }) => {
                     Reassign <b>{recommendation.task}</b> to {recommendation.to}.
                   </p>
                 </div>
-                <button className="text-xs font-bold bg-white text-indigo-600 px-4 py-2.5 rounded-lg shadow-sm border border-indigo-100 hover:bg-indigo-50 transition-colors">
+                <button className="text-xs font-bold bg-primary-brand text-white text-indigo-600 px-4 py-2.5 rounded-lg shadow-sm border border-indigo-100 hover:bg-indigo-50 transition-colors">
                   Apply Fix
                 </button>
               </>

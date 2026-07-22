@@ -1,8 +1,9 @@
+import React from 'react';
 import { motion } from 'framer-motion';
-import { WorkflowStep } from './WorkflowStep';
+import WorkflowStep from './WorkflowStep';
 import { howItWorksData } from '../../../data/howItWorksData';
 
-export const WorkflowTimeline = () => {
+const WorkflowTimeline = () => {
   return (
     <motion.div
       initial="hidden"
@@ -17,15 +18,17 @@ export const WorkflowTimeline = () => {
           }
         }
       }}
-      className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-6 gap-12 xl:gap-6 max-w-[90rem] mx-auto px-4 sm:px-6 lg:px-8 relative"
+      className="flex flex-col gap-6 max-w-4xl mx-auto relative z-10"
     >
       {howItWorksData.map((step, index) => (
         <WorkflowStep 
           key={step.id} 
           data={step} 
-          isLast={index === howItWorksData.length - 1} 
+          index={index} 
         />
       ))}
     </motion.div>
   );
 };
+
+export default WorkflowTimeline;
