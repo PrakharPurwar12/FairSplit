@@ -27,17 +27,25 @@ class TaskSerializer(serializers.ModelSerializer):
             "deadline",
             "status",
             "completion_percentage",
+
+            "predicted_risk",
+            "risk_confidence",
+            "last_risk_update",
+
             "created_by",
             "created_by_name",
             "created_at",
             "updated_at",
         )
+
         read_only_fields = (
             "created_by",
             "created_at",
             "updated_at",
+            "predicted_risk",
+            "risk_confidence",
+            "last_risk_update",
         )
-
 
 class TaskSkillSerializer(serializers.ModelSerializer):
 
@@ -74,7 +82,14 @@ class TaskAssignmentSerializer(serializers.ModelSerializer):
             "assigned_by",
             "assigned_at",
         )
+class TaskProgressUpdateSerializer(serializers.ModelSerializer):
 
+    class Meta:
+        model = Task
+        fields = (
+            "completion_percentage",
+            "actual_hours",
+        )
 
 class AssignmentHistorySerializer(serializers.ModelSerializer):
 

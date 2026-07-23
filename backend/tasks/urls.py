@@ -4,6 +4,7 @@ from .views import (
     TaskListCreateView,
     TaskDetailView,
     TaskSkillListCreateView,
+    TaskProgressUpdateView,
 )
 
 urlpatterns = [
@@ -12,6 +13,12 @@ urlpatterns = [
         "",
         TaskListCreateView.as_view(),
         name="tasks"
+    ),
+
+    path(
+        "<int:task_id>/progress/",
+        TaskProgressUpdateView.as_view(),
+        name="task-progress"
     ),
 
     path(

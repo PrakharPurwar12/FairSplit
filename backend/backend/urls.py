@@ -17,6 +17,8 @@ Including another URLconf
 from django.urls import path, include
 from django.contrib import admin
 
+from tasks.views import TaskProgressUpdateView
+
 urlpatterns = [
     path("admin/", admin.site.urls),
 
@@ -24,4 +26,10 @@ urlpatterns = [
     path("api/skills/", include("skills.urls")),
     path("api/projects/", include("project.urls")),
     path("api/tasks/", include("tasks.urls")),
+    path("api/tasks/<int:task_id>/progress/",TaskProgressUpdateView.as_view(),name="task-progress"),
+    path("api/allocation/",include("allocation.urls")),
+    path("api/analytics/",include("analytics.urls")),
+    path("api/ml/",include("ml.urls")),
+    path("api/analytics/",include("analytics.urls")),
+    
 ]

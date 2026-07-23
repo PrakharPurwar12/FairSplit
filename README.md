@@ -1,134 +1,447 @@
-<div align="center">
+# FairSplit Backend
 
-# 🚀 FairSplit
-**An Intelligent, AI-Powered Project Management & Task Allocation Platform**
+An AI-powered backend for **FairSplit**, a project management platform that automates fair task allocation, predicts task completion risks using Machine Learning, and provides analytics to improve team productivity.
 
-[![Django](https://img.shields.io/badge/Django-092E20?style=for-the-badge&logo=django&logoColor=green)](https://www.djangoproject.com/)
-[![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)](https://reactjs.org/)
-[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-316192?style=for-the-badge&logo=postgresql&logoColor=white)](https://www.postgresql.org/)
-[![Machine Learning](https://img.shields.io/badge/Machine%20Learning-XGBoost%20%7C%20Scikit--Learn-FF6F00?style=for-the-badge&logo=python&logoColor=white)]()
-
-*Bridging the gap between human collaboration and machine intelligence to ensure equitable task distribution and predictable project timelines.*
-
-</div>
-
-<br />
-
-## 📖 The Problem It Solves
-In modern software teams, task distribution often suffers from human bias, leading to burnout for top performers and underutilization of others. Moreover, estimating task completion times is historically inaccurate. 
-
-**FairSplit** solves this by leveraging **Machine Learning (XGBoost & Scikit-Learn)** to analyze historical performance and developer skills, intelligently predicting task duration and recommending the most equitable and efficient task allocations.
+Built using **Django**, **Django REST Framework**, **JWT Authentication**, and **Scikit-learn**.
 
 ---
 
-## ✨ Key Features & Technical Highlights
+## Features
 
-- 🧠 **AI-Driven Task Allocation**: Uses predictive modeling to suggest task assignments based on historical user velocity, skill matrix, and current workload.
-- 📈 **Time-to-Completion Predictions**: Integrates **XGBoost** to forecast accurate deadlines, minimizing project overruns.
-- 🔐 **Robust Security**: Fully authenticated API endpoints using **JWT (JSON Web Tokens)** with secure token refreshing.
-- 📊 **Advanced Analytics Dashboard**: Real-time visualization of team health, project velocity, and resource distribution.
-- 🏗️ **Scalable Architecture**: decoupled backend (Django REST Framework) and modern frontend (React/Vite) ensuring high performance and modularity.
+### Authentication
+- User Registration
+- User Login
+- JWT Authentication
+- Protected REST APIs
+
+### Skills Management
+- Create Skills
+- Update Skills
+- Delete Skills
+- Assign Skills to Users
+- Manage Skill Proficiency Levels
+
+### Project Management
+- Create Projects
+- Update Projects
+- Delete Projects
+- Add Project Members
+- Manage Team Members
+
+### Task Management
+- Create Tasks
+- Update Tasks
+- Delete Tasks
+- Task Priorities
+- Task Difficulty Levels
+- Task Deadlines
+- Task Status Tracking
+- Completion Percentage
+- Estimated & Actual Hours
+- Required Skills for Tasks
 
 ---
 
-## 🛠️ Technology Stack
+# AI Modules
 
-### **Backend (Core & AI)**
-- **Framework**: Django & Django REST Framework (DRF)
-- **Database**: PostgreSQL (via `psycopg2`)
-- **Machine Learning**: `xgboost`, `scikit-learn`, `pandas`, `numpy`
-- **Security & Auth**: `djangorestframework-simplejwt`, `django-cors-headers`
+## Fair Task Allocation Engine
 
-### **Frontend (UI/UX)**
-- **Framework**: React.js (Bootstrapped with Vite for instant HMR)
-- **Styling**: Tailwind CSS v4
-- **Routing**: React Router v7
-- **Icons**: Lucide React
-- **Code Quality**: ESLint
+Automatically assigns tasks to the most suitable team member based on:
+
+- Skill Matching
+- Skill Proficiency
+- Required Skills
+- Current Workload
+- Fairness Penalty
+- Confidence Score
+
+### Allocation Formula
+
+```
+Skill Score = Proficiency × Importance
+
+Workload Score = Maximum Workload − Assigned Hours
+
+Final Score =
+(0.7 × Skill Score)
++
+(0.3 × Workload Score)
+− Fairness Penalty
+```
+
+The highest scoring member receives the task assignment.
+
+The allocation engine also stores:
+
+- Assignment History
+- Allocation Confidence
+- Assignment Reason
+- Matched Skills
 
 ---
 
-## 📂 Architecture & Directory Structure
+## AI Risk Prediction
 
-```text
-FairSplit/
-├── backend/                   # 🐍 Django Backend (REST API)
-│   ├── account/               # Custom user models & JWT auth
-│   ├── allocation/            # Core logic for equitable task distribution
-│   ├── prediction/            # ML inference endpoints (XGBoost/Scikit-Learn)
-│   ├── analytics/             # Data aggregation for frontend dashboards
-│   └── notifications/         # Real-time event broadcasting logic
+The backend includes a Machine Learning model that predicts whether a task is at risk of missing its deadline.
+
+### Model
+
+Random Forest Classifier
+
+### Input Features
+
+- Estimated Hours
+- Difficulty
+- Priority
+- Required Skills
+- Skill Score
+- Workload Score
+- Active Tasks
+- Days Remaining
+- Completion Percentage
+
+### Prediction Classes
+
+- Low Risk
+- Medium Risk
+- High Risk
+
+Prediction is automatically generated whenever task progress is updated.
+
+---
+
+## AI Reassignment Recommendation
+
+If a task is predicted as **High Risk**, the backend recommends a better team member by reusing the allocation algorithm.
+
+Recommendation considers:
+
+- Skill Match
+- Current Workload
+- Fairness
+- Allocation Score
+
+The final reassignment decision remains with the project manager.
+
+---
+
+# Analytics Module
+
+The backend provides APIs for project analytics.
+
+## Project Dashboard
+
+Returns:
+
+- Total Tasks
+- Completed Tasks
+- In Progress Tasks
+- Review Tasks
+- Todo Tasks
+- Completion Percentage
+- Risk Distribution
+
+---
+
+## Member Analytics
+
+Returns:
+
+- Assigned Tasks
+- Completed Tasks
+- Active Tasks
+- Estimated Hours
+- Actual Hours
+- Average Completion
+- Workload Score
+
+---
+
+## Team Analytics
+
+Returns analytics for every project member including:
+
+- Assigned Tasks
+- Completed Tasks
+- Active Tasks
+- Estimated Hours
+- Actual Hours
+- Average Completion
+- Workload Score
+
+---
+
+## Risk Analytics
+
+Returns:
+
+- High Risk Tasks
+- Medium Risk Tasks
+- Low Risk Tasks
+- Average Prediction Confidence
+- High Risk Percentage
+- High Risk Task Details
+
+---
+
+# Technology Stack
+
+## Backend
+
+- Python 3.x
+- Django
+- Django REST Framework
+
+## Database
+
+- SQLite
+
+## Authentication
+
+- JWT (SimpleJWT)
+
+## Machine Learning
+
+- Scikit-learn
+- Random Forest Classifier
+- Joblib
+
+## API Testing
+
+- Postman
+
+---
+
+# Project Structure
+
+```
+backend/
 │
-└── frontend/                  # ⚛️ React Application
-    ├── src/                   
-    │   ├── assets/            # Static assets and images
-    │   ├── components/        # Reusable UI components
-    │   │   ├── common/        # Buttons, Inputs, Modals
-    │   │   ├── layout/        # Navbar, Sidebar, Containers
-    │   │   ├── dashboard/     # Dashboard specific components
-    │   │   ├── project/       # Project specific components
-    │   │   └── task/          # Task specific components
-    │   ├── pages/             # Route-level components (Landing, Login, Dashboard, etc.)
-    │   ├── App.jsx            # Main application router
-    │   └── main.jsx           # React entry point
-    └── package.json           # Frontend dependencies
+├── account/
+├── allocation/
+├── analytics/
+├── ml/
+├── projects/
+├── skills/
+├── tasks/
+│
+├── FairSplit/
+│
+├── manage.py
+├── requirements.txt
+└── README.md
 ```
 
 ---
 
-## 📸 Sneak Peek
-*(Add screenshots or a GIF here showcasing your amazing UI and ML predictions)*
+# Backend Architecture
 
-<div align="center">
-  <img src="https://via.placeholder.com/800x400.png?text=Dashboard+Preview" alt="FairSplit Dashboard">
-</div>
+```
+                Client
+                   │
+                   ▼
+          Django REST APIs
+                   │
+      ┌────────────┼─────────────┐
+      ▼            ▼             ▼
+ Authentication  Projects      Tasks
+                   │
+                   ▼
+        Fair Allocation Engine
+                   │
+                   ▼
+          Task Assignments
+                   │
+                   ▼
+      Task Progress Updates
+                   │
+                   ▼
+      Machine Learning Model
+                   │
+                   ▼
+        Risk Prediction Engine
+                   │
+                   ▼
+ AI Reassignment Recommendation
+                   │
+                   ▼
+          Analytics APIs
+```
 
 ---
 
-## 🚀 Getting Started
+# Database Modules
 
-Follow these instructions to get a copy of the project up and running on your local machine for development and testing.
+## account
 
-### 1️⃣ Clone the Repository
+Handles:
+
+- User Authentication
+- JWT Login
+- User Registration
+
+---
+
+## skills
+
+Models:
+
+- Skill
+- UserSkill
+
+Responsible for maintaining skill information and proficiency levels.
+
+---
+
+## projects
+
+Models:
+
+- Project
+- ProjectMember
+
+Responsible for project creation and member management.
+
+---
+
+## tasks
+
+Models:
+
+- Task
+- TaskSkill
+- TaskAssignment
+- AssignmentHistory
+
+Responsible for task lifecycle and assignment tracking.
+
+---
+
+## allocation
+
+Contains:
+
+- Fair Allocation Algorithm
+- Workload Calculation
+- Skill Scoring
+- Confidence Calculation
+- Assignment Recommendation
+
+---
+
+## ml
+
+Contains:
+
+- Random Forest Model
+- Prediction Logic
+- Model Loading
+- Feature Processing
+
+---
+
+## analytics
+
+Provides dashboard APIs for:
+
+- Projects
+- Members
+- Teams
+- Risks
+
+---
+
+# API Modules
+
+- Authentication
+- Skills
+- Projects
+- Project Members
+- Tasks
+- Task Skills
+- Fair Allocation
+- AI Prediction
+- AI Recommendation
+- Analytics
+
+---
+
+# Installation
+
+## Clone Repository
+
 ```bash
-git clone https://github.com/PrakharPurwar12/FairSplit.git
-cd FairSplit
+git clone https://github.com/<your-username>/FairSplit.git
 ```
 
-### 2️⃣ Backend Environment Setup
+## Create Virtual Environment
+
 ```bash
-cd backend
-python -m venv myenv
+python -m venv venv
+```
 
-# Activate Virtual Environment
-source myenv/bin/activate  # On Windows: myenv\Scripts\activate
+## Activate Environment
 
-# Install Dependencies
+### Windows
+
+```bash
+venv\Scripts\activate
+```
+
+### Linux / macOS
+
+```bash
+source venv/bin/activate
+```
+
+## Install Dependencies
+
+```bash
 pip install -r requirements.txt
+```
 
-# Run Migrations & Start Server
+## Apply Migrations
+
+```bash
+python manage.py makemigrations
 python manage.py migrate
+```
+
+## Create Superuser
+
+```bash
+python manage.py createsuperuser
+```
+
+## Run Development Server
+
+```bash
 python manage.py runserver
 ```
 
-### 3️⃣ Frontend Environment Setup
-Open a new terminal tab/window:
-```bash
-cd frontend
-npm install
-npm run dev
+The backend will be available at:
+
 ```
-> The frontend will typically be available at `http://localhost:5173/` and backend API at `http://localhost:8000/`.
+http://127.0.0.1:8000/
+```
 
 ---
 
-## 🔮 Future Roadmap
-- [ ] Integration with WebSockets (Django Channels) for real-time task updates.
-- [ ] Automated retuning of ML models via Celery periodic tasks.
-- [ ] GitHub/GitLab API integration for tracking commit metrics.
+# Future Enhancements
+
+- Docker Support
+- PostgreSQL Integration
+- CI/CD Pipeline
+- Email Notifications
+- Real-time WebSocket Notifications
+- Explainable AI (XAI)
+- AI-based Team Formation
+- Contribution Score Prediction
 
 ---
 
-<div align="center">
-  <b>Built with ❤️ by Prakhar Purwar</b>
-</div>
+
+
+# License
+
+This project was developed as part of an academic M.Tech project and is intended for educational and research purposes.

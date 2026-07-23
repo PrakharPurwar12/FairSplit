@@ -70,6 +70,26 @@ class Task(models.Model):
             MaxValueValidator(100)
         ]
     )
+    
+    predicted_risk = models.CharField(
+    max_length=20,
+    choices=[
+        ("Low", "Low"),
+        ("Medium", "Medium"),
+        ("High", "High"),
+        ("Unknown", "Unknown"),
+    ],
+    default="Unknown"
+    )
+
+    risk_confidence = models.FloatField(
+        default=0
+    )
+
+    last_risk_update = models.DateTimeField(
+        null=True,
+        blank=True
+    )
 
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
