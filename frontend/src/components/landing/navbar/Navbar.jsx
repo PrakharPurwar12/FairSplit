@@ -16,11 +16,9 @@ const Navbar = () => {
         
         {/* Logo */}
         <Link to="/" className="flex items-center gap-3 group">
-          <div className="w-9 h-9 bg-gradient-to-br from-indigo-600 to-indigo-500 dark:from-primary dark:to-accent rounded-xl flex items-center justify-center shadow-md shadow-indigo-500/20 dark:shadow-lg dark:shadow-primary/20 group-hover:shadow-indigo-500/40 dark:group-hover:shadow-primary/40 transition-all duration-300 relative overflow-hidden">
-             <div className="absolute inset-0 bg-white/20 blur-xl group-hover:opacity-100 opacity-0 transition-opacity duration-300"></div>
-             <Network className="text-white" size={18} strokeWidth={2.5} />
+          <div className="bg-white rounded-xl p-1.5 shadow-sm flex items-center justify-center transition-transform group-hover:scale-105">
+            <img src="/logo.png" alt="FairSplit Logo" className="h-8 w-auto object-contain" />
           </div>
-          <span className="font-extrabold text-lg tracking-tight text-gray-900 dark:text-text">FairSplit</span>
         </Link>
         
         {/* Desktop Links */}

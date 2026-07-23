@@ -20,10 +20,9 @@ const Footer = () => {
           
           <div className="lg:w-1/3">
             <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 bg-gradient-to-br from-indigo-600 to-indigo-500 dark:from-primary dark:to-accent rounded-xl flex items-center justify-center shadow-lg shadow-indigo-500/20">
-                <Network className="text-white" size={20} strokeWidth={2.5} />
+              <div className="bg-white rounded-xl p-2 shadow-sm flex items-center justify-center">
+                <img src="/logo.png" alt="FairSplit Logo" className="h-10 w-auto object-contain" />
               </div>
-              <span className="font-extrabold text-xl tracking-tight text-gray-900 dark:text-text">FairSplit</span>
             </div>
             <p className="text-gray-600 dark:text-text-secondary leading-relaxed text-sm max-w-sm font-medium dark:font-light">
               AI-powered project management platform that intelligently forms teams, predicts risks, optimizes workloads, and helps teams deliver projects faster.

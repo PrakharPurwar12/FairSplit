@@ -91,10 +91,9 @@ const Home = () => {
       <nav className="absolute top-0 w-full z-50 bg-surface0 backdrop-blur-xl border-b border-white/20 h-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-gradient-to-br from-[#2563EB] to-[#7C3AED] rounded-lg flex items-center justify-center shadow-md shadow-blue-500/20">
-              <span className="text-primary font-bold text-lg leading-none">F</span>
+            <div className="bg-white rounded-xl p-1.5 shadow-sm flex items-center justify-center">
+              <img src="/logo.png" alt="FairSplit Logo" className="h-8 w-auto object-contain" />
             </div>
-            <span className="font-bold text-lg tracking-tight">FairSplit</span>
           </div>
           
           <div className="hidden md:flex items-center gap-8 font-medium text-sm text-[#6B7280]">
