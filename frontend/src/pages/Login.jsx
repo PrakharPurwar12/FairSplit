@@ -8,33 +8,47 @@ import AuthDivider from '../components/auth/AuthDivider';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const Login = () => {
-  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
   // Basic frontend validation
-  const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  const isUsernameValid = username.trim().length > 0;
   const isPasswordValid = password.length > 0;
-  const isValid = isEmailValid && isPasswordValid;
+  const isValid = isUsernameValid && isPasswordValid;
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!isValid) return;
     
     setError('');
     setIsLoading(true);
 
-    // Simulated API Call
-    setTimeout(() => {
-      if (email === 'admin@fairsplit.com' && password === 'admin123') {
+    try {
+      const response = await fetch('/api/account/login/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ username, password }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        localStorage.setItem('access_token', data.access);
+        localStorage.setItem('refresh_token', data.refresh);
         navigate('/dashboard');
       } else {
-        setError('Invalid email or password. Try admin@fairsplit.com / admin123');
-        setIsLoading(false);
+        setError(data.detail || data.error || 'Invalid username or password.');
       }
-    }, 800);
+    } catch (err) {
+      setError('Network error. Please try again later.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -59,11 +73,11 @@ const Login = () => {
         </AnimatePresence>
 
         <AuthInput
-          label="Email address"
-          id="email"
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          label="Username"
+          id="username"
+          type="text"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
           required
         />
 

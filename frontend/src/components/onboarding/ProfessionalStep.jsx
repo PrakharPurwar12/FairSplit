@@ -61,6 +61,14 @@ const ProfessionalStep = ({ data, updateData }) => {
           onChange={handleChange}
           placeholder="e.g. Product Development"
         />
+
+        <AuthInput
+          label="Profile Picture URL (Optional)"
+          id="profilePicture"
+          value={data.profilePicture || ''}
+          onChange={handleChange}
+          placeholder="https://example.com/avatar.jpg"
+        />
       </div>
     </div>
   );

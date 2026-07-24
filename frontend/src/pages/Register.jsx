@@ -18,9 +18,13 @@ const StrengthIndicator = ({ met, text }) => (
 );
 
 const Register = () => {
-  const [name, setName] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [role, setRole] = useState('manager');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
@@ -30,22 +34,44 @@ const Register = () => {
   const hasNumber = /\d/.test(password);
   const hasSpecial = /[!@#$%^&*(),.?":{}|<>]/.test(password);
   const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-  const isNameValid = name.length > 2;
+  const isFirstNameValid = firstName.length >= 2;
+  const isLastNameValid = lastName.length >= 2;
+  const isUsernameValid = username.length >= 3;
+  const isPasswordMatch = password === confirmPassword && password.length > 0;
 
-  const isValid = isEmailValid && hasMinLength && hasNumber && hasSpecial && isNameValid;
+  const isValid = isEmailValid && hasMinLength && hasNumber && hasSpecial && isFirstNameValid && isLastNameValid && isUsernameValid && isPasswordMatch;
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!isValid) return;
     
     setError('');
     setIsLoading(true);
 
-    // Simulated API Call
-    setTimeout(() => {
+    try {
+      const response = await fetch('/api/account/register/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          first_name: firstName,
+          last_name: lastName,
+          username,
+          email,
+          password,
+          role
+        })
+      });
+      const data = await response.json();
+      if (response.ok) {
+        navigate('/onboarding');
+      } else {
+        setError(data.detail || data.error || Object.values(data).flat().join(', ') || 'Registration failed.');
+      }
+    } catch (err) {
+      setError('Network error. Please try again later.');
+    } finally {
       setIsLoading(false);
-      navigate('/onboarding');
-    }, 800);
+    }
   };
 
   return (
@@ -69,11 +95,28 @@ const Register = () => {
           )}
         </AnimatePresence>
 
+        <div className="flex gap-4">
+          <AuthInput
+            label="First Name"
+            id="firstName"
+            value={firstName}
+            onChange={(e) => setFirstName(e.target.value)}
+            required
+          />
+          <AuthInput
+            label="Last Name"
+            id="lastName"
+            value={lastName}
+            onChange={(e) => setLastName(e.target.value)}
+            required
+          />
+        </div>
+
         <AuthInput
-          label="Full Name"
-          id="name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
+          label="Username"
+          id="username"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
           required
         />
 
@@ -86,6 +129,29 @@ const Register = () => {
           required
         />
 
+        <div className="flex flex-col relative w-full">
+          <div className="relative group">
+            <select
+              id="role"
+              value={role}
+              onChange={(e) => setRole(e.target.value)}
+              className="peer w-full h-[52px] px-4 pt-5 pb-1 bg-white dark:bg-surface-2 border border-border focus:border-primary focus:ring-primary/20 rounded-xl focus:ring-4 outline-none transition-all text-text text-base shadow-sm dark:shadow-none appearance-none"
+            >
+              <option value="manager">Project Leader</option>
+              <option value="member">Team Member</option>
+            </select>
+            <label
+              htmlFor="role"
+              className="absolute left-4 top-1.5 text-xs font-semibold text-text-muted pointer-events-none"
+            >
+              Join As
+            </label>
+            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-text-muted">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </div>
+          </div>
+        </div>
+
         <div className="flex flex-col gap-2">
           <PasswordInput
             label="Password"
@@ -93,6 +159,14 @@ const Register = () => {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
+          />
+          <PasswordInput
+            label="Confirm Password"
+            id="confirmPassword"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            required
+            error={confirmPassword.length > 0 && password !== confirmPassword ? "Passwords do not match" : ""}
           />
           {/* Password strength indicators */}
           {password.length > 0 && (

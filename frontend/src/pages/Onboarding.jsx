@@ -11,6 +11,8 @@ import NavigationButtons from '../components/onboarding/NavigationButtons';
 
 const Onboarding = () => {
   const [currentStep, setCurrentStep] = useState(1);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
   const totalSteps = 5;
 
   // Shared state for backend integration later
@@ -18,7 +20,8 @@ const Onboarding = () => {
     professional: {
       role: '',
       experience: '',
-      department: ''
+      department: '',
+      profilePicture: ''
     },
     skills: [], // Array of objects: { name: 'React', proficiency: 'Advanced' }
     availability: {
@@ -45,8 +48,37 @@ const Onboarding = () => {
     }));
   };
 
-  const nextStep = () => {
-    if (currentStep < totalSteps) {
+  const nextStep = async () => {
+    if (currentStep === totalSteps - 1) {
+      setIsLoading(true);
+      setError(null);
+      try {
+        const token = localStorage.getItem('access_token');
+        const headers = { 'Content-Type': 'application/json' };
+        if (token) headers['Authorization'] = `Bearer ${token}`;
+
+        const response = await fetch('/api/account/profile/', {
+          method: 'PATCH',
+          headers,
+          body: JSON.stringify({
+            experience: formData.professional.experience,
+            profile_picture: formData.professional.profilePicture,
+            availability_hours: formData.availability.hoursPerWeek
+          })
+        });
+
+        if (response.ok) {
+          setCurrentStep(prev => prev + 1);
+        } else {
+          const data = await response.json().catch(() => null);
+          setError(data?.detail || data?.error || 'Failed to update profile.');
+        }
+      } catch (err) {
+        setError('Network error. Please try again later.');
+      } finally {
+        setIsLoading(false);
+      }
+    } else if (currentStep < totalSteps) {
       setCurrentStep(prev => prev + 1);
     }
   };
@@ -128,6 +160,20 @@ const Onboarding = () => {
 
             {/* Content Area */}
             <div className="flex-1 p-6 sm:p-10 relative overflow-hidden flex flex-col">
+              
+              <AnimatePresence>
+                {error && (
+                  <motion.div 
+                    initial={{ opacity: 0, y: -10 }} 
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    className="mb-4 px-4 py-3 rounded-xl bg-danger/10 text-danger text-sm border border-danger/20 font-medium text-center"
+                  >
+                    {error}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
               <AnimatePresence mode="wait">
                 <motion.div
                   key={currentStep}
@@ -151,7 +197,8 @@ const Onboarding = () => {
                   onNext={nextStep}
                   onPrev={prevStep}
                   onSkip={nextStep}
-                  isValid={isStepValid()}
+                  isValid={isStepValid() && !isLoading}
+                  isLoading={isLoading}
                 />
               </div>
             )}
