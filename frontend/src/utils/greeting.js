@@ -13,18 +13,18 @@ export const getDynamicGreeting = () => {
       emoji: '☀️',
       subtitle: 'Keep your team aligned and monitor ongoing progress.',
     };
-  } else if (hour >= 17 && hour < 21) {
+  } else if (hour >= 17 && hour < 24) {
     return {
       text: 'Good Evening',
       emoji: '🌇',
       subtitle: "Review today's progress and prepare for upcoming deadlines.",
     };
   } else {
-    // 21:00 - 04:59
+    // 00:00 - 04:59
     return {
-      text: 'Good Evening',
-      emoji: '🌙',
-      subtitle: 'Track pending work and AI recommendations before you wrap up.',
+      text: 'Good Morning',
+      emoji: '🌅',
+      subtitle: 'Get an early start on your day by reviewing project health and AI insights.',
     };
   }
 };
