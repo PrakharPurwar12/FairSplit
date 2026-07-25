@@ -25,6 +25,17 @@ const UserMenu = () => {
     navigate('/login');
   };
 
+  const getInitials = () => {
+    if (!user) return 'US';
+    if (user.first_name && user.last_name) {
+      return `${user.first_name.charAt(0)}${user.last_name.charAt(0)}`.toUpperCase();
+    }
+    if (user.first_name) {
+      return user.first_name.substring(0, 2).toUpperCase();
+    }
+    return user.username.substring(0, 2).toUpperCase();
+  };
+
   return (
     <div className="relative ml-1" ref={menuRef}>
       <button 
@@ -37,7 +48,7 @@ const UserMenu = () => {
           <img src={user.profile_picture} alt="Profile" className="w-full h-full object-cover" />
         ) : (
           <span className="text-xs font-medium text-gray-700 dark:text-gray-200">
-            {user.first_name ? user.first_name.charAt(0).toUpperCase() : user.username.charAt(0).toUpperCase()}
+            {getInitials()}
           </span>
         )}
       </button>
@@ -63,6 +74,24 @@ const UserMenu = () => {
                     {user.first_name && user.last_name ? `${user.first_name} ${user.last_name}` : user.username}
                   </p>
                   <p className="text-[11px] text-gray-500 dark:text-gray-400 truncate mt-0.5">{user.email}</p>
+                  <div className="mt-2 pt-2 border-t border-gray-100 dark:border-white/5 space-y-1 text-[11px] text-gray-500 dark:text-gray-400">
+                    <div className="flex justify-between">
+                      <span className="font-medium text-gray-400">Username:</span>
+                      <span className="text-gray-700 dark:text-gray-300">@{user.username}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="font-medium text-gray-400">Role:</span>
+                      <span className="text-gray-700 dark:text-gray-300 capitalize">{user.role}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="font-medium text-gray-400">Experience:</span>
+                      <span className="text-gray-700 dark:text-gray-300">{user.experience} yrs</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="font-medium text-gray-400">Availability:</span>
+                      <span className="text-gray-700 dark:text-gray-300">{user.availability_hours} hrs/wk</span>
+                    </div>
+                  </div>
                 </>
               )}
             </div>

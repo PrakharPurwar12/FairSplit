@@ -5,8 +5,11 @@ import OverviewGrid from '../components/dashboard/OverviewGrid';
 import AIInsightCard from '../components/dashboard/AIInsightCard';
 import ProjectOverviewSkeleton from '../components/dashboard/ProjectOverviewSkeleton';
 import ActivitySkeleton from '../components/dashboard/ActivitySkeleton';
+import { useAuth } from '../context/AuthContext';
 
 const Dashboard = () => {
+  const { user, isLoading } = useAuth();
+
   return (
     <motion.div 
       initial={{ opacity: 0, y: 10 }}
@@ -14,7 +17,10 @@ const Dashboard = () => {
       transition={{ duration: 0.4, ease: "easeOut" }}
       className="flex flex-col h-full w-full max-w-7xl mx-auto space-y-8 pb-12"
     >
-      <WelcomeHero isLoading={true} />
+      <WelcomeHero 
+        isLoading={isLoading} 
+        userName={user?.first_name || user?.username} 
+      />
       <OverviewGrid isLoading={true} />
       <AIInsightCard isLoading={true} />
       
