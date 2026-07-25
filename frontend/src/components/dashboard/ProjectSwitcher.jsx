@@ -1,19 +1,35 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { ChevronDown, Check, Box } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-
-// Mock projects for foundation
-const mockProjects = [
-  { id: '1', name: 'Alpha Project' },
-  { id: '2', name: 'Beta Deployment' },
-  { id: '3', name: 'Gamma Optimization' },
-];
+import { useNavigate } from 'react-router-dom';
+import ProjectService from '../../services/project.service';
 
 const ProjectSwitcher = ({ selectedProjectId, onProjectSelect }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [projects, setProjects] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
   const dropdownRef = useRef(null);
-  
-  const selectedProject = mockProjects.find(p => p.id === selectedProjectId) || mockProjects[0];
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const fetchProjects = async () => {
+      try {
+        const data = await ProjectService.getProjects();
+        setProjects(data);
+        
+        // If there is no selected project and we have projects, select the first one
+        if (data.length > 0 && !selectedProjectId) {
+          onProjectSelect(data[0].id.toString());
+        }
+      } catch (err) {
+        console.error('Failed to load projects in switcher:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchProjects();
+  }, [selectedProjectId, onProjectSelect]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -25,6 +41,13 @@ const ProjectSwitcher = ({ selectedProjectId, onProjectSelect }) => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  const selectedProject = projects.find(p => p.id.toString() === selectedProjectId?.toString());
+
+  const handleCreateClick = () => {
+    setIsOpen(false);
+    navigate('/projects?create=true');
+  };
+
   return (
     <div className="relative" ref={dropdownRef}>
       <button
@@ -35,7 +58,7 @@ const ProjectSwitcher = ({ selectedProjectId, onProjectSelect }) => {
           <Box className="w-3 h-3 text-gray-600 dark:text-gray-300" />
         </div>
         <span className="text-[13px] font-medium text-gray-700 dark:text-gray-200 hidden sm:block truncate max-w-[120px]">
-          {selectedProject ? selectedProject.name : 'Select Project'}
+          {isLoading ? 'Loading...' : (selectedProject ? selectedProject.title : 'Select Project')}
         </span>
         <ChevronDown className={`w-3.5 h-3.5 text-gray-400 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
       </button>
@@ -55,34 +78,43 @@ const ProjectSwitcher = ({ selectedProjectId, onProjectSelect }) => {
                   Personal Projects
                 </span>
               </div>
-              {mockProjects.map((project) => {
-                const isSelected = project.id === selectedProjectId;
-                return (
-                  <button
-                    key={project.id}
-                    onClick={() => {
-                      onProjectSelect(project.id);
-                      setIsOpen(false);
-                    }}
-                    className={`flex items-center justify-between w-full text-left px-2 py-2 rounded-lg text-[13px] font-medium transition-colors ${
-                      isSelected
-                        ? 'bg-blue-50/50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400'
-                        : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-white/5'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2">
-                      <div className={`w-5 h-5 rounded-md flex items-center justify-center border shrink-0 ${isSelected ? 'bg-white dark:bg-gray-900 border-blue-200 dark:border-blue-900/50' : 'bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-white/10'}`}>
-                        <Box className={`w-3 h-3 ${isSelected ? 'text-blue-600 dark:text-blue-400' : 'text-gray-500 dark:text-gray-400'}`} />
+              {isLoading ? (
+                <div className="px-3 py-2 text-xs text-gray-400 dark:text-gray-500">Loading...</div>
+              ) : projects.length === 0 ? (
+                <div className="px-3 py-2 text-xs text-gray-400 dark:text-gray-500">No projects found</div>
+              ) : (
+                projects.map((project) => {
+                  const isSelected = project.id.toString() === selectedProjectId?.toString();
+                  return (
+                    <button
+                      key={project.id}
+                      onClick={() => {
+                        onProjectSelect(project.id.toString());
+                        setIsOpen(false);
+                      }}
+                      className={`flex items-center justify-between w-full text-left px-2 py-2 rounded-lg text-[13px] font-medium transition-colors ${
+                        isSelected
+                          ? 'bg-blue-50/50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400'
+                          : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-white/5'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <div className={`w-5 h-5 rounded-md flex items-center justify-center border shrink-0 ${isSelected ? 'bg-white dark:bg-gray-900 border-blue-200 dark:border-blue-900/50' : 'bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-white/10'}`}>
+                          <Box className={`w-3 h-3 ${isSelected ? 'text-blue-600 dark:text-blue-400' : 'text-gray-500 dark:text-gray-400'}`} />
+                        </div>
+                        <span className="truncate">{project.title}</span>
                       </div>
-                      <span className="truncate">{project.name}</span>
-                    </div>
-                    {isSelected && <Check className="w-3.5 h-3.5" />}
-                  </button>
-                );
-              })}
+                      {isSelected && <Check className="w-3.5 h-3.5" />}
+                    </button>
+                  );
+                })
+              )}
             </div>
             <div className="border-t border-gray-100 dark:border-white/5 p-1.5">
-              <button className="flex items-center w-full px-2 py-2 rounded-lg text-[13px] font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-white/5 transition-colors">
+              <button
+                onClick={handleCreateClick}
+                className="flex items-center w-full px-2 py-2 rounded-lg text-[13px] font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-white/5 transition-colors"
+              >
                 Create new project...
               </button>
             </div>

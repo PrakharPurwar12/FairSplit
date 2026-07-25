@@ -16,6 +16,7 @@ import {
 import SidebarItem from './SidebarItem';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { useAuth } from '../../context/AuthContext';
 
 const navItems = [
   { icon: LayoutDashboard, label: 'Dashboard', to: '/dashboard' },
@@ -28,7 +29,8 @@ const navItems = [
   { icon: Settings, label: 'Settings', to: '/settings' },
 ];
 
-const Sidebar = ({ isMobileOpen, isCollapsed, toggleMobileSidebar, toggleCollapse, isLoading = true }) => {
+const Sidebar = ({ isMobileOpen, isCollapsed, toggleMobileSidebar, toggleCollapse }) => {
+  const { user, isLoading } = useAuth();
   return (
     <>
       {/* Mobile overlay */}
@@ -98,22 +100,36 @@ const Sidebar = ({ isMobileOpen, isCollapsed, toggleMobileSidebar, toggleCollaps
           <div className={`p-2.5 rounded-xl border border-gray-200/60 dark:border-white/5 bg-white dark:bg-white/[0.02] shadow-sm transition-all duration-300 ${isCollapsed ? 'flex justify-center' : 'flex items-center gap-3'}`}>
             <div className="relative shrink-0">
               <div className="w-9 h-9 rounded-full bg-gray-100 dark:bg-white/10 flex items-center justify-center overflow-hidden">
-                {isLoading && <div className="w-full h-full animate-pulse bg-gray-200/80 dark:bg-white/10"></div>}
+                {isLoading || !user ? (
+                  <div className="w-full h-full animate-pulse bg-gray-200/80 dark:bg-white/10"></div>
+                ) : user.profile_picture ? (
+                  <img src={user.profile_picture} alt="Profile" className="w-full h-full object-cover" />
+                ) : (
+                  <span className="text-xs font-semibold text-gray-700 dark:text-gray-200">
+                    {user.first_name && user.last_name 
+                      ? `${user.first_name.charAt(0)}${user.last_name.charAt(0)}`.toUpperCase()
+                      : user.username.substring(0, 2).toUpperCase()}
+                  </span>
+                )}
               </div>
               <div className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 border-2 border-white dark:border-[#111111] rounded-full"></div>
             </div>
             
             {!isCollapsed && (
-              <div className="flex flex-col min-w-0 flex-1 justify-center space-y-1.5">
-                {isLoading ? (
+              <div className="flex flex-col min-w-0 flex-1 justify-center space-y-1">
+                {isLoading || !user ? (
                   <>
                     <div className="h-3.5 w-24 bg-gray-200/80 dark:bg-white/10 rounded animate-pulse"></div>
                     <div className="h-2.5 w-16 bg-gray-200/80 dark:bg-white/10 rounded animate-pulse"></div>
                   </>
                 ) : (
                   <>
-                    <span className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">John Doe</span>
-                    <span className="text-[11px] text-gray-500 dark:text-gray-400 truncate">Product Designer</span>
+                    <span className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+                      {user.first_name && user.last_name ? `${user.first_name} ${user.last_name}` : user.username}
+                    </span>
+                    <span className="text-[11px] text-gray-500 dark:text-gray-400 truncate capitalize">
+                      {user.role}
+                    </span>
                   </>
                 )}
               </div>
