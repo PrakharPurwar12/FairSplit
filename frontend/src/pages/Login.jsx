@@ -1,11 +1,12 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import AuthLayout from '../components/auth/AuthLayout';
 import AuthInput from '../components/auth/AuthInput';
 import PasswordInput from '../components/auth/PasswordInput';
 import SocialButtons from '../components/auth/SocialButtons';
 import AuthDivider from '../components/auth/AuthDivider';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useAuth } from '../context/AuthContext';
 
 const Login = () => {
   const [username, setUsername] = useState('');
@@ -13,6 +14,15 @@ const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
+  const location = useLocation();
+  const { login, isAuthenticated } = useAuth();
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      const from = location.state?.from?.pathname || '/dashboard';
+      navigate(from, { replace: true });
+    }
+  }, [isAuthenticated, navigate, location]);
 
   // Basic frontend validation
   const isUsernameValid = username.trim().length > 0;
@@ -27,31 +37,17 @@ const Login = () => {
     setIsLoading(true);
 
     try {
-      const response = await fetch('/api/account/login/', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ username, password }),
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        localStorage.setItem('access_token', data.access);
-        localStorage.setItem('refresh_token', data.refresh);
-        navigate('/dashboard');
-      } else {
-        let errorMsg = 'Invalid username or password.';
-        try {
-          const data = await response.json();
-          errorMsg = data.detail || data.error || errorMsg;
-        } catch (_e) {
-          errorMsg = `Server error: ${response.status} ${response.statusText}`;
-        }
-        setError(errorMsg);
+      await login(username, password);
+      const from = location.state?.from?.pathname || '/dashboard';
+      navigate(from, { replace: true });
+    } catch (err) {
+      let errorMsg = 'Invalid username or password.';
+      if (err.response?.data) {
+        errorMsg = err.response.data.detail || err.response.data.error || errorMsg;
+      } else if (err.request) {
+        errorMsg = 'Network error. Please try again later.';
       }
-    } catch (_err) {
-      setError('Network error. Please try again later.');
+      setError(errorMsg);
     } finally {
       setIsLoading(false);
     }

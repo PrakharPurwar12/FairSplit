@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import AuthLayout from '../components/auth/AuthLayout';
 import AuthInput from '../components/auth/AuthInput';
@@ -7,6 +7,8 @@ import SocialButtons from '../components/auth/SocialButtons';
 import AuthDivider from '../components/auth/AuthDivider';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Check } from 'lucide-react';
+import AuthService from '../services/auth.service';
+import { useAuth } from '../context/AuthContext';
 
 const StrengthIndicator = ({ met, text }) => (
   <div className={`flex items-center gap-1.5 text-xs font-medium ${met ? 'text-success' : 'text-text-muted transition-colors'}`}>
@@ -28,6 +30,13 @@ const Register = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/dashboard', { replace: true });
+    }
+  }, [isAuthenticated, navigate]);
 
   // Basic frontend validation & password strength
   const hasMinLength = password.length >= 8;
@@ -49,33 +58,25 @@ const Register = () => {
     setIsLoading(true);
 
     try {
-      const response = await fetch('/api/account/register/', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          first_name: firstName,
-          last_name: lastName,
-          username,
-          email,
-          password,
-          role
-        })
+      await AuthService.register({
+        first_name: firstName,
+        last_name: lastName,
+        username,
+        email,
+        password,
+        role
       });
       
-      if (response.ok) {
-        navigate('/onboarding');
-      } else {
-        let errorMsg = 'Registration failed.';
-        try {
-          const data = await response.json();
-          errorMsg = data.detail || data.error || Object.values(data).flat().join(', ') || errorMsg;
-        } catch (_e) {
-          errorMsg = `Server error: ${response.status} ${response.statusText}`;
-        }
-        setError(errorMsg);
+      // Auto redirect to login on success
+      navigate('/login');
+    } catch (err) {
+      let errorMsg = 'Registration failed.';
+      if (err.response?.data) {
+        errorMsg = err.response.data.detail || err.response.data.error || Object.values(err.response.data).flat().join(', ') || errorMsg;
+      } else if (err.request) {
+        errorMsg = 'Network error. Please try again later.';
       }
-    } catch (_err) {
-      setError('Network error. Please try again later.');
+      setError(errorMsg);
     } finally {
       setIsLoading(false);
     }

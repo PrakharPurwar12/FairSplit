@@ -8,11 +8,14 @@ import AvailabilityStep from '../components/onboarding/AvailabilityStep';
 import PreferencesStep from '../components/onboarding/PreferencesStep';
 import CompletionStep from '../components/onboarding/CompletionStep';
 import NavigationButtons from '../components/onboarding/NavigationButtons';
+import { useAuth } from '../context/AuthContext';
+import AuthService from '../services/auth.service';
 
 const Onboarding = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
+  const { setUser } = useAuth();
   const totalSteps = 5;
 
   // Shared state for backend integration later
@@ -53,28 +56,22 @@ const Onboarding = () => {
       setIsLoading(true);
       setError(null);
       try {
-        const token = localStorage.getItem('access_token');
-        const headers = { 'Content-Type': 'application/json' };
-        if (token) headers['Authorization'] = `Bearer ${token}`;
-
-        const response = await fetch('/api/account/profile/', {
-          method: 'PATCH',
-          headers,
-          body: JSON.stringify({
-            experience: formData.professional.experience,
-            profile_picture: formData.professional.profilePicture,
-            availability_hours: formData.availability.hoursPerWeek
-          })
+        const updatedUser = await AuthService.updateProfile({
+          experience: formData.professional.experience,
+          profile_picture: formData.professional.profilePicture,
+          availability_hours: formData.availability.hoursPerWeek
         });
 
-        if (response.ok) {
-          setCurrentStep(prev => prev + 1);
-        } else {
-          const data = await response.json().catch(() => null);
-          setError(data?.detail || data?.error || 'Failed to update profile.');
+        setUser(updatedUser);
+        setCurrentStep(prev => prev + 1);
+      } catch (err) {
+        let errorMsg = 'Failed to update profile.';
+        if (err.response?.data) {
+          errorMsg = err.response.data.detail || err.response.data.error || errorMsg;
+        } else if (err.request) {
+          errorMsg = 'Network error. Please try again later.';
         }
-      } catch (_err) {
-        setError('Network error. Please try again later.');
+        setError(errorMsg);
       } finally {
         setIsLoading(false);
       }
