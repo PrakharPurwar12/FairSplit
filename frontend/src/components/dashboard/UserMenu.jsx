@@ -3,7 +3,7 @@ import { User, LogOut, Settings } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 
-const UserMenu = () => {
+const UserMenu = ({ isLoading = true }) => {
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef(null);
 
@@ -21,9 +21,13 @@ const UserMenu = () => {
     <div className="relative ml-1" ref={menuRef}>
       <button 
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center justify-center w-8 h-8 rounded-full bg-gradient-to-tr from-purple-500 to-blue-500 text-white font-medium text-xs hover:ring-2 hover:ring-blue-500/50 hover:ring-offset-2 dark:hover:ring-offset-[#111111] transition-all duration-200 outline-none focus-visible:ring-2 focus-visible:ring-blue-500 shadow-sm"
+        className="flex items-center justify-center w-8 h-8 rounded-full bg-gray-100 dark:bg-white/5 border border-gray-200/50 dark:border-white/10 hover:ring-2 hover:ring-blue-500/50 hover:ring-offset-2 dark:hover:ring-offset-[#111111] transition-all duration-200 outline-none focus-visible:ring-2 focus-visible:ring-blue-500 shadow-sm"
       >
-        JD
+        {isLoading ? (
+          <div className="w-full h-full rounded-full animate-pulse bg-gray-200/80 dark:bg-white/10"></div>
+        ) : (
+          <span className="text-xs font-medium text-gray-700 dark:text-gray-200">US</span>
+        )}
       </button>
 
       <AnimatePresence>
@@ -36,8 +40,17 @@ const UserMenu = () => {
             className="absolute right-0 mt-2 w-56 rounded-xl shadow-xl shadow-black/5 dark:shadow-black/20 bg-white dark:bg-[#1A1A1A] border border-gray-200/60 dark:border-white/10 z-50 overflow-hidden"
           >
             <div className="px-4 py-3 border-b border-gray-100 dark:border-white/5">
-              <p className="text-[13px] font-semibold text-gray-900 dark:text-white">John Doe</p>
-              <p className="text-[11px] text-gray-500 dark:text-gray-400 truncate mt-0.5">john.doe@fairsplit.ai</p>
+              {isLoading ? (
+                <div className="space-y-2">
+                  <div className="h-4 w-24 bg-gray-100 dark:bg-white/5 rounded animate-pulse"></div>
+                  <div className="h-3 w-32 bg-gray-100 dark:bg-white/5 rounded animate-pulse"></div>
+                </div>
+              ) : (
+                <>
+                  <p className="text-[13px] font-semibold text-gray-900 dark:text-white">User Name</p>
+                  <p className="text-[11px] text-gray-500 dark:text-gray-400 truncate mt-0.5">user@example.com</p>
+                </>
+              )}
             </div>
             <div className="p-1.5">
               <Link

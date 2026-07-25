@@ -28,7 +28,7 @@ const navItems = [
   { icon: Settings, label: 'Settings', to: '/settings' },
 ];
 
-const Sidebar = ({ isMobileOpen, isCollapsed, toggleMobileSidebar, toggleCollapse }) => {
+const Sidebar = ({ isMobileOpen, isCollapsed, toggleMobileSidebar, toggleCollapse, isLoading = true }) => {
   return (
     <>
       {/* Mobile overlay */}
@@ -46,10 +46,10 @@ const Sidebar = ({ isMobileOpen, isCollapsed, toggleMobileSidebar, toggleCollaps
       <aside
         className={`fixed inset-y-0 left-0 z-50 flex flex-col bg-[#FAFAFA] dark:bg-[#111111] border-r border-gray-200/70 dark:border-white/10 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]
           ${isMobileOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full lg:translate-x-0'}
-          ${isCollapsed ? 'lg:w-[72px]' : 'lg:w-[260px]'} w-[280px]`}
+          ${isCollapsed ? 'lg:w-[72px]' : 'lg:w-[280px]'} w-[280px]`}
       >
         {/* Logo area */}
-        <div className="flex flex-col pt-6 pb-2 px-5">
+        <div className="flex flex-col pt-8 pb-4 px-5 shrink-0">
           <div className="flex items-center justify-between">
             <Link to="/" className="flex items-center gap-3 outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded-md">
               <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center shrink-0 shadow-sm shadow-blue-600/20">
@@ -78,9 +78,9 @@ const Sidebar = ({ isMobileOpen, isCollapsed, toggleMobileSidebar, toggleCollaps
         </div>
 
         {/* Navigation links */}
-        <nav className="flex-1 overflow-y-auto pt-6 px-3 space-y-0.5 scrollbar-thin scrollbar-thumb-gray-200 dark:scrollbar-thumb-gray-800">
-          <div className="px-3 mb-2">
-            {!isCollapsed && <span className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Menu</span>}
+        <nav className="flex-1 overflow-y-auto pt-4 px-3 space-y-1 scrollbar-thin scrollbar-thumb-gray-200 dark:scrollbar-thumb-gray-800">
+          <div className="px-3 mb-3">
+            {!isCollapsed && <span className="text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Menu</span>}
           </div>
           {navItems.map((item) => (
             <SidebarItem
@@ -94,19 +94,28 @@ const Sidebar = ({ isMobileOpen, isCollapsed, toggleMobileSidebar, toggleCollaps
         </nav>
 
         {/* User Footer Area */}
-        <div className="p-3 mt-auto">
-          <div className={`p-2 rounded-xl border border-gray-200/60 dark:border-white/5 bg-white dark:bg-white/[0.02] shadow-sm transition-all duration-300 ${isCollapsed ? 'flex justify-center' : 'flex items-center gap-3'}`}>
+        <div className="p-4 mt-auto shrink-0">
+          <div className={`p-2.5 rounded-xl border border-gray-200/60 dark:border-white/5 bg-white dark:bg-white/[0.02] shadow-sm transition-all duration-300 ${isCollapsed ? 'flex justify-center' : 'flex items-center gap-3'}`}>
             <div className="relative shrink-0">
-              <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-purple-500 to-blue-500 flex items-center justify-center text-white font-medium text-sm shadow-inner">
-                JD
+              <div className="w-9 h-9 rounded-full bg-gray-100 dark:bg-white/10 flex items-center justify-center overflow-hidden">
+                {isLoading && <div className="w-full h-full animate-pulse bg-gray-200/80 dark:bg-white/10"></div>}
               </div>
               <div className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 border-2 border-white dark:border-[#111111] rounded-full"></div>
             </div>
             
             {!isCollapsed && (
-              <div className="flex flex-col min-w-0 flex-1">
-                <span className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">John Doe</span>
-                <span className="text-[11px] text-gray-500 dark:text-gray-400 truncate">Product Designer</span>
+              <div className="flex flex-col min-w-0 flex-1 justify-center space-y-1.5">
+                {isLoading ? (
+                  <>
+                    <div className="h-3.5 w-24 bg-gray-200/80 dark:bg-white/10 rounded animate-pulse"></div>
+                    <div className="h-2.5 w-16 bg-gray-200/80 dark:bg-white/10 rounded animate-pulse"></div>
+                  </>
+                ) : (
+                  <>
+                    <span className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">John Doe</span>
+                    <span className="text-[11px] text-gray-500 dark:text-gray-400 truncate">Product Designer</span>
+                  </>
+                )}
               </div>
             )}
             
@@ -118,7 +127,7 @@ const Sidebar = ({ isMobileOpen, isCollapsed, toggleMobileSidebar, toggleCollaps
           </div>
 
           {/* Desktop Collapse button */}
-          <div className="hidden lg:flex items-center justify-end mt-2">
+          <div className="hidden lg:flex items-center justify-end mt-3">
             <button
               onClick={toggleCollapse}
               className="p-1.5 rounded-md text-gray-400 hover:bg-gray-200 hover:text-gray-700 dark:text-gray-500 dark:hover:bg-white/10 dark:hover:text-gray-300 transition-colors"

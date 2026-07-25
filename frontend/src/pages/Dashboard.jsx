@@ -12,15 +12,13 @@ const Dashboard = () => {
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, ease: "easeOut" }}
-      className="flex flex-col h-full w-full max-w-7xl mx-auto"
+      className="flex flex-col h-full w-full max-w-7xl mx-auto space-y-8 pb-12"
     >
       <WelcomeHero isLoading={true} />
-      
       <OverviewGrid isLoading={true} />
-      
       <AIInsightCard isLoading={true} />
       
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 pb-12">
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
         <div className="xl:col-span-2">
           <ProjectOverviewSkeleton />
         </div>
