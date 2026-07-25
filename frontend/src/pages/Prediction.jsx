@@ -24,8 +24,9 @@ const Prediction = () => {
   const [error, setError] = useState(null);
 
   // Reassignment Recommendation State
+  // Backend returns a single recommendation object, not an array
   const [reassignmentTask, setReassignmentTask] = useState(null);
-  const [recommendations, setRecommendations] = useState([]);
+  const [recommendation, setRecommendation] = useState(null); // single object: { recommended_member: {username,...}, final_score, reason }
   const [isFetchRecommendationLoading, setIsFetchRecommendationLoading] = useState(false);
   const [recommendationError, setRecommendationError] = useState(null);
   const [isRecommendationModalOpen, setIsRecommendationModalOpen] = useState(false);
@@ -84,15 +85,26 @@ const Prediction = () => {
     setReassignmentTask(task);
     setIsFetchRecommendationLoading(true);
     setRecommendationError(null);
-    setRecommendations([]);
+    setRecommendation(null);
     setIsRecommendationModalOpen(true);
 
     try {
+      // Backend response shape:
+      // If task.predicted_risk != 'High': { message: '...', current_risk: '...' }
+      // If task.predicted_risk == 'High': { task, current_assignee, predicted_risk, recommendation: { recommended_member: {username,...}, final_score, reason: [...] } }
       const res = await PredictionService.recommendReassignment(task.task_id);
-      if (res.recommendation && Array.isArray(res.recommendation)) {
-        setRecommendations(res.recommendation);
+      if (res.message) {
+        // Non-high risk or no eligible replacement
+        setRecommendationError(res.message);
+      } else if (res.recommendation) {
+        const rec = res.recommendation;
+        if (rec.error) {
+          setRecommendationError(rec.error);
+        } else {
+          setRecommendation(rec);
+        }
       } else {
-        setRecommendationError(res.message || 'No recommendations generated.');
+        setRecommendationError('No recommendation data returned.');
       }
     } catch (err) {
       setRecommendationError(err.response?.data?.error || 'Failed to fetch reassignment recommendation.');
@@ -354,41 +366,45 @@ const Prediction = () => {
                   <p>{recommendationError}</p>
                 </div>
               </div>
-            ) : (
+            ) : recommendation ? (
               <div className="space-y-4">
-                <span className="block text-[11px] font-bold text-gray-400 uppercase tracking-wider">Suggested Candidates</span>
+                <span className="block text-[11px] font-bold text-gray-400 uppercase tracking-wider">AI Recommended Candidate</span>
                 
-                <div className="space-y-3 max-h-[300px] overflow-y-auto pr-1">
-                  {recommendations.map((rec) => (
-                    <div 
-                      key={rec.member_id}
-                      className="p-3.5 rounded-xl border border-gray-200/70 dark:border-white/5 hover:border-blue-500/50 dark:hover:border-blue-500/30 bg-gray-50/50 dark:bg-white/[0.01] flex justify-between items-center"
-                    >
-                      <div className="space-y-1.5">
-                        <span className="block text-xs font-bold text-gray-800 dark:text-gray-200">
-                          @{rec.member}
-                        </span>
-                        
-                        <div className="flex items-center gap-3 text-[10px] text-gray-400">
-                          <span>Workload Score: <strong className="text-gray-700 dark:text-gray-300">{rec.workload_score}</strong></span>
-                          <span>•</span>
-                          <span>Assigned Tasks: <strong className="text-gray-700 dark:text-gray-300">{rec.assigned_tasks}</strong></span>
-                        </div>
-                      </div>
-
-                      {/* Match confidence score */}
-                      <div className="text-right flex flex-col items-end gap-1.5">
-                        <span className="block text-[10px] font-bold text-green-500 uppercase tracking-wider bg-green-500/10 px-2 py-0.5 rounded-full">
-                          {(rec.score * 100).toFixed(0)}% Match
-                        </span>
-                      </div>
+                {/* Single recommendation card - backend returns one best candidate */}
+                <div className="p-4 rounded-xl border border-green-200/60 dark:border-green-900/30 bg-green-50/30 dark:bg-green-950/5">
+                  <div className="flex justify-between items-start gap-3 mb-3">
+                    <div>
+                      <span className="block text-xs font-bold text-gray-800 dark:text-gray-200">
+                        @{recommendation.recommended_member?.username || 'N/A'}
+                      </span>
+                      <span className="block text-[10px] text-gray-400 mt-0.5">Best Fit Score: <strong className="text-gray-700 dark:text-gray-300">{recommendation.final_score}</strong></span>
                     </div>
-                  ))}
+                    <span className="block text-[10px] font-bold text-green-600 dark:text-green-400 uppercase tracking-wider bg-green-500/10 px-2 py-0.5 rounded-full shrink-0">
+                      Top Candidate
+                    </span>
+                  </div>
+
+                  {/* Reason list */}
+                  {Array.isArray(recommendation.reason) && recommendation.reason.length > 0 && (
+                    <div className="space-y-1">
+                      <span className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">Why this candidate:</span>
+                      {recommendation.reason.map((r, i) => (
+                        <div key={i} className="flex items-start gap-2 text-[10px] text-gray-500">
+                          <CheckCircle className="w-3 h-3 text-green-500 shrink-0 mt-0.5" />
+                          <span>{r}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 <div className="p-3 bg-blue-50/30 border border-blue-100 dark:bg-blue-950/10 dark:border-blue-950/30 rounded-xl text-[10px] text-gray-500 leading-relaxed">
-                  These recommendations are weighted against current individual developer task estimated workloads, role alignments, and general availability metrics.
+                  This recommendation is based on skill match scores, current workload distribution, and fairness penalty calculations.
                 </div>
+              </div>
+            ) : (
+              <div className="py-8 text-center text-xs text-gray-400">
+                No recommendation data available.
               </div>
             )}
 
