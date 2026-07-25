@@ -1,24 +1,32 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Plus, Layout } from 'lucide-react';
+import { getDynamicGreeting } from '../../utils/greeting';
 
 const WelcomeHero = ({ userName, isLoading = true }) => {
-  const hour = new Date().getHours();
-  const greeting = hour < 12 ? 'Good Morning' : hour < 18 ? 'Good Afternoon' : 'Good Evening';
+  const [greetingInfo, setGreetingInfo] = useState(getDynamicGreeting());
+
+  // Optional: update greeting if the component stays mounted across hour boundaries
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setGreetingInfo(getDynamicGreeting());
+    }, 60000); // Check every minute
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <div className="flex flex-col gap-5 w-full">
       <div className="space-y-2">
         <h1 className="text-3xl sm:text-4xl font-semibold tracking-tight text-gray-900 dark:text-white flex items-center gap-2">
-          {greeting},{' '}
+          {greetingInfo.text}
           {isLoading ? (
-            <div className="h-9 w-36 bg-gray-200 dark:bg-white/10 rounded-lg animate-pulse"></div>
+            <div className="h-9 w-36 bg-gray-200 dark:bg-white/10 rounded-lg animate-pulse ml-1"></div>
           ) : (
-            <span>{userName}</span>
+            <span>, {userName}</span>
           )}
-          <span className="inline-block animate-wave origin-bottom-right">👋</span>
+          <span className="inline-block animate-wave origin-bottom-right ml-1">{greetingInfo.emoji}</span>
         </h1>
         <p className="text-[15px] sm:text-base text-gray-500/90 dark:text-gray-400/90 font-medium">
-          Manage your AI-powered projects with real-time insights.
+          {greetingInfo.subtitle}
         </p>
       </div>
 
