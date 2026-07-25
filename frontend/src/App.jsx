@@ -14,6 +14,8 @@ import Settings from './pages/Settings';
 import Onboarding from './pages/Onboarding';
 import './App.css';
 
+import DashboardLayout from './components/dashboard/DashboardLayout';
+
 function App() {
   return (
     <Router>
@@ -25,15 +27,19 @@ function App() {
         
         {/* Private Routes (Currently accessible for development) */}
         <Route path="/onboarding" element={<Onboarding />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/projects" element={<Projects />} />
-        <Route path="/projects/:id" element={<ProjectDetails />} />
-        <Route path="/tasks" element={<Tasks />} />
-        <Route path="/analytics" element={<Analytics />} />
-        <Route path="/prediction" element={<Prediction />} />
-        <Route path="/notifications" element={<Notifications />} />
-        <Route path="/profile" element={<Profile />} />
-        <Route path="/settings" element={<Settings />} />
+        
+        {/* Dashboard Routes wrapped in DashboardLayout */}
+        <Route element={<DashboardLayout />}>
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/projects" element={<Projects />} />
+          <Route path="/projects/:id" element={<ProjectDetails />} />
+          <Route path="/tasks" element={<Tasks />} />
+          <Route path="/analytics" element={<Analytics />} />
+          <Route path="/prediction" element={<Prediction />} />
+          <Route path="/notifications" element={<Notifications />} />
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/settings" element={<Settings />} />
+        </Route>
       </Routes>
     </Router>
   );
