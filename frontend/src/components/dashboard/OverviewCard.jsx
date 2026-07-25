@@ -1,6 +1,6 @@
 import React from 'react';
 
-const OverviewCard = ({ title, icon: Icon, isLoading = true }) => {
+const OverviewCard = ({ title, value, trend, icon: Icon, isLoading = true }) => {
   return (
     <div className="relative p-6 rounded-xl border border-gray-200/60 dark:border-white/5 bg-white dark:bg-[#111111]/80 shadow-sm hover:shadow-md hover:-translate-y-1 hover:shadow-gray-200/50 dark:hover:shadow-black/50 transition-all duration-300 group overflow-hidden flex flex-col justify-between min-h-[140px]">
       
@@ -25,11 +25,13 @@ const OverviewCard = ({ title, icon: Icon, isLoading = true }) => {
         ) : (
           <div className="space-y-1">
             <div className="text-2xl font-semibold text-gray-900 dark:text-white tracking-tight">
-              {/* Value goes here when not loading */}
+              {value}
             </div>
-            <div className="text-[13px] font-medium text-gray-500">
-              {/* Trend indicator goes here when not loading */}
-            </div>
+            {trend && (
+              <div className="text-[12px] font-medium text-gray-400">
+                {trend}
+              </div>
+            )}
           </div>
         )}
       </div>

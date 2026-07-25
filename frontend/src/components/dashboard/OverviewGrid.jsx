@@ -2,12 +2,18 @@ import React from 'react';
 import { FolderKanban, CheckSquare, Users, AlertTriangle } from 'lucide-react';
 import OverviewCard from './OverviewCard';
 
-const OverviewGrid = ({ isLoading = true }) => {
+const OverviewGrid = ({ 
+  activeProjects = 0, 
+  totalTasks = 0, 
+  totalMembers = 0, 
+  highRiskTasks = 0, 
+  isLoading = true 
+}) => {
   const cards = [
-    { title: 'Active Projects', icon: FolderKanban },
-    { title: 'Tasks', icon: CheckSquare },
-    { title: 'Team Members', icon: Users },
-    { title: 'High Risk Tasks', icon: AlertTriangle },
+    { title: 'Active Projects', icon: FolderKanban, value: activeProjects, trend: 'Currently active' },
+    { title: 'Total Tasks', icon: CheckSquare, value: totalTasks, trend: 'In workspace' },
+    { title: 'Team Members', icon: Users, value: totalMembers, trend: 'Across projects' },
+    { title: 'High Risk Tasks', icon: AlertTriangle, value: highRiskTasks, trend: 'AI risk flagged' },
   ];
 
   return (
@@ -16,6 +22,8 @@ const OverviewGrid = ({ isLoading = true }) => {
         <OverviewCard 
           key={index} 
           title={card.title} 
+          value={card.value}
+          trend={card.trend}
           icon={card.icon} 
           isLoading={isLoading} 
         />
