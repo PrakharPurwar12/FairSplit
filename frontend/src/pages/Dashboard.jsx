@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { useOutletContext } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { AlertCircle } from 'lucide-react';
 import WelcomeHero from '../components/dashboard/WelcomeHero';
@@ -10,15 +11,21 @@ import TaskDistributionChart from '../components/dashboard/TaskDistributionChart
 import { useAuth } from '../context/AuthContext';
 import ProjectService from '../services/project.service';
 import TaskService from '../services/task.service';
+import PredictionService from '../services/prediction.service';
 
 const Dashboard = () => {
   const { user, isLoading: isAuthLoading } = useAuth();
+  const { selectedProjectId } = useOutletContext();
   
   const [projects, setProjects] = useState([]);
   const [tasks, setTasks] = useState([]);
   const [membersDict, setMembersDict] = useState({});
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  const [riskData, setRiskData] = useState(null);
+  const [isRiskLoading, setIsRiskLoading] = useState(false);
+  const [riskError, setRiskError] = useState(null);
 
   const fetchDashboardData = useCallback(async () => {
     await Promise.resolve(); // Defer state updates to avoid synchronous useEffect rendering issue
@@ -58,6 +65,27 @@ const Dashboard = () => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchDashboardData();
   }, [fetchDashboardData]);
+
+  const fetchRiskData = useCallback(async () => {
+    if (!selectedProjectId) return;
+    await Promise.resolve(); // Defer state updates to avoid synchronous useEffect rendering issues
+    setIsRiskLoading(true);
+    setRiskError(null);
+    try {
+      const data = await PredictionService.getProjectRisk(selectedProjectId);
+      setRiskData(data);
+    } catch (err) {
+      setRiskError('Prediction engine unavailable.');
+      console.error(err);
+    } finally {
+      setIsRiskLoading(false);
+    }
+  }, [selectedProjectId]);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchRiskData();
+  }, [fetchRiskData]);
 
   // Derived Metrics
   const activeProjectsCount = useMemo(() => {
@@ -174,7 +202,11 @@ const Dashboard = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2">
-          <AIInsightCard isLoading={dashboardLoading} />
+          <AIInsightCard 
+            isLoading={isRiskLoading || dashboardLoading} 
+            riskData={riskData}
+            error={riskError}
+          />
         </div>
         <div className="lg:col-span-1">
           <TaskDistributionChart 
