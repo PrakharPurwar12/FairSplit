@@ -11,25 +11,45 @@ const ProjectSwitcher = ({ selectedProjectId, onProjectSelect }) => {
   const dropdownRef = useRef(null);
   const navigate = useNavigate();
 
+  const selectedProjectIdRef = useRef(selectedProjectId);
+  const onProjectSelectRef = useRef(onProjectSelect);
+
+  // Keep refs up-to-date to avoid stale closures in mount effect
   useEffect(() => {
+    selectedProjectIdRef.current = selectedProjectId;
+    onProjectSelectRef.current = onProjectSelect;
+  }, [selectedProjectId, onProjectSelect]);
+
+  useEffect(() => {
+    let active = true;
     const fetchProjects = async () => {
       try {
         const data = await ProjectService.getProjects();
-        setProjects(data);
-        
-        // If there is no selected project and we have projects, select the first one
-        if (data.length > 0 && !selectedProjectId) {
-          onProjectSelect(data[0].id.toString());
+        if (active) {
+          setProjects(data);
+          
+          if (data.length > 0) {
+            const currentSel = selectedProjectIdRef.current;
+            const exists = data.some(p => p.id.toString() === currentSel?.toString());
+            if (!currentSel || !exists) {
+              onProjectSelectRef.current(data[0].id.toString());
+            }
+          }
         }
       } catch (err) {
         console.error('Failed to load projects in switcher:', err);
       } finally {
-        setIsLoading(false);
+        if (active) {
+          setIsLoading(false);
+        }
       }
     };
 
     fetchProjects();
-  }, [selectedProjectId, onProjectSelect]);
+    return () => {
+      active = false;
+    };
+  }, []);
 
   useEffect(() => {
     const handleClickOutside = (event) => {

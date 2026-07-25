@@ -6,7 +6,7 @@ import Topbar from './Topbar';
 const DashboardLayout = () => {
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
-  const [selectedProjectId, setSelectedProjectId] = useState('1'); 
+  const [selectedProjectId, setSelectedProjectId] = useState(''); 
 
   const toggleMobileSidebar = () => setIsMobileSidebarOpen(!isMobileSidebarOpen);
   const toggleCollapse = () => setIsSidebarCollapsed(!isSidebarCollapsed);
