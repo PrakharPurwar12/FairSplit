@@ -35,14 +35,20 @@ const Login = () => {
         body: JSON.stringify({ username, password }),
       });
 
-      const data = await response.json();
-
       if (response.ok) {
+        const data = await response.json();
         localStorage.setItem('access_token', data.access);
         localStorage.setItem('refresh_token', data.refresh);
         navigate('/dashboard');
       } else {
-        setError(data.detail || data.error || 'Invalid username or password.');
+        let errorMsg = 'Invalid username or password.';
+        try {
+          const data = await response.json();
+          errorMsg = data.detail || data.error || errorMsg;
+        } catch (e) {
+          errorMsg = `Server error: ${response.status} ${response.statusText}`;
+        }
+        setError(errorMsg);
       }
     } catch (err) {
       setError('Network error. Please try again later.');

@@ -61,11 +61,18 @@ const Register = () => {
           role
         })
       });
-      const data = await response.json();
+      
       if (response.ok) {
         navigate('/onboarding');
       } else {
-        setError(data.detail || data.error || Object.values(data).flat().join(', ') || 'Registration failed.');
+        let errorMsg = 'Registration failed.';
+        try {
+          const data = await response.json();
+          errorMsg = data.detail || data.error || Object.values(data).flat().join(', ') || errorMsg;
+        } catch (e) {
+          errorMsg = `Server error: ${response.status} ${response.statusText}`;
+        }
+        setError(errorMsg);
       }
     } catch (err) {
       setError('Network error. Please try again later.');
