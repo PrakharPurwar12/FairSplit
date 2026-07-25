@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { Check, ShieldAlert, Activity, BarChart3, ChevronRight } from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
 
 const Hero = () => {
   const containerVariants = {

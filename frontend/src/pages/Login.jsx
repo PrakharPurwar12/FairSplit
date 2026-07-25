@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import AuthLayout from '../components/auth/AuthLayout';
 import AuthInput from '../components/auth/AuthInput';
@@ -45,12 +45,12 @@ const Login = () => {
         try {
           const data = await response.json();
           errorMsg = data.detail || data.error || errorMsg;
-        } catch (e) {
+        } catch (_e) {
           errorMsg = `Server error: ${response.status} ${response.statusText}`;
         }
         setError(errorMsg);
       }
-    } catch (err) {
+    } catch (_err) {
       setError('Network error. Please try again later.');
     } finally {
       setIsLoading(false);

@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Network } from 'lucide-react';
+
 import FooterLinks from './FooterLinks';
 import FooterBottom from './FooterBottom';
 

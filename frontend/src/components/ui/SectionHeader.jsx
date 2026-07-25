@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 
-const SectionHeader = ({ badge, title, description }) => {
+const SectionHeader = ({ badge, title, subtitle, description }) => {
   return (
     <motion.div 
       initial={{ opacity: 0, y: 20 }}
@@ -10,16 +10,18 @@ const SectionHeader = ({ badge, title, description }) => {
       transition={{ duration: 0.6 }}
       className="max-w-3xl mx-auto text-center px-4"
     >
-      <div className="inline-block mb-4 px-3 py-1 rounded-full bg-indigo-50 dark:bg-primary/5 border border-indigo-100 dark:border-primary-brand/30 dark:glass shadow-sm dark:shadow-none">
-        <span className="text-[10px] sm:text-xs font-bold text-indigo-600 dark:text-text-brand uppercase tracking-widest">{badge}</span>
-      </div>
+      {badge && (
+        <div className="inline-block mb-4 px-3 py-1 rounded-full bg-indigo-50 dark:bg-primary/5 border border-indigo-100 dark:border-primary-brand/30 dark:glass shadow-sm dark:shadow-none">
+          <span className="text-[10px] sm:text-xs font-bold text-indigo-600 dark:text-text-brand uppercase tracking-widest">{badge}</span>
+        </div>
+      )}
       
       <h2 className="text-3xl md:text-5xl font-extrabold text-gray-900 dark:text-text mb-6 tracking-tight">
         {title}
       </h2>
       
       <p className="text-lg md:text-xl text-gray-600 dark:text-text-secondary font-light leading-relaxed">
-        {description}
+        {description || subtitle}
       </p>
     </motion.div>
   );

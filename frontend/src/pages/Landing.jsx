@@ -1,5 +1,5 @@
 import React from 'react';
-import { motion } from 'framer-motion';
+
 import Navbar from '../components/landing/navbar/Navbar';
 import Hero from '../components/landing/hero/Hero';
 import Features from '../components/landing/features/Features';

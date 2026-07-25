@@ -73,7 +73,7 @@ const Onboarding = () => {
           const data = await response.json().catch(() => null);
           setError(data?.detail || data?.error || 'Failed to update profile.');
         }
-      } catch (err) {
+      } catch (_err) {
         setError('Network error. Please try again later.');
       } finally {
         setIsLoading(false);

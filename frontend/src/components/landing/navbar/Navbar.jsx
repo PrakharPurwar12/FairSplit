@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Network } from 'lucide-react';
+
 import ThemeToggle from '../../common/ThemeToggle';
 
 const Navbar = () => {

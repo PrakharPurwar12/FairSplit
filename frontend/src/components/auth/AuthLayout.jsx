@@ -2,7 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import ThemeToggle from '../common/ThemeToggle';
-import { ShieldCheck, Activity, BrainCircuit, Users, BarChart3, CheckCircle2 } from 'lucide-react';
+import { ShieldCheck, Activity, BrainCircuit, Users, BarChart3 } from 'lucide-react';
 
 const AuthLayout = ({ children, title, subtitle }) => {
   return (

@@ -15,6 +15,7 @@ import Onboarding from './pages/Onboarding';
 import './App.css';
 
 import DashboardLayout from './components/dashboard/DashboardLayout';
+import ProtectedRoute from './components/auth/ProtectedRoute';
 
 function App() {
   return (
@@ -25,11 +26,19 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         
-        {/* Private Routes (Currently accessible for development) */}
-        <Route path="/onboarding" element={<Onboarding />} />
+        {/* Private Routes */}
+        <Route path="/onboarding" element={
+          <ProtectedRoute>
+            <Onboarding />
+          </ProtectedRoute>
+        } />
         
-        {/* Dashboard Routes wrapped in DashboardLayout */}
-        <Route element={<DashboardLayout />}>
+        {/* Dashboard Routes */}
+        <Route element={
+          <ProtectedRoute>
+            <DashboardLayout />
+          </ProtectedRoute>
+        }>
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/projects" element={<Projects />} />
           <Route path="/projects/:id" element={<ProjectDetails />} />
