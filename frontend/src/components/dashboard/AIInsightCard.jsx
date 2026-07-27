@@ -7,7 +7,7 @@ const AIInsightCard = ({ riskData = null, isLoading = true, error = null }) => {
   const navigate = useNavigate();
 
   const getRiskStatus = () => {
-    if (!riskData) return { label: 'Unknown', color: 'text-gray-500 bg-gray-100 dark:bg-white/5 border-gray-200' };
+    if (!riskData) return { label: 'AI Analysis Pending', color: 'text-gray-500 bg-gray-100 dark:bg-white/5 border-gray-200' };
     const pct = riskData.high_risk_percentage;
     if (pct > 30) {
       return { 

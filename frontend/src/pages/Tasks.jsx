@@ -457,7 +457,7 @@ const Tasks = () => {
                     <TrendingUp className="w-3.5 h-3.5" />
                     <span>Logged: {parseFloat(task.actual_hours).toFixed(1)} hrs</span>
                   </div>
-                  {task.predicted_risk !== 'Unknown' && (
+                  {task.predicted_risk !== 'Unknown' ? (
                     <div className="flex items-center gap-1">
                       <Cpu className="w-3.5 h-3.5 text-blue-500" />
                       <span className={`font-semibold ${
@@ -468,6 +468,13 @@ const Tasks = () => {
                             : 'text-green-500'
                       }`}>
                         AI Risk: {task.predicted_risk}
+                      </span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-1">
+                      <Cpu className="w-3.5 h-3.5 text-gray-400" />
+                      <span className="font-semibold text-gray-400">
+                        AI Analysis Pending
                       </span>
                     </div>
                   )}
@@ -873,7 +880,7 @@ const Tasks = () => {
               </p>
             </div>
 
-            {selectedTask.predicted_risk !== 'Unknown' && (
+            {selectedTask.predicted_risk !== 'Unknown' ? (
               <div className="p-4 rounded-xl border border-blue-100 bg-blue-50/30 dark:border-blue-950/30 dark:bg-blue-950/10 space-y-1">
                 <h4 className="text-xs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider flex items-center gap-1.5">
                   <Cpu className="w-4 h-4" />
@@ -881,6 +888,16 @@ const Tasks = () => {
                 </h4>
                 <p className="text-xs text-gray-500 dark:text-gray-400 leading-normal">
                   The machine learning model predicted task delivery risk is <strong>{selectedTask.predicted_risk}</strong> with a confidence score of <strong>{(selectedTask.risk_confidence * 100).toFixed(0)}%</strong>.
+                </p>
+              </div>
+            ) : (
+              <div className="p-4 rounded-xl border border-gray-100 bg-gray-50/30 dark:border-gray-800/30 dark:bg-gray-900/10 space-y-1">
+                <h4 className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
+                  <Cpu className="w-4 h-4" />
+                  AI Analysis Pending
+                </h4>
+                <p className="text-xs text-gray-400 dark:text-gray-500 leading-normal">
+                  Assign the task and update progress to generate an AI prediction.
                 </p>
               </div>
             )}
