@@ -137,6 +137,13 @@ const Prediction = () => {
     }
   };
 
+  const formatConfidence = (val) => {
+    if (val == null || isNaN(val)) return '0%';
+    const num = Number(val);
+    const pct = num <= 1 && num > 0 ? num * 100 : num;
+    return `${pct % 1 === 0 ? pct.toFixed(0) : pct.toFixed(1)}%`;
+  };
+
   const getRiskColor = (pct) => {
     if (pct > 30) return 'text-red-600 dark:text-red-400 border-red-200 bg-red-50 dark:bg-red-950/20';
     if (pct > 10) return 'text-yellow-600 dark:text-yellow-400 border-yellow-200 bg-yellow-50 dark:bg-yellow-950/20';
@@ -263,7 +270,7 @@ const Prediction = () => {
                 <div className="space-y-3 text-xs text-gray-500">
                   <div className="flex justify-between items-center py-1.5 border-b border-gray-100 dark:border-white/5">
                     <span>Prediction Confidence:</span>
-                    <span className="font-bold text-gray-800 dark:text-gray-200">{(riskData.average_confidence * 100).toFixed(0)}%</span>
+                    <span className="font-bold text-gray-800 dark:text-gray-200">{formatConfidence(riskData.average_confidence)}</span>
                   </div>
                   <div className="flex justify-between items-center py-1.5 border-b border-gray-100 dark:border-white/5">
                     <span>Total Tasks Evaluated:</span>
