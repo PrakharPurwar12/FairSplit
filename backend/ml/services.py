@@ -21,34 +21,29 @@ def update_task_prediction(task):
         logger.info(f"Skipping prediction for Task {task.id}: TaskAssignment.DoesNotExist.")
         return None
 
-    try:
-        with transaction.atomic():
-            # Build features
-            features = build_prediction_features(task)
-            
-            # Normalize priority (Encoder Safety)
-            if 'priority' in features and isinstance(features['priority'], str):
-                features['priority'] = features['priority'].title()
+    with transaction.atomic():
+        # Build features
+        features = build_prediction_features(task)
+        
+        # Normalize priority (Encoder Safety: priority_encoder expects lowercase 'low', 'medium', 'high')
+        if 'priority' in features and isinstance(features['priority'], str):
+            features['priority'] = features['priority'].lower()
 
-            # Predict risk
-            prediction = predict_risk(features)
+        # Predict risk
+        prediction = predict_risk(features)
 
-            # Update task
-            task.predicted_risk = prediction["predicted_risk"]
-            task.risk_confidence = prediction["confidence"]
-            task.last_risk_update = timezone.now()
-            task.save(update_fields=['predicted_risk', 'risk_confidence', 'last_risk_update'])
+        # Update task
+        task.predicted_risk = prediction["predicted_risk"]
+        task.risk_confidence = prediction["confidence"]
+        task.last_risk_update = timezone.now()
+        task.save(update_fields=['predicted_risk', 'risk_confidence', 'last_risk_update'])
 
-            logger.info(
-                f"Task {task.id} Prediction Updated | "
-                f"Risk: {task.predicted_risk} | "
-                f"Confidence: {task.risk_confidence}% | "
-                f"Timestamp: {task.last_risk_update}"
-            )
-            
-            return prediction
+        logger.info(
+            f"Task {task.id} Prediction Updated | "
+            f"Risk: {task.predicted_risk} | "
+            f"Confidence: {task.risk_confidence}% | "
+            f"Timestamp: {task.last_risk_update}"
+        )
+        
+        return prediction
 
-    except Exception as e:
-        logger.error(f"Failed to update prediction for Task {task.id}: {str(e)}")
-        # Don't crash the calling workflow if prediction fails
-        return None

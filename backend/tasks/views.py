@@ -12,12 +12,22 @@ from .models import Task, TaskAssignment
 from .serializers import TaskProgressUpdateSerializer
 from ml.services import update_task_prediction
 
+from django.db import models
+
 class TaskListCreateView(generics.ListCreateAPIView):
     serializer_class = TaskSerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        return Task.objects.select_related("project", "created_by").filter(created_by=self.request.user)
+        user = self.request.user
+        if user.is_staff or user.is_superuser:
+            return Task.objects.select_related("project", "created_by").all()
+        return Task.objects.select_related("project", "created_by").filter(
+            models.Q(created_by=user) |
+            models.Q(project__manager=user) |
+            models.Q(project__members__user=user) |
+            models.Q(assignment__assigned_to=user)
+        ).distinct()
 
     def perform_create(self, serializer):
         serializer.save(created_by=self.request.user)
@@ -28,7 +38,15 @@ class TaskDetailView(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        return Task.objects.filter(created_by=self.request.user)
+        user = self.request.user
+        if user.is_staff or user.is_superuser:
+            return Task.objects.all()
+        return Task.objects.filter(
+            models.Q(created_by=user) |
+            models.Q(project__manager=user) |
+            models.Q(project__members__user=user) |
+            models.Q(assignment__assigned_to=user)
+        ).distinct()
 
 
 class TaskSkillListCreateView(generics.ListCreateAPIView):

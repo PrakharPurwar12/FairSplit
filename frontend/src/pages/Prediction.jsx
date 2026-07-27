@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import ProjectService from '../services/project.service';
 import PredictionService from '../services/prediction.service';
+import AllocationService from '../services/allocation.service';
 import Modal from '../components/ui/Modal';
 import Toast from '../components/ui/Toast';
 
@@ -22,6 +23,7 @@ const Prediction = () => {
   const [riskData, setRiskData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isAllocating, setIsAllocating] = useState(false);
 
   // Reassignment Recommendation State
   // Backend returns a single recommendation object, not an array
@@ -114,6 +116,27 @@ const Prediction = () => {
     }
   };
 
+  // Run AI Allocation Handler
+  const handleRunAllocation = async () => {
+    if (!selectedProjectId) return;
+    setIsAllocating(true);
+    try {
+      const res = await AllocationService.generateAllocation(selectedProjectId);
+      if (res && res.error) {
+        setToast({ message: res.error, type: 'error' });
+      } else {
+        const count = Array.isArray(res) ? res.length : 0;
+        setToast({ message: `AI Allocation generated! ${count} task(s) allocated successfully.`, type: 'success' });
+        fetchRiskAnalytics();
+      }
+    } catch (err) {
+      setToast({ message: err.response?.data?.error || err.response?.data?.detail || 'Failed to run AI Allocation.', type: 'error' });
+      console.error(err);
+    } finally {
+      setIsAllocating(false);
+    }
+  };
+
   const getRiskColor = (pct) => {
     if (pct > 30) return 'text-red-600 dark:text-red-400 border-red-200 bg-red-50 dark:bg-red-950/20';
     if (pct > 10) return 'text-yellow-600 dark:text-yellow-400 border-yellow-200 bg-yellow-50 dark:bg-yellow-950/20';
@@ -128,8 +151,6 @@ const Prediction = () => {
       day: 'numeric'
     });
   };
-
-
 
   return (
     <div className="space-y-8 pb-12">
@@ -147,19 +168,29 @@ const Prediction = () => {
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white flex items-center gap-2">
             <Cpu className="w-8 h-8 text-blue-500" />
-            AI Prediction Engine
+            AI Allocation & Prediction Hub
           </h1>
           <p className="text-sm text-gray-500 mt-1">
-            Machine learning forecast of deadline slips, workload strain, and suggested mitigations.
+            Generate AI task allocation, forecast project risk, and inspect smart reassignment mitigations.
           </p>
         </div>
 
-        {/* Project Selector dropdown */}
-        <div className="w-56 shrink-0">
+        {/* Action Button & Project Selector */}
+        <div className="flex items-center gap-3 shrink-0">
+          {selectedProjectId && (
+            <button
+              onClick={handleRunAllocation}
+              disabled={isAllocating}
+              className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-xl text-xs font-semibold transition-all shadow-sm disabled:opacity-50"
+            >
+              <Cpu className={`w-4 h-4 ${isAllocating ? 'animate-spin' : ''}`} />
+              {isAllocating ? 'Allocating...' : 'Run AI Allocation'}
+            </button>
+          )}
           <select
             value={selectedProjectId}
             onChange={(e) => setSelectedProjectId(e.target.value)}
-            className="w-full px-3 py-2 bg-white dark:bg-[#111111] border border-gray-200 dark:border-white/10 rounded-xl text-sm outline-none focus:border-blue-500 transition-all shadow-sm"
+            className="px-3 py-2 bg-white dark:bg-[#111111] border border-gray-200 dark:border-white/10 rounded-xl text-sm outline-none focus:border-blue-500 transition-all shadow-sm"
           >
             <option value="">Select Project...</option>
             {projects.map(p => (

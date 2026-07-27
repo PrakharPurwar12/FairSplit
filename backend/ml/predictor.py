@@ -14,7 +14,7 @@ risk_encoder = joblib.load(MODEL_DIR / "risk_encoder.pkl")
 def predict_risk(data):
 
     priority = priority_encoder.transform(
-        [data["priority"]]
+        [str(data["priority"]).lower()]
     )[0]
 
     input_df = pd.DataFrame([{

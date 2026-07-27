@@ -11,6 +11,13 @@ class TaskSerializer(serializers.ModelSerializer):
 
     project_name = serializers.ReadOnlyField(source="project.title")
     created_by_name = serializers.ReadOnlyField(source="created_by.username")
+    assigned_to_name = serializers.SerializerMethodField()
+
+    def get_assigned_to_name(self, obj):
+        try:
+            return obj.assignment.assigned_to.username
+        except (AttributeError, TaskAssignment.DoesNotExist):
+            return None
 
     class Meta:
         model = Task
@@ -34,12 +41,14 @@ class TaskSerializer(serializers.ModelSerializer):
 
             "created_by",
             "created_by_name",
+            "assigned_to_name",
             "created_at",
             "updated_at",
         )
 
         read_only_fields = (
             "created_by",
+            "assigned_to_name",
             "created_at",
             "updated_at",
             "predicted_risk",

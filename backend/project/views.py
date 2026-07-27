@@ -17,7 +17,10 @@ class ProjectListCreateView(generics.ListCreateAPIView):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        return Project.objects.filter(manager=self.request.user)
+        user = self.request.user
+        if user.is_staff or user.is_superuser:
+            return Project.objects.all()
+        return (Project.objects.filter(manager=user) | Project.objects.filter(members__user=user)).distinct()
 
     def perform_create(self, serializer):
         serializer.save(manager=self.request.user)
@@ -29,7 +32,10 @@ class ProjectDetailView(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        return Project.objects.filter(manager=self.request.user)
+        user = self.request.user
+        if user.is_staff or user.is_superuser:
+            return Project.objects.all()
+        return (Project.objects.filter(manager=user) | Project.objects.filter(members__user=user)).distinct()
 
 
 class ProjectMemberListCreateView(generics.ListCreateAPIView):

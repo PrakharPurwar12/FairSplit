@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import TaskService from '../services/task.service';
 import ProjectService from '../services/project.service';
+import AllocationService from '../services/allocation.service';
 import Modal from '../components/ui/Modal';
 import Toast from '../components/ui/Toast';
 
@@ -21,6 +22,7 @@ const Tasks = () => {
   const [projects, setProjects] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isAllocating, setIsAllocating] = useState(false);
 
   // Filter & Search States
   const [searchQuery, setSearchQuery] = useState('');
@@ -172,8 +174,33 @@ const Tasks = () => {
     }
   };
 
+  // RUN AI ALLOCATION
+  const handleRunAllocation = async () => {
+    if (!projectFilter || projectFilter === 'all') return;
+    setIsAllocating(true);
+    try {
+      const res = await AllocationService.generateAllocation(projectFilter);
+      if (res && res.error) {
+        showToast(res.error, 'error');
+      } else {
+        const count = Array.isArray(res) ? res.length : 0;
+        showToast(`AI Allocation completed! ${count} task(s) allocated successfully.`);
+        fetchInitialData();
+      }
+    } catch (err) {
+      showToast(err.response?.data?.error || err.response?.data?.detail || 'Failed to run AI Allocation.', 'error');
+      console.error(err);
+    } finally {
+      setIsAllocating(false);
+    }
+  };
+
   // PROGRESS UPDATE
   const openProgressModal = (task) => {
+    if (!task.assigned_to_name) {
+      showToast('Task has not been assigned. Run AI Allocation first.', 'error');
+      return;
+    }
     setSelectedTask(task);
     setCompletionPercentage(task.completion_percentage);
     setActualHours(parseFloat(task.actual_hours || 0).toString());
@@ -290,13 +317,25 @@ const Tasks = () => {
           <h1 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white">Tasks</h1>
           <p className="text-sm text-gray-500 mt-1">Manage project workloads and log progress updates.</p>
         </div>
-        <button
-          onClick={() => setIsCreateOpen(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-[13px] font-semibold transition-all shadow-sm shadow-blue-600/10"
-        >
-          <Plus className="w-4 h-4" />
-          Create Task
-        </button>
+        <div className="flex items-center gap-3">
+          {projectFilter !== 'all' && (
+            <button
+              onClick={handleRunAllocation}
+              disabled={isAllocating}
+              className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-xl text-[13px] font-semibold transition-all shadow-sm shadow-indigo-600/20 disabled:opacity-50"
+            >
+              <Cpu className={`w-4 h-4 ${isAllocating ? 'animate-spin' : ''}`} />
+              {isAllocating ? 'Allocating...' : 'Run AI Allocation'}
+            </button>
+          )}
+          <button
+            onClick={() => setIsCreateOpen(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-[13px] font-semibold transition-all shadow-sm shadow-blue-600/10"
+          >
+            <Plus className="w-4 h-4" />
+            Create Task
+          </button>
+        </div>
       </div>
 
       {/* Search, Filter, Sort Panel */}
@@ -428,6 +467,19 @@ const Tasks = () => {
                   <span className="text-gray-500 dark:text-gray-400">
                     Difficulty: {task.difficulty}/5
                   </span>
+                  <span className="text-gray-300 dark:text-gray-600">•</span>
+                  {task.assigned_to_name ? (
+                    <span className="text-gray-600 dark:text-gray-300 font-semibold">
+                      Assigned: @{task.assigned_to_name}
+                    </span>
+                  ) : (
+                    <span 
+                      className="px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-950/20 dark:text-amber-400 dark:border-amber-900/30 text-[10px] font-semibold"
+                      title="Run AI Allocation first to assign a team member"
+                    >
+                      Run AI Allocation first
+                    </span>
+                  )}
                 </div>
 
                 {/* Title */}
@@ -493,8 +545,10 @@ const Tasks = () => {
                   </div>
                   <div 
                     onClick={() => openProgressModal(task)}
-                    className="h-2 w-full bg-gray-100 dark:bg-white/5 rounded-full overflow-hidden cursor-pointer hover:ring-2 hover:ring-blue-500/20 transition-all"
-                    title="Click to update task progress"
+                    className={`h-2 w-full bg-gray-100 dark:bg-white/5 rounded-full overflow-hidden ${
+                      !task.assigned_to_name ? 'cursor-not-allowed opacity-60' : 'cursor-pointer hover:ring-2 hover:ring-blue-500/20'
+                    } transition-all`}
+                    title={!task.assigned_to_name ? "Run AI Allocation first to assign this task" : "Click to update task progress"}
                   >
                     <div 
                       className={`h-full rounded-full transition-all duration-300 ${

@@ -6,6 +6,7 @@ import Dashboard from './pages/Dashboard';
 import Projects from './pages/Projects';
 import ProjectDetails from './pages/ProjectDetails';
 import Tasks from './pages/Tasks';
+import Teams from './pages/Teams';
 import Analytics from './pages/Analytics';
 import Prediction from './pages/Prediction';
 import Notifications from './pages/Notifications';
@@ -45,8 +46,10 @@ function App() {
           <Route path="/projects" element={<Projects />} />
           <Route path="/projects/:id" element={<ProjectDetails />} />
           <Route path="/tasks" element={<Tasks />} />
-          <Route path="/analytics" element={<Analytics />} />
+          <Route path="/teams" element={<Teams />} />
+          <Route path="/ai-allocation" element={<Prediction />} />
           <Route path="/prediction" element={<Prediction />} />
+          <Route path="/analytics" element={<Analytics />} />
           <Route path="/notifications" element={<Notifications />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/settings" element={<Settings />} />
