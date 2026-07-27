@@ -27,6 +27,13 @@ const AIInsightCard = ({ riskData = null, isLoading = true, error = null }) => {
     };
   };
 
+  const formatConfidence = (val) => {
+    if (val == null || isNaN(val)) return '0%';
+    const num = Number(val);
+    const pct = num <= 1 && num > 0 ? num * 100 : num;
+    return `${pct % 1 === 0 ? pct.toFixed(0) : pct.toFixed(1)}%`;
+  };
+
   const status = getRiskStatus();
 
   return (
@@ -110,7 +117,7 @@ const AIInsightCard = ({ riskData = null, isLoading = true, error = null }) => {
                 {status.label}
               </span>
               <span className="text-xs font-semibold text-gray-400">
-                Model Confidence: <strong className="text-gray-700 dark:text-gray-300">{(riskData.average_confidence * 100).toFixed(0)}%</strong>
+                Model Confidence: <strong className="text-gray-700 dark:text-gray-300">{formatConfidence(riskData.average_confidence)}</strong>
               </span>
             </div>
 

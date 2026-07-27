@@ -13,6 +13,9 @@ import ProjectService from '../services/project.service';
 import TaskService from '../services/task.service';
 import PredictionService from '../services/prediction.service';
 
+// Explicit list of project lifecycle statuses considered active/ongoing
+const ACTIVE_PROJECT_STATUSES = new Set(['active', 'planning', 'in_progress', 'ongoing']);
+
 const Dashboard = () => {
   const { user, isLoading: isAuthLoading } = useAuth();
   const { selectedProjectId } = useOutletContext();
@@ -87,13 +90,13 @@ const Dashboard = () => {
     fetchRiskData();
   }, [fetchRiskData]);
 
-  // Derived Metrics
+  // Derived Metrics (explicit active status whitelist filtering)
   const activeProjectsCount = useMemo(() => {
-    return projects.filter(p => p.status === 'active').length;
+    return projects.filter(p => p.status && ACTIVE_PROJECT_STATUSES.has(p.status.toLowerCase())).length;
   }, [projects]);
 
   const highRiskTasksCount = useMemo(() => {
-    return tasks.filter(t => t.predicted_risk === 'High').length;
+    return tasks.filter(t => t.predicted_risk?.toLowerCase() === 'high').length;
   }, [tasks]);
 
   const uniqueMembersCount = useMemo(() => {
