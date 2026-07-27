@@ -9,9 +9,13 @@ import {
   FolderKanban, 
   Clock, 
   AlertCircle,
-  X
+  X,
+  Users,
+  CheckSquare,
+  UserCheck
 } from 'lucide-react';
 import ProjectService from '../services/project.service';
+import TaskService from '../services/task.service';
 
 const Projects = () => {
   const [projects, setProjects] = useState([]);
@@ -23,7 +27,7 @@ const Projects = () => {
   const [statusFilter, setStatusFilter] = useState('all');
   const [sortBy, setSortBy] = useState('updated'); // name, updated, created
   
-  // Modals (Init isCreateModalOpen directly from query param to avoid cascading render)
+  // Modals
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(() => {
     const params = new URLSearchParams(window.location.search);
     return params.get('create') === 'true';
@@ -47,12 +51,52 @@ const Projects = () => {
   const navigate = useNavigate();
 
   const fetchProjects = useCallback(async () => {
-    await Promise.resolve(); // Defer state updates to avoid synchronous useEffect rendering issue
+    await Promise.resolve(); // Defer state updates to satisfy eslint rule
     setIsLoading(true);
     setError(null);
     try {
-      const data = await ProjectService.getProjects();
-      setProjects(data);
+      const [projectsData, tasksData] = await Promise.all([
+        ProjectService.getProjects(),
+        TaskService.getTasks().catch(() => [])
+      ]);
+
+      // Fetch member count for each project
+      const memberPromises = projectsData.map(p => 
+        ProjectService.getProjectMembers(p.id)
+          .then(members => ({ projectId: p.id, count: members.length }))
+          .catch(() => ({ projectId: p.id, count: 0 }))
+      );
+      const memberResults = await Promise.all(memberPromises);
+      const memberCountMap = {};
+      memberResults.forEach(m => { memberCountMap[m.projectId] = m.count; });
+
+      // Aggregate task stats per project
+      const taskStatsMap = {};
+      (tasksData || []).forEach(task => {
+        const pId = task.project;
+        if (!taskStatsMap[pId]) {
+          taskStatsMap[pId] = { total: 0, completed: 0 };
+        }
+        taskStatsMap[pId].total += 1;
+        if (task.status === 'completed' || task.completion_percentage === 100) {
+          taskStatsMap[pId].completed += 1;
+        }
+      });
+
+      // Enhance project objects with real metrics
+      const enhanced = projectsData.map(p => {
+        const stats = taskStatsMap[p.id] || { total: 0, completed: 0 };
+        const progress = stats.total > 0 ? Math.round((stats.completed / stats.total) * 100) : 0;
+        return {
+          ...p,
+          totalTasks: stats.total,
+          completedTasks: stats.completed,
+          progress: progress,
+          memberCount: memberCountMap[p.id] || 0
+        };
+      });
+
+      setProjects(enhanced);
     } catch (err) {
       setError('Failed to load projects. Please try again.');
       console.error(err);
@@ -109,7 +153,8 @@ const Projects = () => {
   };
 
   // Edit Project pre-fill and submission
-  const openEditModal = (project) => {
+  const openEditModal = (project, e) => {
+    e.stopPropagation();
     setSelectedProject(project);
     setTitle(project.title);
     setDescription(project.description || '');
@@ -129,7 +174,6 @@ const Projects = () => {
     setIsFormSubmitting(true);
     setFormError(null);
 
-    // Only send fields that changed
     const patchedFields = {};
     if (title !== selectedProject.title) patchedFields.title = title;
     if (description !== selectedProject.description) patchedFields.description = description;
@@ -156,20 +200,19 @@ const Projects = () => {
     }
   };
 
-  // Delete Project with optimistic update
-  const handleDelete = async (projectId) => {
+  // Delete Project with confirmation dialog
+  const handleDelete = async (projectId, e) => {
+    e.stopPropagation();
     const confirmDelete = window.confirm('Are you sure you want to delete this project? This action cannot be undone.');
     if (!confirmDelete) return;
 
     const previousProjects = [...projects];
-    // Optimistic UI update
     setProjects(projects.filter(p => p.id !== projectId));
 
     try {
       await ProjectService.deleteProject(projectId);
       showToast('Project deleted successfully.');
     } catch (err) {
-      // Rollback on failure
       setProjects(previousProjects);
       showToast('Failed to delete project. Restoring data.', 'error');
       console.error(err);
@@ -186,15 +229,16 @@ const Projects = () => {
     setSelectedProject(null);
   };
 
-  // Memoized Search, Filter, and Sort logic
+  // Memoized Search (title + description), Filter (status), and Sort
   const processedProjects = useMemo(() => {
     return projects
       .filter((project) => {
+        const query = searchQuery.toLowerCase();
         const matchesSearch = 
-          project.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          (project.description || '').toLowerCase().includes(searchQuery.toLowerCase());
+          project.title.toLowerCase().includes(query) ||
+          (project.description || '').toLowerCase().includes(query);
         
-        const matchesStatus = statusFilter === 'all' || project.status === statusFilter;
+        const matchesStatus = statusFilter === 'all' || project.status.toLowerCase() === statusFilter.toLowerCase();
         
         return matchesSearch && matchesStatus;
       })
@@ -204,7 +248,6 @@ const Projects = () => {
         } else if (sortBy === 'created') {
           return new Date(b.created_at) - new Date(a.created_at);
         } else {
-          // Default: Recently updated
           return new Date(b.updated_at) - new Date(a.updated_at);
         }
       });
@@ -240,7 +283,7 @@ const Projects = () => {
         </div>
         <button
           onClick={() => setIsCreateModalOpen(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-[13px] font-semibold transition-all shadow-sm shadow-blue-600/10"
+          className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-[13px] font-semibold transition-all shadow-sm shadow-blue-600/10"
         >
           <Plus className="w-4 h-4" />
           Create Project
@@ -253,7 +296,7 @@ const Projects = () => {
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <input
             type="text"
-            placeholder="Search projects by name or description..."
+            placeholder="Search projects by title or description..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full pl-10 pr-4 py-2 bg-white dark:bg-[#111111] border border-gray-200 dark:border-white/10 rounded-xl text-sm focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all"
@@ -266,7 +309,7 @@ const Projects = () => {
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="w-full md:w-40 pl-3 pr-8 py-2 bg-white dark:bg-[#111111] border border-gray-200 dark:border-white/10 rounded-xl text-sm outline-none focus:border-blue-500 transition-all appearance-none"
+              className="w-full md:w-40 px-3 py-2 bg-white dark:bg-[#111111] border border-gray-200 dark:border-white/10 rounded-xl text-sm outline-none focus:border-blue-500 transition-all font-semibold"
             >
               <option value="all">All Statuses</option>
               <option value="planning">Planning</option>
@@ -275,12 +318,12 @@ const Projects = () => {
             </select>
           </div>
 
-          {/* Sort selection */}
+          {/* Sort Selection */}
           <div className="relative flex-1 md:flex-none">
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
-              className="w-full md:w-44 pl-3 pr-8 py-2 bg-white dark:bg-[#111111] border border-gray-200 dark:border-white/10 rounded-xl text-sm outline-none focus:border-blue-500 transition-all appearance-none"
+              className="w-full md:w-44 px-3 py-2 bg-white dark:bg-[#111111] border border-gray-200 dark:border-white/10 rounded-xl text-sm outline-none focus:border-blue-500 transition-all font-semibold"
             >
               <option value="updated">Recently Updated</option>
               <option value="created">Recently Created</option>
@@ -292,16 +335,12 @@ const Projects = () => {
 
       {/* Main Content Area */}
       {isLoading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {[1, 2, 3].map((n) => (
-            <div key={n} className="h-48 rounded-2xl border border-gray-200 dark:border-white/10 p-5 animate-pulse bg-gray-50/50 dark:bg-white/[0.02]">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {[1, 2, 3, 4].map((n) => (
+            <div key={n} className="h-56 rounded-2xl border border-gray-200 dark:border-white/10 p-5 animate-pulse bg-gray-50/50 dark:bg-white/[0.02]">
               <div className="h-5 w-2/3 bg-gray-200 dark:bg-white/10 rounded-md mb-4"></div>
               <div className="h-3 w-full bg-gray-200 dark:bg-white/10 rounded-md mb-2"></div>
               <div className="h-3 w-4/5 bg-gray-200 dark:bg-white/10 rounded-md mb-6"></div>
-              <div className="flex justify-between items-center">
-                <div className="h-4 w-16 bg-gray-200 dark:bg-white/10 rounded-md"></div>
-                <div className="h-8 w-8 bg-gray-200 dark:bg-white/10 rounded-full"></div>
-              </div>
             </div>
           ))}
         </div>
@@ -337,37 +376,37 @@ const Projects = () => {
           )}
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {processedProjects.map((project) => (
             <div 
               key={project.id}
-              className="group relative flex flex-col justify-between p-5 rounded-2xl bg-white dark:bg-[#161616] border border-gray-200/70 dark:border-white/5 hover:border-gray-300 dark:hover:border-white/10 shadow-sm hover:shadow-md transition-all duration-200"
+              onClick={() => navigate(`/projects/${project.id}`)}
+              className="group relative flex flex-col justify-between p-5 rounded-2xl bg-white dark:bg-[#161616] border border-gray-200/70 dark:border-white/5 hover:border-blue-500/40 dark:hover:border-blue-500/40 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer"
             >
               <div>
-                {/* Status Badge */}
+                {/* Status Badge & Actions */}
                 <div className="flex justify-between items-start mb-3">
-                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold border ${
+                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold border capitalize ${
                     project.status === 'completed'
                       ? 'bg-green-50 text-green-700 border-green-200/50 dark:bg-green-950/20 dark:text-green-400 dark:border-green-900/30'
                       : project.status === 'active'
                         ? 'bg-blue-50 text-blue-700 border-blue-200/50 dark:bg-blue-950/20 dark:text-blue-400 dark:border-blue-900/30'
                         : 'bg-yellow-50 text-yellow-700 border-yellow-200/50 dark:bg-yellow-950/20 dark:text-yellow-400 dark:border-yellow-900/30'
                   }`}>
-                    {project.status.charAt(0).toUpperCase() + project.status.slice(1)}
+                    {project.status}
                   </span>
                   
-                  {/* Actions Dropdown / Icons */}
                   <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                     <button 
-                      onClick={() => openEditModal(project)}
-                      className="p-1 rounded-md text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-white/5 transition-colors"
+                      onClick={(e) => openEditModal(project, e)}
+                      className="p-1.5 rounded-md text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-white/5 transition-colors"
                       title="Edit project"
                     >
                       <Edit3 className="w-3.5 h-3.5" />
                     </button>
                     <button 
-                      onClick={() => handleDelete(project.id)}
-                      className="p-1 rounded-md text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-gray-100 dark:hover:bg-white/5 transition-colors"
+                      onClick={(e) => handleDelete(project.id, e)}
+                      className="p-1.5 rounded-md text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-gray-100 dark:hover:bg-white/5 transition-colors"
                       title="Delete project"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
@@ -375,27 +414,58 @@ const Projects = () => {
                   </div>
                 </div>
 
-                {/* Title and Description */}
-                <h3 
-                  onClick={() => navigate(`/projects/${project.id}`)}
-                  className="text-base font-bold text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer transition-colors truncate"
-                >
+                {/* Title & Description */}
+                <h3 className="text-base font-bold text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors truncate">
                   {project.title}
                 </h3>
-                <p className="text-xs text-gray-500 mt-2 line-clamp-2 min-h-[32px]">
+                <p className="text-xs text-gray-500 mt-1.5 line-clamp-2 min-h-[32px] leading-relaxed">
                   {project.description || 'No description provided.'}
                 </p>
+
+                {/* Progress Bar & Percentage */}
+                <div className="mt-4 space-y-1.5">
+                  <div className="flex justify-between items-center text-[11px]">
+                    <span className="text-gray-400 font-semibold">Progress</span>
+                    <span className="font-bold text-gray-800 dark:text-gray-200">{project.progress}%</span>
+                  </div>
+                  <div className="w-full h-1.5 bg-gray-100 dark:bg-white/5 rounded-full overflow-hidden">
+                    <div 
+                      className={`h-full rounded-full transition-all duration-500 ${
+                        project.progress === 100 ? 'bg-green-500' : 'bg-blue-500'
+                      }`}
+                      style={{ width: `${project.progress}%` }}
+                    />
+                  </div>
+                </div>
+
+                {/* Real Meta Badges */}
+                <div className="mt-4 grid grid-cols-3 gap-2 pt-3 border-t border-gray-100 dark:border-white/5 text-[11px]">
+                  <div className="flex flex-col">
+                    <span className="text-gray-400 flex items-center gap-1"><CheckSquare className="w-3 h-3 text-blue-500" /> Tasks</span>
+                    <span className="font-bold text-gray-700 dark:text-gray-300 mt-0.5">{project.completedTasks}/{project.totalTasks}</span>
+                  </div>
+
+                  <div className="flex flex-col">
+                    <span className="text-gray-400 flex items-center gap-1"><Users className="w-3 h-3 text-purple-500" /> Members</span>
+                    <span className="font-bold text-gray-700 dark:text-gray-300 mt-0.5">{project.memberCount}</span>
+                  </div>
+
+                  <div className="flex flex-col">
+                    <span className="text-gray-400 flex items-center gap-1"><UserCheck className="w-3 h-3 text-green-500" /> Manager</span>
+                    <span className="font-bold text-gray-700 dark:text-gray-300 mt-0.5 truncate">@{project.manager_name || 'Admin'}</span>
+                  </div>
+                </div>
               </div>
 
-              {/* Bottom dates/meta */}
-              <div className="mt-5 pt-4 border-t border-gray-100 dark:border-white/5 flex justify-between items-center text-[11px] text-gray-400">
+              {/* Bottom dates */}
+              <div className="mt-4 pt-3 border-t border-gray-100 dark:border-white/5 flex justify-between items-center text-[11px] text-gray-400">
                 <div className="flex items-center gap-1">
                   <Calendar className="w-3.5 h-3.5" />
                   <span>Due: {formatDate(project.end_date)}</span>
                 </div>
                 <div className="flex items-center gap-1">
                   <Clock className="w-3.5 h-3.5" />
-                  <span>Updated: {formatDate(project.updated_at)}</span>
+                  <span>{formatDate(project.updated_at)}</span>
                 </div>
               </div>
             </div>
@@ -427,7 +497,7 @@ const Projects = () => {
                 <input
                   type="text"
                   required
-                  placeholder="e.g. FairSplit Phase 2"
+                  placeholder="e.g. FairSplit Production Release"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   className="w-full px-3 py-2 bg-transparent border border-gray-200 dark:border-white/10 rounded-xl text-sm focus:border-blue-500 outline-none transition-colors"
@@ -473,7 +543,7 @@ const Projects = () => {
                 <select
                   value={status}
                   onChange={(e) => setStatus(e.target.value)}
-                  className="w-full px-3 py-2 bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-white/10 rounded-xl text-sm focus:border-blue-500 outline-none transition-colors"
+                  className="w-full px-3 py-2 bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-white/10 rounded-xl text-sm focus:border-blue-500 outline-none transition-colors capitalize"
                 >
                   <option value="planning">Planning</option>
                   <option value="active">Active</option>
@@ -570,7 +640,7 @@ const Projects = () => {
                 <select
                   value={status}
                   onChange={(e) => setStatus(e.target.value)}
-                  className="w-full px-3 py-2 bg-white dark:bg-[#1A1A1A] border border-gray-200/10 rounded-xl text-sm focus:border-blue-500 outline-none transition-colors"
+                  className="w-full px-3 py-2 bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-white/10 rounded-xl text-sm focus:border-blue-500 outline-none transition-colors capitalize"
                 >
                   <option value="planning">Planning</option>
                   <option value="active">Active</option>
