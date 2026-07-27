@@ -1,7 +1,9 @@
+from django.shortcuts import get_object_or_404
+from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from tasks.models import Task
+from tasks.models import Task, TaskAssignment
 from .algorithms import recommend_reassignment
 from .algorithms import allocate_tasks
 
@@ -22,7 +24,13 @@ class RecommendReassignmentView(APIView):
 
     def post(self, request, task_id):
 
-        task = Task.objects.get(id=task_id)
+        task = get_object_or_404(Task, id=task_id)
+
+        if not hasattr(task, "assignment") or task.assignment is None:
+            return Response(
+                {"error": "Task is not assigned."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
         if task.predicted_risk != "High":
 
@@ -46,4 +54,4 @@ class RecommendReassignmentView(APIView):
 
             "recommendation": recommendation
 
-        })
+        })

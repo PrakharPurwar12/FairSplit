@@ -1,3 +1,4 @@
+from datetime import datetime
 from collections import defaultdict
 from project.models import ProjectMember
 from skills.models import UserSkill
@@ -411,9 +412,14 @@ def build_prediction_features(task):
     ).count()
 
     # Days left
+    deadline_date = (
+        datetime.strptime(task.deadline, "%Y-%m-%d").date()
+        if isinstance(task.deadline, str)
+        else task.deadline
+    )
     days_left = max(
         0,
-        (task.deadline - timezone.now().date()).days
+        (deadline_date - timezone.now().date()).days
     )
 
     return {
@@ -516,7 +522,10 @@ def recommend_reassignment(task):
 
     return {
 
-        "recommended_member": best["member"].user,
+        "recommended_member": {
+            "id": best["member"].user.id,
+            "username": best["member"].user.username,
+        },
 
         "final_score": best["final_score"],
 

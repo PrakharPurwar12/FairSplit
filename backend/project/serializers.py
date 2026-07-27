@@ -37,3 +37,4 @@ class ProjectMemberSerializer(serializers.ModelSerializer):
             "role",
             "joined_at",
         )
+        read_only_fields = ("project",)

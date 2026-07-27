@@ -60,6 +60,7 @@ class TaskSkillSerializer(serializers.ModelSerializer):
             "skill_name",
             "importance",
         )
+        read_only_fields = ("task",)
 
 
 class TaskAssignmentSerializer(serializers.ModelSerializer):
