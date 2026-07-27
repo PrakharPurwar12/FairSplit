@@ -16,8 +16,10 @@ import ProjectService from '../services/project.service';
 import AllocationService from '../services/allocation.service';
 import Modal from '../components/ui/Modal';
 import Toast from '../components/ui/Toast';
+import { useAuth } from '../context/AuthContext';
 
 const Tasks = () => {
+  const { user: currentUser } = useAuth();
   const [tasks, setTasks] = useState([]);
   const [projects, setProjects] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -195,7 +197,18 @@ const Tasks = () => {
     }
   };
 
-  // PROGRESS UPDATE
+  // PROGRESS UPDATE PERMISSION CHECK
+  const canUserUpdateTaskProgress = (task) => {
+    if (!task || !currentUser) return false;
+    const project = projects.find(p => p.id === task.project);
+    const isAssigned = (task.assigned_to === currentUser.id || task.assigned_to_name === currentUser.username);
+    const isManager = (project?.manager === currentUser.id || project?.manager_name === currentUser.username);
+    const isCreator = (task.created_by === currentUser.id || task.created_by_name === currentUser.username);
+    const isAdmin = Boolean(currentUser.is_staff || currentUser.is_superuser || currentUser.role === 'admin');
+
+    return isAssigned || isManager || isCreator || isAdmin;
+  };
+
   const openProgressModal = (task) => {
     if (!task.assigned_to_name) {
       showToast('Task has not been assigned. Run AI Allocation first.', 'error');
@@ -209,6 +222,10 @@ const Tasks = () => {
 
   const handleProgressSubmit = async (e) => {
     e.preventDefault();
+    if (!canUserUpdateTaskProgress(selectedTask)) {
+      setFormError('You do not have permission to update progress for this task.');
+      return;
+    }
     setIsSubmitting(true);
     setFormError(null);
 
@@ -835,6 +852,13 @@ const Tasks = () => {
       {/* PROGRESS MODAL */}
       <Modal isOpen={isProgressOpen} onClose={() => { setIsProgressOpen(false); resetForm(); }} title="Update Progress">
         <form onSubmit={handleProgressSubmit} className="space-y-4">
+          {!canUserUpdateTaskProgress(selectedTask) && (
+            <div className="p-3 bg-yellow-50 dark:bg-yellow-950/20 text-yellow-800 dark:text-yellow-400 text-xs rounded-xl border border-yellow-200 dark:border-yellow-900/50 leading-snug flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 shrink-0 text-yellow-600 dark:text-yellow-400" />
+              <span>Read-Only Mode: You are not authorized to update progress. Only the assigned member (@{selectedTask?.assigned_to_name}), Project Manager, Task Creator, or Admin can update.</span>
+            </div>
+          )}
+
           {formError && (
             <div className="p-3 bg-red-50 dark:bg-red-950/20 text-red-600 dark:text-red-400 text-xs rounded-xl border border-red-200 dark:border-red-900/50 leading-snug">
               {formError}
@@ -847,9 +871,10 @@ const Tasks = () => {
               type="range"
               min="0"
               max="100"
+              disabled={!canUserUpdateTaskProgress(selectedTask)}
               value={completionPercentage}
               onChange={(e) => setCompletionPercentage(e.target.value)}
-              className="w-full h-2 bg-gray-200 dark:bg-white/10 rounded-lg appearance-none cursor-pointer accent-blue-600"
+              className="w-full h-2 bg-gray-200 dark:bg-white/10 rounded-lg appearance-none cursor-pointer accent-blue-600 disabled:opacity-40 disabled:cursor-not-allowed"
             />
           </div>
 
@@ -859,10 +884,11 @@ const Tasks = () => {
               type="number"
               step="0.1"
               required
+              disabled={!canUserUpdateTaskProgress(selectedTask)}
               placeholder="e.g. 5.5"
               value={actualHours}
               onChange={(e) => setActualHours(e.target.value)}
-              className="w-full px-3 py-2 bg-transparent border border-gray-200 dark:border-white/10 rounded-xl text-sm focus:border-blue-500 outline-none"
+              className="w-full px-3 py-2 bg-transparent border border-gray-200 dark:border-white/10 rounded-xl text-sm focus:border-blue-500 outline-none disabled:opacity-40 disabled:cursor-not-allowed"
             />
           </div>
 
@@ -876,10 +902,10 @@ const Tasks = () => {
             </button>
             <button
               type="submit"
-              disabled={isSubmitting}
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50 rounded-xl text-sm font-semibold transition-colors"
+              disabled={!canUserUpdateTaskProgress(selectedTask) || isSubmitting}
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50 disabled:cursor-not-allowed rounded-xl text-sm font-semibold transition-colors"
             >
-              {isSubmitting ? 'Updating...' : 'Update Progress'}
+              {isSubmitting ? 'Saving...' : 'Update Progress'}
             </button>
           </div>
         </form>

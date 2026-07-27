@@ -83,10 +83,15 @@ class TaskProgressUpdateView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # Only assigned member can update
-        if assignment.assigned_to != request.user:
+        # Permission check: Allow assigned member, project manager, task creator, or admin
+        is_assigned = (assignment.assigned_to == request.user)
+        is_manager = (task.project.manager == request.user)
+        is_creator = (task.created_by == request.user)
+        is_admin = (request.user.is_staff or request.user.is_superuser)
+
+        if not (is_assigned or is_manager or is_creator or is_admin):
             return Response(
-                {"error": "You are not assigned to this task."},
+                {"error": "You do not have permission to update progress for this task."},
                 status=status.HTTP_403_FORBIDDEN
             )
 
