@@ -44,6 +44,16 @@ def update_task_prediction(task):
             f"Confidence: {task.risk_confidence}% | "
             f"Timestamp: {task.last_risk_update}"
         )
+
+        if task.predicted_risk == "High":
+            from notifications.services import create_notification
+            assignee = getattr(task.assignment, 'assigned_to', None)
+            manager = getattr(task.project, 'manager', None)
+            msg = f"High Risk Warning: Task '{task.title}' flagged as High Risk ({task.risk_confidence}% confidence)."
+            if assignee:
+                create_notification(user=assignee, title="High Risk Alert", message=msg, notification_type="risk_high")
+            if manager and manager != assignee:
+                create_notification(user=manager, title="High Risk Alert", message=msg, notification_type="risk_high")
         
         return prediction
 

@@ -14,6 +14,8 @@ from ml.services import update_task_prediction
 
 from django.db import models
 
+from notifications.services import create_notification, notify_project_members
+
 class TaskListCreateView(generics.ListCreateAPIView):
     serializer_class = TaskSerializer
     permission_classes = [IsAuthenticated]
@@ -30,7 +32,14 @@ class TaskListCreateView(generics.ListCreateAPIView):
         ).distinct()
 
     def perform_create(self, serializer):
-        serializer.save(created_by=self.request.user)
+        task = serializer.save(created_by=self.request.user)
+        notify_project_members(
+            project=task.project,
+            title="New Task Created",
+            message=f"Task '{task.title}' was created in project '{task.project.title}'.",
+            notification_type="task_created",
+            exclude_user=self.request.user
+        )
 
 
 class TaskDetailView(generics.RetrieveUpdateDestroyAPIView):
@@ -94,26 +103,44 @@ class TaskProgressUpdateView(APIView):
         # Auto-update task status
         if task.completion_percentage == 0:
             task.status = "todo"
-
-        elif task.completion_percentage < 100:
+        elif task.completion_percentage == 100:
+            task.status = "completed"
+        else:
             task.status = "progress"
 
-        else:
-            task.status = "completed"
-
         task.save()
-        
-        # ---------------------------------------
-        # AI Risk Prediction
-        # ---------------------------------------
-        prediction = update_task_prediction(task)
 
-        response_data = {
+        # Trigger AI Prediction update
+        update_task_prediction(task)
+
+        # Notification generation
+        if task.completion_percentage == 100 or task.status == "completed":
+            create_notification(
+                user=task.project.manager,
+                title="Task Completed",
+                message=f"Task '{task.title}' was marked as 100% completed by @{request.user.username}.",
+                notification_type="task_completed"
+            )
+            create_notification(
+                user=request.user,
+                title="Task Completed",
+                message=f"Great job! Task '{task.title}' is completed.",
+                notification_type="task_completed"
+            )
+        else:
+            if task.project.manager and task.project.manager != request.user:
+                create_notification(
+                    user=task.project.manager,
+                    title="Task Progress Updated",
+                    message=f"@{request.user.username} updated task '{task.title}' to {task.completion_percentage}%.",
+                    notification_type="progress_updated"
+                )
+
+        return Response({
             "message": "Task updated successfully.",
-            "task": TaskSerializer(task).data
-        }
-        
-        if prediction:
-            response_data["prediction"] = prediction
-
-        return Response(response_data)
+            "task_id": task.id,
+            "status": task.status,
+            "completion_percentage": task.completion_percentage,
+            "predicted_risk": task.predicted_risk,
+            "risk_confidence": task.risk_confidence
+        })

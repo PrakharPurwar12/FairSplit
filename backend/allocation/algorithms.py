@@ -349,6 +349,14 @@ def allocate_tasks(project_id):
         from ml.services import update_task_prediction
         update_task_prediction(task)
 
+        from notifications.services import create_notification
+        create_notification(
+            user=best["member"].user,
+            title="Task Assigned",
+            message=f"Task '{task.title}' was assigned to you via AI Allocation.",
+            notification_type="task_assigned"
+        )
+
         workloads[
             best["member"].user.id
         ] += float(task.estimated_hours)
@@ -363,17 +371,25 @@ def allocate_tasks(project_id):
 
             "workload_score": best["workload_score"],
 
-            "fairness_penalty": best["penalty"],
+            "penalty": best["penalty"],
 
             "final_score": best["final_score"],
 
             "confidence": confidence,
-            
-            "matched_skills": best["matched_skills"],
 
-            "reason": reasons,
+            "reasons": reasons
 
         })
+
+    if results and tasks.first():
+        project = tasks.first().project
+        from notifications.services import create_notification
+        create_notification(
+            user=project.manager,
+            title="AI Allocation Completed",
+            message=f"AI Task Allocation generated {len(results)} task assignment(s) for project '{project.title}'.",
+            notification_type="allocation_completed"
+        )
 
     return results
 

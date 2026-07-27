@@ -29,4 +29,5 @@ urlpatterns = [
     path("api/allocation/",include("allocation.urls")),
     path("api/analytics/",include("analytics.urls")),
     path("api/ml/",include("ml.urls")),
+    path("api/notifications/", include("notifications.urls")),
 ]

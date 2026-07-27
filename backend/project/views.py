@@ -11,6 +11,9 @@ from .serializers import (
 )
 
 
+from notifications.services import create_notification
+
+
 class ProjectListCreateView(generics.ListCreateAPIView):
 
     serializer_class = ProjectSerializer
@@ -23,7 +26,13 @@ class ProjectListCreateView(generics.ListCreateAPIView):
         return (Project.objects.filter(manager=user) | Project.objects.filter(members__user=user)).distinct()
 
     def perform_create(self, serializer):
-        serializer.save(manager=self.request.user)
+        project = serializer.save(manager=self.request.user)
+        create_notification(
+            user=self.request.user,
+            title="Project Created",
+            message=f"Project '{project.title}' was created successfully.",
+            notification_type="project_created"
+        )
 
 
 class ProjectDetailView(generics.RetrieveUpdateDestroyAPIView):
@@ -51,7 +60,22 @@ class ProjectMemberListCreateView(generics.ListCreateAPIView):
         )
 
     def perform_create(self, serializer):
-        serializer.save(project_id=self.kwargs["project_id"])
+        member = serializer.save(project_id=self.kwargs["project_id"])
+        project = member.project
+        if member.user:
+            create_notification(
+                user=member.user,
+                title="Added to Project Team",
+                message=f"You were added to project '{project.title}' as {member.role}.",
+                notification_type="member_added"
+            )
+        if project.manager and project.manager != self.request.user:
+            create_notification(
+                user=project.manager,
+                title="New Member Added",
+                message=f"@{member.user.username} was added to '{project.title}'.",
+                notification_type="member_added"
+            )
 
 
 class ProjectMemberDetailView(generics.DestroyAPIView):
@@ -61,3 +85,22 @@ class ProjectMemberDetailView(generics.DestroyAPIView):
 
     def get_queryset(self):
         return ProjectMember.objects.all()
+
+    def perform_destroy(self, instance):
+        project = instance.project
+        user = instance.user
+        if user:
+            create_notification(
+                user=user,
+                title="Removed from Project Team",
+                message=f"You were removed from project '{project.title}'.",
+                notification_type="member_removed"
+            )
+        if project.manager and project.manager != user:
+            create_notification(
+                user=project.manager,
+                title="Member Removed",
+                message=f"@{user.username} was removed from project '{project.title}'.",
+                notification_type="member_removed"
+            )
+        instance.delete()
