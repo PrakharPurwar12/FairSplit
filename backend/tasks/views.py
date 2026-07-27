@@ -10,15 +10,14 @@ from rest_framework.response import Response
 from rest_framework import status
 from .models import Task, TaskAssignment
 from .serializers import TaskProgressUpdateSerializer
-from allocation.algorithms import build_prediction_features
-from ml.predictor import predict_risk
+from ml.services import update_task_prediction
 
 class TaskListCreateView(generics.ListCreateAPIView):
     serializer_class = TaskSerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        return Task.objects.filter(created_by=self.request.user)
+        return Task.objects.select_related("project", "created_by").filter(created_by=self.request.user)
 
     def perform_create(self, serializer):
         serializer.save(created_by=self.request.user)
@@ -89,21 +88,14 @@ class TaskProgressUpdateView(APIView):
         # ---------------------------------------
         # AI Risk Prediction
         # ---------------------------------------
+        prediction = update_task_prediction(task)
 
-        features = build_prediction_features(task)
+        response_data = {
+            "message": "Task updated successfully.",
+            "task": TaskSerializer(task).data
+        }
+        
+        if prediction:
+            response_data["prediction"] = prediction
 
-        prediction = predict_risk(features)
-
-        task.predicted_risk = prediction["predicted_risk"]
-        task.risk_confidence = prediction["confidence"]
-        task.last_risk_update = timezone.now()
-
-        task.save()
-
-        return Response(
-            {
-                "message": "Task updated successfully.",
-                "prediction": prediction,
-                "task": TaskSerializer(task).data
-            }
-        )
+        return Response(response_data)
