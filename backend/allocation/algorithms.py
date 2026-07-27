@@ -345,6 +345,9 @@ def allocate_tasks(project_id):
 
         )
 
+        from ml.services import update_task_prediction
+        update_task_prediction(task)
+
         workloads[
             best["member"].user.id
         ] += float(task.estimated_hours)
