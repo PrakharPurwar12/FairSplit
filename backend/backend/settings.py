@@ -39,8 +39,15 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
 
+    "django.contrib.sites",
+
     "rest_framework",
     "corsheaders",
+
+    "allauth",
+    "allauth.socialaccount",
+    "allauth.socialaccount.providers.google",
+    "allauth.socialaccount.providers.github",
 
     "account",
     "skills",
@@ -51,6 +58,36 @@ INSTALLED_APPS = [
     "notifications",
     "tasks"
 ]
+
+SITE_ID = 1
+
+import os
+from decouple import config
+
+GOOGLE_CLIENT_ID = config("GOOGLE_CLIENT_ID", default="")
+GOOGLE_CLIENT_SECRET = config("GOOGLE_CLIENT_SECRET", default="")
+GITHUB_CLIENT_ID = config("GITHUB_CLIENT_ID", default="")
+GITHUB_CLIENT_SECRET = config("GITHUB_CLIENT_SECRET", default="")
+
+SOCIALACCOUNT_PROVIDERS = {
+    "google": {
+        "APP": {
+            "client_id": GOOGLE_CLIENT_ID,
+            "secret": GOOGLE_CLIENT_SECRET,
+            "key": ""
+        },
+        "SCOPE": ["profile", "email"],
+        "AUTH_PARAMS": {"access_type": "online"},
+    },
+    "github": {
+        "APP": {
+            "client_id": GITHUB_CLIENT_ID,
+            "secret": GITHUB_CLIENT_SECRET,
+            "key": ""
+        },
+        "SCOPE": ["user:email"],
+    }
+}
 
 
 CORS_ALLOW_ALL_ORIGINS = True

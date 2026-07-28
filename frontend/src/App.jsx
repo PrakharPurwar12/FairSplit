@@ -13,6 +13,7 @@ import Notifications from './pages/Notifications';
 import Profile from './pages/Profile';
 import Settings from './pages/Settings';
 import Onboarding from './pages/Onboarding';
+import AuthCallback from './pages/AuthCallback';
 import './App.css';
 
 import DashboardLayout from './components/dashboard/DashboardLayout';
@@ -28,6 +29,7 @@ function App() {
         <Route path="/" element={<Landing />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/auth/callback" element={<AuthCallback />} />
         
         {/* Private Routes */}
         <Route path="/onboarding" element={

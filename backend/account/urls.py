@@ -9,6 +9,8 @@ from .views import (
     RegisterView,
     ProfileView,
     UserListView,
+    OAuthURLView,
+    OAuthLoginView,
 )
 
 urlpatterns = [
@@ -41,5 +43,17 @@ urlpatterns = [
         "users/",
         UserListView.as_view(),
         name="user-list"
+    ),
+
+    path(
+        "oauth/url/",
+        OAuthURLView.as_view(),
+        name="oauth-url"
+    ),
+
+    path(
+        "oauth/login/",
+        OAuthLoginView.as_view(),
+        name="oauth-login"
     ),
 ]

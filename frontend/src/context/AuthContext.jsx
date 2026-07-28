@@ -37,6 +37,14 @@ export const AuthProvider = ({ children }) => {
     return data;
   };
 
+  const oauthLogin = async (provider, code) => {
+    const data = await AuthService.oauthLogin(provider, code);
+    const userData = data.user || (await AuthService.getCurrentUser());
+    setUser(userData);
+    setIsAuthenticated(true);
+    return data;
+  };
+
   const logout = () => {
     AuthService.logout();
     setUser(null);
@@ -49,6 +57,7 @@ export const AuthProvider = ({ children }) => {
     isAuthenticated,
     isLoading,
     login,
+    oauthLogin,
     logout,
   };
 
