@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="docs/assets/banner.png" width="100%" alt="FairSplit Banner">
+</p>
+
 <div align="center">
 
 # ⚖️ FairSplit
@@ -21,7 +25,7 @@
 
 <br/>
 
-[🚀 Quick Start](#-quick-start) · [🏗️ Architecture](#%EF%B8%8F-system-architecture) · [🤖 AI Engine](#-ai-allocation-engine) · [🧠 ML Prediction](#-machine-learning-risk-prediction) · [🐳 Docker](#-docker-deployment) · [📖 API Docs](#-api-overview) · [❓ FAQ](#-frequently-asked-questions)
+[🎥 Demo](#-project-demo) · [🚀 Quick Start](#-quick-start) · [🏗️ Architecture](#%EF%B8%8F-system-architecture) · [🤖 AI Engine](#-ai-allocation-engine) · [🧠 ML Prediction](#-machine-learning-risk-prediction) · [🐳 Docker](#-docker-deployment) · [📖 API Docs](#-api-overview) · [❓ FAQ](#-frequently-asked-questions)
 
 <br/>
 
@@ -53,6 +57,7 @@
 ## 📋 Table of Contents
 
 - [About FairSplit](#-about-fairsplit)
+- [Project Demo](#-project-demo)
 - [Feature Matrix](#-feature-matrix)
 - [Key Features](#-key-features)
 - [Complete Workflow](#-complete-workflow)
@@ -105,6 +110,14 @@ FairSplit treats task assignment as a **data-driven optimization problem**. It c
 
 > [!NOTE]
 > FairSplit does not replace project managers; it provides actionable recommendations, allocation confidence metrics, and automated risk alerts to support decision-making.
+
+---
+
+## 🎥 Project Demo
+
+<p align="center">
+  <img src="docs/assets/demo.gif" width="100%" alt="FairSplit Demo">
+</p>
 
 ---
 
