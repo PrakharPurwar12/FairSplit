@@ -58,6 +58,14 @@ const Tasks = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [toast, setToast] = useState(null);
 
+  const formatConfidence = (val) => {
+    if (val == null || isNaN(val)) return '0%';
+    const num = Number(val);
+    const pct = (num > 0 && num <= 1) ? num * 100 : num;
+    const clamped = Math.min(100, Math.max(0, pct));
+    return `${clamped % 1 === 0 ? clamped.toFixed(0) : clamped.toFixed(1)}%`;
+  };
+
   const fetchInitialData = useCallback(async () => {
     await Promise.resolve(); // Defer state updates to satisfy eslint rule
     setIsLoading(true);
@@ -967,7 +975,7 @@ const Tasks = () => {
                   AI Risk Prediction: {selectedTask.predicted_risk}
                 </h4>
                 <p className="text-xs text-gray-500 dark:text-gray-400 leading-normal">
-                  The machine learning model predicted task delivery risk is <strong>{selectedTask.predicted_risk}</strong> with a confidence score of <strong>{(selectedTask.risk_confidence * 100).toFixed(0)}%</strong>.
+                  The machine learning model predicted task delivery risk is <strong>{selectedTask.predicted_risk}</strong> with a confidence score of <strong>{formatConfidence(selectedTask.risk_confidence)}</strong>.
                 </p>
               </div>
             ) : (

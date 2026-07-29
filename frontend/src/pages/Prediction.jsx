@@ -140,8 +140,9 @@ const Prediction = () => {
   const formatConfidence = (val) => {
     if (val == null || isNaN(val)) return '0%';
     const num = Number(val);
-    const pct = num <= 1 && num > 0 ? num * 100 : num;
-    return `${pct % 1 === 0 ? pct.toFixed(0) : pct.toFixed(1)}%`;
+    const pct = (num > 0 && num <= 1) ? num * 100 : num;
+    const clamped = Math.min(100, Math.max(0, pct));
+    return `${clamped % 1 === 0 ? clamped.toFixed(0) : clamped.toFixed(1)}%`;
   };
 
   const getRiskColor = (pct) => {
@@ -340,7 +341,7 @@ const Prediction = () => {
                     >
                       <div className="space-y-1 flex-1 min-w-0">
                         <span className="text-[9px] font-bold text-red-500 uppercase tracking-wider bg-red-100/50 dark:bg-red-950/40 px-2 py-0.5 rounded-full border border-red-200/30">
-                          {task.risk} Risk ({(task.confidence * 100).toFixed(0)}%)
+                          {task.risk} Risk ({formatConfidence(task.confidence)})
                         </span>
                         <h4 className="text-sm font-bold text-gray-800 dark:text-gray-200 truncate">
                           {task.task_title}

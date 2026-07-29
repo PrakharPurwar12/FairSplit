@@ -30,8 +30,9 @@ const AIInsightCard = ({ riskData = null, isLoading = true, error = null }) => {
   const formatConfidence = (val) => {
     if (val == null || isNaN(val)) return '0%';
     const num = Number(val);
-    const pct = num <= 1 && num > 0 ? num * 100 : num;
-    return `${pct % 1 === 0 ? pct.toFixed(0) : pct.toFixed(1)}%`;
+    const pct = (num > 0 && num <= 1) ? num * 100 : num;
+    const clamped = Math.min(100, Math.max(0, pct));
+    return `${clamped % 1 === 0 ? clamped.toFixed(0) : clamped.toFixed(1)}%`;
   };
 
   const status = getRiskStatus();
