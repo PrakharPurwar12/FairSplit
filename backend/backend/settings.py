@@ -235,5 +235,6 @@ DEFAULT_FROM_EMAIL = config("DEFAULT_FROM_EMAIL", default="FairSplit Team <norep
 # OAuth Configuration (Google & GitHub)
 GOOGLE_CLIENT_ID = config("GOOGLE_CLIENT_ID", default="")
 GOOGLE_CLIENT_SECRET = config("GOOGLE_CLIENT_SECRET", default="")
+GOOGLE_REDIRECT_URI = config("GOOGLE_REDIRECT_URI", default="http://localhost/auth/callback")
 GITHUB_CLIENT_ID = config("GITHUB_CLIENT_ID", default="")
 GITHUB_CLIENT_SECRET = config("GITHUB_CLIENT_SECRET", default="")

@@ -27,7 +27,7 @@ class EmailService:
         using Django's configured EmailBackend (SMTP / Gmail).
         """
         from_email = cls.get_config_val("DEFAULT_FROM_EMAIL", "FairSplit Team <noreply@fairsplit.com>")
-        frontend_url = cls.get_config_val("FRONTEND_URL", "http://localhost:5173").rstrip("/")
+        frontend_url = cls.get_config_val("FRONTEND_URL", "http://localhost").rstrip("/")
         host_user = cls.get_config_val("EMAIL_HOST_USER", "")
         host_password = cls.get_config_val("EMAIL_HOST_PASSWORD", "")
 

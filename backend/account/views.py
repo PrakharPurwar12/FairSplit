@@ -70,7 +70,7 @@ class OAuthURLView(APIView):
 
     def get(self, request):
         provider = request.query_params.get("provider", "google").lower()
-        redirect_uri = request.query_params.get("redirect_uri", "http://localhost:5173/auth/callback")
+        redirect_uri = get_env_val("GOOGLE_REDIRECT_URI", "http://localhost/auth/callback")
 
         if provider == "google":
             client_id = get_env_val("GOOGLE_CLIENT_ID")
@@ -97,7 +97,7 @@ class OAuthLoginView(APIView):
     def post(self, request):
         provider = request.data.get("provider", "").lower()
         code = request.data.get("code")
-        redirect_uri = request.data.get("redirect_uri", "http://localhost:5173/auth/callback")
+        redirect_uri = request.data.get("redirect_uri") or get_env_val("GOOGLE_REDIRECT_URI", "http://localhost/auth/callback")
 
         if not provider or not code:
             return Response({"error": "Provider and authorization code are required."}, status=status.HTTP_400_BAD_REQUEST)

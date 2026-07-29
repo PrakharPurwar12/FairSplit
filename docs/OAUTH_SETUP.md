@@ -33,10 +33,10 @@ This guide documents the architecture, configuration steps, and environment requ
    - Select **Web Application**.
    - Set Name: `FairSplit Production Web App`.
    - Add **Authorized JavaScript origins**:
-     - Local: `http://localhost:5173`, `http://localhost:8000`
+     - Local: `http://localhost`, `http://localhost:8000`
      - Production: `https://your-production-domain.com`
    - Add **Authorized redirect URIs**:
-     - Local: `http://localhost:5173/auth/callback`
+     - Local: `http://localhost/auth/callback`
      - Production: `https://your-production-domain.com/auth/callback`
 5. Copy the generated **Client ID** and **Client Secret**.
 
@@ -48,8 +48,8 @@ This guide documents the architecture, configuration steps, and environment requ
 2. Click **New OAuth App**.
 3. Configure App Settings:
    - **Application Name**: `FairSplit`
-   - **Homepage URL**: `http://localhost:5173` (or `https://your-production-domain.com`)
-   - **Authorization callback URL**: `http://localhost:5173/auth/callback` (or `https://your-production-domain.com/auth/callback`)
+   - **Homepage URL**: `http://localhost` (or `https://your-production-domain.com`)
+   - **Authorization callback URL**: `http://localhost/auth/callback` (or `https://your-production-domain.com/auth/callback`)
 4. Click **Register application**.
 5. Copy the **Client ID**.
 6. Generate and copy a new **Client Secret**.
@@ -90,7 +90,7 @@ GITHUB_CLIENT_SECRET="your-github-client-secret"
    ```
 
 3. **Testing OAuth Login**:
-   - Navigate to `http://localhost:5173/login` or `http://localhost:5173/register`.
+   - Navigate to `http://localhost/login` or `http://localhost/register`.
    - Click **Continue with Google** or **Continue with GitHub**.
    - Complete provider consent.
    - Verify redirection back to `/auth/callback`, token exchange, and landing on `/dashboard`.
