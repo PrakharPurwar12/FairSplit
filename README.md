@@ -2,7 +2,11 @@
 
 # ⚖️ FairSplit
 
-### AI-Powered Project Management with Intelligent Task Allocation & Risk Prediction
+### AI-Powered Project Management & Workload Optimization Engine
+
+<p align="center">
+  <b>An open-source, full-stack project management platform that prevents team burnout through automated, skill-matched task allocation and proactive machine learning risk prediction.</b>
+</p>
 
 <br/>
 
@@ -17,27 +21,46 @@
 
 <br/>
 
-**FairSplit is a full-stack project management platform where work is never piled on one person.**
-It uses a custom AI engine to assign tasks based on skill match, workload, and fairness — and a trained Machine Learning model to predict which tasks are at risk of missing their deadlines before it happens.
+[🚀 Quick Start](#-quick-start) · [🏗️ Architecture](#%EF%B8%8F-system-architecture) · [🤖 AI Engine](#-ai-allocation-engine) · [🧠 ML Prediction](#-machine-learning-risk-prediction) · [🐳 Docker](#-docker-deployment) · [📖 API Docs](#-api-overview) · [❓ FAQ](#-frequently-asked-questions)
 
 <br/>
 
-[🚀 Quick Start](#-quick-start) · [🏗️ Architecture](#%EF%B8%8F-system-architecture) · [🤖 AI Engine](#-ai-allocation-engine) · [🧠 ML Prediction](#-machine-learning-risk-prediction) · [🐳 Docker](#-docker-deployment) · [📖 API Docs](#-api-overview)
-
 </div>
+
+---
+
+### 🌟 Project Highlights
+
+| 🤖 Smart Task Allocation | 🧠 Predictive ML Risk Scoring | 🐳 Production Containerized |
+| :--- | :--- | :--- |
+| Optimizes task distribution using a multi-factor algorithm considering skill proficiency, member capacity, and fairness penalties. | Flags tasks at risk of missing deadlines before failure using a trained Random Forest classifier triggered on progress updates. | Fully orchestrates Nginx Alpine, Gunicorn WSGI, Django REST Framework, and PostgreSQL 16 using Docker Compose. |
+
+---
+
+## 📊 System Metrics & Scale
+
+| Metric | Value | Technology / Details |
+| :--- | :---: | :--- |
+| **Frontend SPA Pages** | **17** | React 19 + React Router 7 (Dashboard, Projects, Tasks, Analytics, etc.) |
+| **REST API Endpoints** | **30+** | Django REST Framework + SimpleJWT + allauth |
+| **Containerized Services** | **3** | Nginx (`fairsplit_frontend`), Gunicorn (`fairsplit_backend`), Postgres (`fairsplit_postgres`) |
+| **ML Inference Model** | **1** | Random Forest Classifier (`risk_model.pkl`) + scikit-learn encoders |
+| **Authentication Methods** | **3** | JWT (Email/Password), Google OAuth 2.0, GitHub OAuth |
+| **Database Tables** | **11** | PostgreSQL 16 / SQLite3 relational schema |
 
 ---
 
 ## 📋 Table of Contents
 
 - [About FairSplit](#-about-fairsplit)
+- [Feature Matrix](#-feature-matrix)
 - [Key Features](#-key-features)
 - [Complete Workflow](#-complete-workflow)
 - [System Architecture](#%EF%B8%8F-system-architecture)
 - [AI Allocation Engine](#-ai-allocation-engine)
-- [ML Risk Prediction](#-machine-learning-risk-prediction)
-- [Authentication](#-authentication)
-- [Database Design](#-database-design)
+- [Machine Learning Risk Prediction](#-machine-learning-risk-prediction)
+- [Authentication Architecture](#-authentication-architecture)
+- [Database Schema](#-database-schema)
 - [API Overview](#-api-overview)
 - [Tech Stack](#-tech-stack)
 - [Project Structure](#-project-structure)
@@ -45,11 +68,13 @@ It uses a custom AI engine to assign tasks based on skill match, workload, and f
 - [Docker Deployment](#-docker-deployment)
 - [Environment Variables](#-environment-variables)
 - [OAuth Configuration](#-oauth-configuration)
-- [Development Workflow](#-development-workflow)
-- [Security](#-security)
+- [Development & Git Workflow](#-development--git-workflow)
+- [Security Implementation](#-security-implementation)
+- [UI Gallery](#-ui-gallery)
+- [Architecture & Design Q&A](#-architecture--design-qa)
 - [Known Limitations](#-known-limitations)
 - [Roadmap](#-roadmap)
-- [Contributing](#-contributing)
+- [Frequently Asked Questions](#-frequently-asked-questions)
 - [Developer](#-developer)
 - [License](#-license)
 
@@ -59,128 +84,128 @@ It uses a custom AI engine to assign tasks based on skill match, workload, and f
 
 ### The Problem
 
-Every software team faces the same invisible dysfunction: work is never evenly distributed.
+In software development teams, work distribution is rarely balanced. 
 
-Senior engineers get buried under the most critical tasks while others stay underutilized. Project managers make assignment decisions based on gut feel, not data. Deadlines slip not because teams lack talent, but because the wrong people are assigned to the wrong tasks at the wrong time.
+Senior engineers are frequently overloaded with critical tasks while junior or newly onboarded members remain underutilized. Project managers make assignment decisions manually based on immediate availability or gut feeling, leading to:
 
-Existing project management tools like Jira, Trello, and Asana are fundamentally **passive**. They track what you tell them. They don't tell you what's wrong, who's overloaded, or which task is silently heading toward a missed deadline.
+1. **Member Burnout**: Over-assignment of high-impact tasks to the same team members.
+2. **Skill Mismatch**: Tasks assigned without systematically evaluating required skill proficiencies.
+3. **Reactive Problem Solving**: Project risks are identified only after deadlines have already passed.
+
+Existing project management platforms (e.g. Jira, Trello) are **passive tools** — they store and display status updates entered by users, but do not actively optimize workload distribution or predict delivery risks.
 
 ### Why FairSplit Exists
 
-FairSplit treats task allocation as an **optimization problem** — not a manual decision. It combines:
+FairSplit treats task assignment as a **data-driven optimization problem**. It combines algorithmic task allocation with machine learning risk inference to solve team imbalance:
 
-- **Skill matching** — tasks are matched to members who have the required skills at the right proficiency level.
-- **Workload balancing** — no member gets buried while others are idle.
-- **Fairness enforcement** — a fairness penalty prevents the same person from being auto-assigned repeatedly.
-- **Predictive risk scoring** — a trained Random Forest model flags tasks that are statistically likely to miss their deadlines, before they actually do.
+- **Skill Match Scoring**: Evaluates member proficiencies against task requirements.
+- **Capacity & Workload Balancing**: Calculates remaining hours to prevent member overloading.
+- **Fairness Enforcement**: Applies dynamic penalties to avoid repeating auto-assignments to the same member.
+- **Preemptive Risk Detection**: Predicts completion risk (Low, Medium, High) with confidence metrics whenever task progress changes.
 
-The result is a system that makes data-driven allocation decisions, surfaces risk proactively, and gives project managers insight into team health at a glance.
+> [!NOTE]
+> FairSplit does not replace project managers; it provides actionable recommendations, allocation confidence metrics, and automated risk alerts to support decision-making.
+
+---
+
+## ⚡ Feature Matrix
+
+| Module | Status | Core Implementation Details |
+| :--- | :---: | :--- |
+| **Email/Password Auth** | ✅ Active | Django REST Framework + SimpleJWT (`/api/account/login/`) |
+| **Google OAuth 2.0** | ✅ Active | `django-allauth` integration + authorization code flow |
+| **GitHub OAuth** | ✅ Active | `django-allauth` integration + authorization code flow |
+| **Projects & Members** | ✅ Active | Multi-project workspace, role management (Manager / Member) |
+| **Email Invitations** | ✅ Active | Gmail SMTP backend + secure invitation tokens |
+| **Task Board** | ✅ Active | Kanban states (`todo`, `in_progress`, `review`, `done`), priority, difficulty |
+| **AI Task Allocation** | ✅ Active | Multi-factor scoring algorithm (`backend/allocation/`) |
+| **ML Risk Prediction** | ✅ Active | Random Forest Classifier (`backend/ml/predictor.py`) |
+| **Analytics Dashboard** | ✅ Active | Project KPIs, member workload, risk distributions |
+| **In-App Notifications** | ✅ Active | REST notification center, unread count, read states |
+| **Docker Compose** | ✅ Active | 3-service deployment (Nginx, Gunicorn, PostgreSQL 16) |
 
 ---
 
 ## ✨ Key Features
 
 <details>
-<summary><b>🔐 Authentication & Identity</b></summary>
+<summary><b>🔐 Authentication & Identity Management</b></summary>
 
-- Email/password registration and login
-- **Google OAuth 2.0** — one-click sign-in with Google
-- **GitHub OAuth** — one-click sign-in with GitHub
-- JWT access tokens (24-hour lifetime) + refresh tokens (7-day rotation)
-- Custom `AbstractUser` model with role field (`manager` / `member`)
-- Automatic social account linking via `django-allauth`
-
-</details>
-
-<details>
-<summary><b>📁 Projects & Teams</b></summary>
-
-- Create and manage multiple projects
-- Invite members by email — invitation emails sent via Gmail SMTP
-- Role-based membership: Manager vs. Member
-- Invitation token system with configurable expiry
-- Pending invitation processing on new user registration
+- Standard Email/Password registration and login.
+- **Google OAuth 2.0** & **GitHub OAuth** integration via authorization code exchange.
+- JWT authentication (`access` token valid for 24h, `refresh` token valid for 7d with rotation).
+- Role-based permissions (`manager` vs `member`).
+- Automatic account creation and social account linking via `django-allauth`.
 
 </details>
 
 <details>
-<summary><b>✅ Task Management</b></summary>
+<summary><b>📁 Projects & Team Management</b></summary>
 
-- Full task lifecycle: `todo` → `in_progress` → `review` → `done`
-- Task priorities: Low / Medium / High / Critical
-- Task difficulty levels: Easy / Medium / Hard / Expert
-- Deadline tracking with days-remaining calculation
-- Estimated hours vs. actual hours tracking
-- Completion percentage (0–100%) with role-based access control
-- Required skills per task
-- Assignment history with allocation reasoning
+- Multi-project creation and management.
+- Team member invitations sent via Django SMTP (Gmail backend).
+- Configurable invitation token expiration (`INVITATION_EXPIRY_DAYS`).
+- Automatic matching and processing of pending project invitations upon new user registration.
 
 </details>
 
 <details>
-<summary><b>🤖 AI Task Allocation</b></summary>
+<summary><b>✅ Task Management & Lifecycle</b></summary>
 
-- Automated assignment using a custom scoring algorithm
-- Inputs: skill match, proficiency, workload score, fairness penalty
-- Stores allocation confidence score and matched skills
-- Generates human-readable assignment reason
-- Recommends reassignment for high-risk tasks
-
-</details>
-
-<details>
-<summary><b>🧠 ML Risk Prediction</b></summary>
-
-- Random Forest Classifier trained on synthetic task data
-- Triggered automatically on every task progress update
-- Outputs: Low / Medium / High risk label + confidence percentage
-- Full class probability breakdown (Low%, Medium%, High%)
-- XGBoost also available in the training pipeline
+- Kanban workflow states: `todo` → `in_progress` → `review` → `done`.
+- Task Priorities: `Low`, `Medium`, `High`, `Critical`.
+- Task Difficulties: `Easy`, `Medium`, `Hard`, `Expert`.
+- Estimated vs. actual hours tracking.
+- Completion percentage tracking (0–100%) with role-scoped update controls.
+- Required skill tagging with importance weighting.
+- Full audit history of task assignments and reassignments.
 
 </details>
 
 <details>
-<summary><b>📊 Analytics Dashboard</b></summary>
+<summary><b>🤖 AI Task Allocation Engine</b></summary>
 
-- Project-level KPI cards: total tasks, completed, in-progress, review
-- Completion percentage and risk distribution charts
-- Per-member workload analytics: assigned hours, actual hours, average completion
-- Team-wide analytics grid
-- Risk analytics: high-risk task count, average confidence, task details
-
-</details>
-
-<details>
-<summary><b>🔔 Notifications</b></summary>
-
-- In-app notification system
-- Notification types: task assigned, invitation received, project updates
-- Unread count badge in navigation
-- Mark individual or all as read
+- Programmatic task allocation based on multi-factor scoring.
+- Evaluates skill proficiency, active workload capacity, and historical assignment count.
+- Stores allocation confidence score and human-readable assignment rationale.
+- Recommends optimal team members for task reassignment.
 
 </details>
 
 <details>
-<summary><b>🎨 Frontend & UX</b></summary>
+<summary><b>🧠 Machine Learning Risk Prediction</b></summary>
 
-- React 18 + Vite 5 single-page application
-- Dark-mode–first glassmorphism UI
-- Fully responsive — mobile to widescreen
-- Protected routes with JWT guard
-- Context-based global auth state
-- Pages: Landing, Login, Register, Onboarding, Dashboard, Projects, Tasks, Teams, Analytics, Prediction, Notifications, Profile, Settings, Invite Preview
+- Trained **Random Forest Classifier** predicting delivery risk (`Low`, `Medium`, `High`).
+- Inference triggered on every task progress update (`PATCH /api/tasks/{id}/progress/`).
+- Returns risk label, confidence percentage, and class probability distribution.
+- XGBoost comparison pipeline included in model training script (`backend/ml/train.py`).
 
 </details>
 
 <details>
-<summary><b>🐳 Docker & Deployment</b></summary>
+<summary><b>📊 Analytics & Performance Metrics</b></summary>
 
-- Production-ready `docker-compose.yml` orchestrating 3 services
-- Multi-stage frontend build: Node 20 Alpine → Nginx Alpine (27.4 MB image)
-- Django backend on Python 3.12-slim with Gunicorn WSGI
-- PostgreSQL 16 with persistent volume and healthchecks
-- Automatic migrations and `collectstatic` on container startup
-- All credentials environment-variable driven via `.env`
+- Project dashboard metrics: total tasks, completed, in-progress, review.
+- Per-member workload breakdown: assigned hours, actual hours, completion rates.
+- Risk analytics detailing high-risk tasks and average prediction confidence.
+
+</details>
+
+<details>
+<summary><b>🔔 Notifications Center</b></summary>
+
+- Notification tracking for task assignments, project invites, and role updates.
+- API endpoints for unread counts, marking single/all as read, and deletion.
+
+</details>
+
+<details>
+<summary><b>🐳 Docker Deployment</b></summary>
+
+- Single-command orchestration via `docker-compose.yml`.
+- Multi-stage frontend image (`node:20-alpine` → `nginx:alpine`, 27.4 MB footprint).
+- Django backend running on `python:3.12-slim` via Gunicorn WSGI.
+- PostgreSQL 16 with data persistence and container healthchecks.
 
 </details>
 
@@ -190,28 +215,26 @@ The result is a system that makes data-driven allocation decisions, surfaces ris
 
 ```mermaid
 flowchart TD
-    A[👤 User visits http://localhost] --> B{New or returning?}
-    B -->|New| C[Register / Google OAuth / GitHub OAuth]
-    B -->|Returning| D[Login → JWT issued]
-    C --> D
-    D --> E[🏠 Dashboard — KPI overview]
-    E --> F[📁 Create or open a Project]
-    F --> G[📧 Invite team members by email]
-    G --> H[✅ Create Tasks with skills + deadline + difficulty]
-    H --> I{Manual or AI assignment?}
-    I -->|AI| J[🤖 Run AI Allocation Engine]
-    J --> K[Scoring: skill match × workload × fairness penalty]
-    K --> L[Best member assigned + reason stored]
-    I -->|Manual| L
-    L --> M[Member updates task progress]
-    M --> N[🧠 ML Risk Predictor runs automatically]
-    N --> O{Prediction?}
-    O -->|High Risk| P[⚠️ Reassignment recommendation surfaced]
-    O -->|Low / Medium| Q[Task continues normally]
-    P --> R[Manager reviews recommendation]
-    Q --> S[📊 Analytics updated in real-time]
-    R --> S
-    S --> T[✅ Task completed → Project health score updated]
+    A["👤 User Accesses Platform"] --> B{"Authenticated?"}
+    B -->|No| C["Register / Login / OAuth Flow"]
+    C --> D["JWT Pair Issued & Stored"]
+    B -->|Yes| D
+    D --> E["🏠 View Dashboard & Projects"]
+    E --> F["📁 Create Project & Invite Members"]
+    F --> G["✅ Create Tasks & Define Skill Requirements"]
+    G --> H{"Assignment Strategy?"}
+    H -->|AI Engine| I["🤖 Execute AI Allocation Engine"]
+    I --> J["Calculate Skill Match × Capacity − Fairness Penalty"]
+    J --> K["Assign Best Member & Log Rationale"]
+    H -->|Manual| K
+    K --> L["👤 Assigned Member Updates Progress"]
+    L --> M["🧠 Trigger ML Risk Predictor"]
+    M --> N{"Risk Assessment"}
+    N -->|High Risk| O["⚠️ Surface Reassignment Recommendation"]
+    N -->|Low / Medium Risk| P["Task Continues Standard Lifecycle"]
+    O --> Q["Project Manager Reviews & Reassigns"]
+    P --> R["📊 Update Analytics & Completion Status"]
+    Q --> R
 ```
 
 ---
@@ -220,195 +243,134 @@ flowchart TD
 
 ```mermaid
 graph TB
-    subgraph Browser["🌐 Browser (http://localhost)"]
-        React["React 18 + Vite SPA"]
+    subgraph Client["🌐 Client Layer"]
+        React["React 19 + Vite SPA<br/>(Tailwind CSS + Framer Motion)"]
     end
 
-    subgraph Docker["🐳 Docker Compose Network (fairsplit_net)"]
-        Nginx["📦 Nginx Alpine\n(Port 80)\nServes SPA + Proxies /api/"]
-        Gunicorn["⚙️ Gunicorn WSGI\n(Port 8000)\n4 Workers"]
-        Django["🐍 Django 6.0\nREST Framework"]
-        ML["🧠 ML Predictor\nRandom Forest\n(joblib model)"]
-        PG["🗄️ PostgreSQL 16\n(Port 5432)\npersistent volume"]
+    subgraph Docker["🐳 Docker Container Environment (fairsplit_net)"]
+        Nginx["📦 Nginx Alpine Reverse Proxy<br/>(Port 80)<br/>Static Assets + API Router"]
+        Gunicorn["⚙️ Gunicorn WSGI Server<br/>(Port 8000)<br/>Python 3.12-slim"]
+        Django["🐍 Django 6.0 REST API<br/>SimpleJWT + allauth"]
+        ML["🧠 ML Predictor<br/>Random Forest Model<br/>(joblib inference)"]
+        PG[("🗄️ PostgreSQL 16<br/>(Port 5432)<br/>Persistent Volume")]
     end
 
-    React -->|HTTP| Nginx
-    Nginx -->|Static assets| React
-    Nginx -->|/api/* proxy| Gunicorn
+    React -->|HTTP Requests| Nginx
+    Nginx -->|Serve SPA Bundle| React
+    Nginx -->|Proxy /api/*| Gunicorn
     Gunicorn --> Django
-    Django -->|ORM queries| PG
-    Django -->|predict_risk()| ML
-    ML -->|risk label + confidence| Django
+    Django -->|ORM Transactions| PG
+    Django -->|Feature Vector| ML
+    ML -->|Risk Label & Confidence| Django
 ```
 
-### Component Breakdown
+### Component Architecture Summary
 
-| Component | Technology | Responsibility |
-|-----------|-----------|---------------|
-| **SPA** | React 18 + Vite 5 | UI rendering, routing, state management |
-| **Reverse Proxy** | Nginx Alpine | Serve static bundle, proxy `/api/` to Gunicorn |
-| **WSGI Server** | Gunicorn 22 | Process Django HTTP requests across sync workers |
-| **Application Server** | Django 6.0 + DRF | Business logic, REST APIs, authentication |
-| **ML Engine** | scikit-learn / joblib | Risk prediction inference at request time |
-| **Database** | PostgreSQL 16 | Persistent relational data storage |
-| **Auth Provider** | SimpleJWT + allauth | JWT lifecycle, Google/GitHub OAuth flows |
+| Layer | Component | Technology | Responsibility |
+| :--- | :--- | :--- | :--- |
+| **Frontend** | Single Page App | React 19, Vite 8, React Router 7 | User interface, state management, routing |
+| **Proxy** | Reverse Proxy | Nginx Alpine | Static asset hosting, routing `/api/` traffic |
+| **WSGI** | App Gateway | Gunicorn 22.0.0 | WSGI worker management for Django |
+| **Backend** | REST Service | Django 6.0, DRF | Authentication, project domain logic, APIs |
+| **Machine Learning** | Inference Engine | scikit-learn, joblib | Real-time risk scoring using trained model |
+| **Database** | Primary Store | PostgreSQL 16 / SQLite3 | Relational storage for users, tasks, and analytics |
 
 ---
 
 ## 🤖 AI Allocation Engine
 
-The allocation engine lives in `backend/allocation/` and is invoked when a manager clicks **Run AI Allocation** on a project.
-
-### How It Works
-
-For each unassigned task in the project, the engine:
-
-1. **Fetches all active project members** and their skills/proficiencies.
-2. **Calculates a Skill Score** per member per task:
+The task allocation module (`backend/allocation/`) programmatically identifies the optimal team member for unassigned tasks.
 
 ```
-skill_score = sum(proficiency × importance) for each matched required skill
+       Skill Score = ∑ (Member Skill Proficiency × Task Skill Importance)
+    Workload Score = Max Workload Capacity − Member Assigned Hours
+      Fairness Fee = Dynamic Penalty based on Recent Auto-Assignments
+
+  Final Score = (0.7 × Skill Score) + (0.3 × Workload Score) − Fairness Fee
 ```
 
-3. **Calculates a Workload Score** per member:
+### Allocation Pipeline
 
-```
-workload_score = MAX_WORKLOAD_HOURS − member's currently assigned estimated hours
-```
-
-4. **Applies a Fairness Penalty** — members who have already been auto-assigned recently receive a penalty, preventing the engine from repeatedly choosing the same high-scorer.
-
-5. **Computes a Final Allocation Score**:
-
-```
-final_score = (0.7 × skill_score) + (0.3 × workload_score) − fairness_penalty
-```
-
-6. **Assigns the task** to the member with the highest final score and stores:
-   - Confidence percentage
-   - Matched skills list
-   - Human-readable assignment reason
-
-7. For tasks already assigned to a **high-risk** member, the engine surfaces a **reassignment recommendation** — the manager makes the final call.
-
-### What Gets Stored
-
-```python
-TaskAssignment(
-    task=task,
-    assigned_to=best_member,
-    allocation_confidence=confidence,      # e.g. 87.4%
-    allocation_reason="Matched skills: Python, Django. Lowest workload.",
-    matched_skills=["Python", "Django"],
-    assignment_method="ai_allocation"
-)
-```
+1. **Skill Matrix Evaluation**: Scans required skills for a task and computes a weighted proficiency score for each active project member.
+2. **Workload Analysis**: Queries `TaskAssignment` records to sum assigned hours per member, deriving available capacity (`WorkloadManager`).
+3. **Fairness Penalty Application**: Subtracts points for members who have received consecutive auto-assignments to prevent over-allocation.
+4. **Assignment Execution**: Assigns the member with the highest final score, recording the confidence percentage, matched skill list, and human-readable reasoning.
 
 ---
 
 ## 🧠 Machine Learning Risk Prediction
 
-The ML pipeline lives in `backend/ml/` and runs automatically every time a team member updates their task progress.
+The ML module (`backend/ml/`) evaluates task delivery risks whenever a team member updates task progress (`PATCH /api/tasks/{id}/progress/`).
 
-### Model
+> [!IMPORTANT]
+> The model evaluates task execution metrics dynamically. High estimated hours combined with low completion percentage and tight deadlines increase the probability of a `High` risk classification.
 
-**Random Forest Classifier** (scikit-learn) trained on a synthetic dataset of task scenarios.
-
-### Input Features
-
-| Feature | Description |
-|---------|-------------|
-| `estimated_hours` | Total hours scoped for the task |
-| `difficulty` | Encoded difficulty level (1–4) |
-| `priority` | Label-encoded priority (low/medium/high/critical) |
-| `required_skills` | Count of required skills |
-| `skill_score` | Assigned member's skill match score |
-| `workload_score` | Member's available capacity score |
-| `active_tasks` | Member's count of currently active tasks |
-| `days_left` | Days until deadline at prediction time |
-| `completion_percentage` | Current task completion (0–100) |
-
-### Outputs
-
-```json
-{
-  "predicted_risk": "High",
-  "confidence": 91.25,
-  "probabilities": {
-    "Low": 3.50,
-    "Medium": 5.25,
-    "High": 91.25
-  }
-}
-```
-
-### Prediction Pipeline
+### Feature Pipeline
 
 ```mermaid
 sequenceDiagram
-    participant Member as 👤 Team Member
+    autonumber
+    actor Member as 👤 Team Member
     participant API as 🐍 Django API
     participant ML as 🧠 ML Predictor
     participant DB as 🗄️ PostgreSQL
 
-    Member->>API: PATCH /tasks/{id}/ (update progress)
-    API->>DB: Load task + assignment context
-    DB-->>API: Task data + member workload
+    Member->>API: PATCH /api/tasks/{id}/progress/ {completion_percentage, actual_hours}
+    API->>DB: Fetch Task, Project Member, and Workload Context
+    DB-->>API: Task Attributes & Active Capacity
     API->>ML: predict_risk(feature_dict)
-    ML->>ML: Label encode priority
-    ML->>ML: Run Random Forest inference
+    ML->>ML: Encode categorical features (Priority)
+    ML->>ML: Execute Random Forest Inference
     ML-->>API: {predicted_risk, confidence, probabilities}
-    API->>DB: Save prediction to task record
-    API-->>Member: Task response includes risk score
+    API->>DB: Save prediction & confidence to Task record
+    API-->>Member: Return updated Task representation with risk metrics
 ```
+
+### Model Feature Schema
+
+| Input Feature | Data Type | Description |
+| :--- | :--- | :--- |
+| `estimated_hours` | Float | Total hours scoped for task completion |
+| `difficulty` | Integer | Encoded task difficulty (1 = Easy, 4 = Expert) |
+| `priority` | String | Label-encoded priority (`low`, `medium`, `high`, `critical`) |
+| `required_skills` | Integer | Total count of required skills for task |
+| `skill_score` | Float | Assigned member's skill match score |
+| `workload_score` | Float | Assigned member's current available capacity |
+| `active_tasks` | Integer | Count of tasks currently assigned to member |
+| `days_left` | Integer | Remaining days until deadline |
+| `completion_percentage` | Float | Current progress percentage (0–100) |
 
 ---
 
-## 🔐 Authentication
+## 🔐 Authentication Architecture
 
-### Email / Password Flow
-
-```
-POST /api/account/register/  →  Create user account
-POST /api/account/login/     →  Returns {access, refresh} JWT pair
-POST /api/account/token/refresh/ →  Rotate refresh token
-```
-
-### Google & GitHub OAuth Flow
+FairSplit supports standard credential authentication and OAuth 2.0 social login.
 
 ```mermaid
 sequenceDiagram
-    participant Browser
-    participant Backend as Django API
-    participant Google as Google OAuth
+    autonumber
+    actor User as 👤 User Browser
+    participant API as 🐍 Django API
+    participant OAuth as 🔑 Provider (Google/GitHub)
 
-    Browser->>Backend: GET /api/account/oauth/url/?provider=google
-    Backend-->>Browser: {url: "https://accounts.google.com/o/oauth2/v2/auth?..."}
-    Browser->>Google: Redirect to Google consent page
-    Google-->>Browser: Redirect to /auth/callback?code=...
-    Browser->>Backend: POST /api/account/oauth/login/ {provider, code}
-    Backend->>Google: Exchange code for access token
-    Google-->>Backend: {access_token}
-    Backend->>Google: Fetch userinfo (email, name, sub)
-    Backend->>Backend: get_or_create User + SocialAccount
-    Backend-->>Browser: {access, refresh, user}
+    User->>API: GET /api/account/oauth/url/?provider=google
+    API-->>User: {url: "https://accounts.google.com/o/oauth2/v2/auth?..."}
+    User->>OAuth: Redirect to OAuth Consent Screen
+    OAuth-->>User: Redirect to /auth/callback?code=...
+    User->>API: POST /api/account/oauth/login/ {provider, code}
+    API->>OAuth: Exchange authorization code for Provider Access Token
+    OAuth-->>API: {access_token}
+    API->>OAuth: Fetch User Profile Info (email, sub/id, name)
+    API->>API: get_or_create User & SocialAccount record
+    API-->>User: Return FairSplit JWT Pair {access, refresh}
 ```
 
-**JWT Configuration:**
-
-| Setting | Value |
-|---------|-------|
-| Access Token Lifetime | 24 hours |
-| Refresh Token Lifetime | 7 days |
-| Rotate Refresh Tokens | ✅ Yes |
-| Algorithm | HS256 |
+> [!TIP]
+> JWT Access Tokens expire in **24 hours**, while Refresh Tokens expire in **7 days**. Refresh tokens rotate automatically on use.
 
 ---
 
-## 🗄️ Database Design
-
-<details>
-<summary><b>Click to expand schema overview</b></summary>
+## 🗄️ Database Schema
 
 ```mermaid
 erDiagram
@@ -425,103 +387,85 @@ erDiagram
     Skill ||--o{ TaskSkill : "referenced by"
 ```
 
-### Core Tables
-
-| Table | Key Fields | Purpose |
-|-------|-----------|---------|
-| `account_user` | id, email, username, role, first_name, last_name | Custom user model |
-| `project_project` | id, name, description, created_by, created_at | Project records |
-| `project_projectmember` | project, user, role | Team membership |
-| `project_projectinvitation` | email, project, invited_by, token, status, expires_at | Email invitations |
-| `tasks_task` | project, title, priority, difficulty, deadline, estimated_hours, completion_percentage, predicted_risk, risk_confidence | Task lifecycle |
-| `tasks_taskassignment` | task, assigned_to, confidence, reason, matched_skills, method | AI assignment records |
-| `tasks_assignmenthistory` | task, from_user, to_user, changed_by, reason | Reassignment audit trail |
-| `skills_skill` | name, description | Skill catalogue |
-| `skills_userskill` | user, skill, proficiency_level | Member proficiency |
-| `tasks_taskskill` | task, skill, importance | Task skill requirements |
-| `notifications_notification` | user, type, message, is_read, created_at | In-app notifications |
-
-</details>
-
 ---
 
 ## 📖 API Overview
 
-All endpoints are prefixed with `/api/`.
+All API endpoints are prefixed with `/api/`.
 
 <details>
-<summary><b>Authentication & Account</b></summary>
+<summary><b>1. Authentication & Account APIs</b></summary>
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `POST` | `/account/register/` | Register new user |
-| `POST` | `/account/login/` | Login and receive JWT pair |
-| `POST` | `/account/refresh/` | Refresh access token |
-| `GET` / `PATCH` | `/account/profile/` | Get or update profile |
-| `GET` | `/account/users/` | List active users (auth required) |
-| `GET` | `/account/oauth/url/` | Get OAuth redirect URL |
-| `POST` | `/account/oauth/login/` | Exchange OAuth code for JWT |
+| Method | Endpoint | Description | Auth Required |
+| :--- | :--- | :--- | :---: |
+| `POST` | `/api/account/register/` | Register new user account | No |
+| `POST` | `/api/account/login/` | Obtain JWT access/refresh token pair | No |
+| `POST` | `/api/account/refresh/` | Refresh expired JWT access token | No |
+| `GET` / `PATCH` | `/api/account/profile/` | Retrieve or update user profile | Yes |
+| `GET` | `/api/account/users/` | List active workspace users | Yes |
+| `GET` | `/api/account/oauth/url/` | Generate Google/GitHub OAuth URL | No |
+| `POST` | `/api/account/oauth/login/` | Exchange OAuth code for JWT pair | No |
 
 </details>
 
 <details>
-<summary><b>Projects & Member Invitations</b></summary>
+<summary><b>2. Project & Team Management APIs</b></summary>
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `GET` / `POST` | `/projects/` | List or create projects |
-| `GET` / `PATCH` / `DELETE` | `/projects/{id}/` | Project detail, update, delete |
-| `GET` / `POST` | `/projects/{id}/members/` | List or add project members |
-| `DELETE` | `/projects/members/{id}/` | Remove project member |
-| `POST` | `/projects/{id}/invite/` | Send invitation email |
-| `GET` | `/projects/{id}/invitations/` | List project invitations |
-| `GET` | `/invitations/{token}/` | Preview invitation token |
-| `POST` | `/invitations/{token}/accept/` | Accept project invitation |
-| `POST` | `/invitations/{id}/cancel/` | Cancel pending invitation |
-| `POST` | `/invitations/{id}/resend/` | Resend invitation email |
-
-</details>
-
-<details>
-<summary><b>Tasks & Allocation</b></summary>
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `GET` / `POST` | `/tasks/` | List or create tasks |
-| `GET` / `PATCH` / `DELETE` | `/tasks/{id}/` | Task detail, update, delete |
-| `PATCH` | `/tasks/{id}/progress/` | Update progress & trigger ML risk prediction |
-| `GET` / `POST` | `/tasks/{id}/skills/` | Task skill requirements |
-| `POST` | `/allocation/generate/{project_id}/` | Run AI task allocation engine for project |
-| `GET` | `/allocation/recommend/{task_id}/` | Get AI reassignment recommendation for task |
+| Method | Endpoint | Description | Auth Required |
+| :--- | :--- | :--- | :---: |
+| `GET` / `POST` | `/api/projects/` | List user projects or create project | Yes |
+| `GET` / `PATCH` / `DELETE` | `/api/projects/{id}/` | Retrieve, update, or delete project | Yes |
+| `GET` / `POST` | `/api/projects/{id}/members/` | List or add project members | Yes |
+| `DELETE` | `/api/projects/members/{id}/` | Remove member from project | Yes |
+| `POST` | `/api/projects/{id}/invite/` | Send email invitation | Yes |
+| `GET` | `/api/projects/{id}/invitations/` | List pending invitations for project | Yes |
+| `GET` | `/api/invitations/{token}/` | Preview invitation token details | No |
+| `POST` | `/api/invitations/{token}/accept/` | Accept invitation token | Yes |
+| `POST` | `/api/invitations/{id}/cancel/` | Cancel pending invitation | Yes |
+| `POST` | `/api/invitations/{id}/resend/` | Resend invitation email | Yes |
 
 </details>
 
 <details>
-<summary><b>Analytics & Machine Learning</b></summary>
+<summary><b>3. Task Management & AI Allocation APIs</b></summary>
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `GET` | `/analytics/project/{project_id}/` | Project KPI dashboard summary |
-| `GET` | `/analytics/member/{member_id}/` | Per-member workload analytics |
-| `GET` | `/analytics/team/{project_id}/` | Team-wide performance analytics |
-| `GET` | `/analytics/risk/{project_id}/` | Risk distribution analytics |
-| `POST` | `/ml/predict-risk/` | Run manual ML risk prediction inference |
+| Method | Endpoint | Description | Auth Required |
+| :--- | :--- | :--- | :---: |
+| `GET` / `POST` | `/api/tasks/` | List tasks or create task | Yes |
+| `GET` / `PATCH` / `DELETE` | `/api/tasks/{id}/` | Retrieve, update, or delete task | Yes |
+| `PATCH` | `/api/tasks/{id}/progress/` | Update progress & trigger ML risk prediction | Yes |
+| `GET` / `POST` | `/api/tasks/{id}/skills/` | Manage required skills for task | Yes |
+| `POST` | `/api/allocation/generate/{project_id}/` | Run AI task allocation engine | Yes |
+| `GET` | `/api/allocation/recommend/{task_id}/` | Get AI reassignment recommendation | Yes |
 
 </details>
 
 <details>
-<summary><b>Notifications & Skills</b></summary>
+<summary><b>4. Analytics & Machine Learning APIs</b></summary>
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `GET` | `/notifications/` | List user notifications |
-| `GET` | `/notifications/unread-count/` | Get unread notification count |
-| `POST` | `/notifications/read-all/` | Mark all notifications as read |
-| `PATCH` | `/notifications/{id}/read/` | Mark single notification as read |
-| `DELETE` | `/notifications/{id}/` | Delete notification |
-| `GET` / `POST` | `/skills/` | Skill catalogue |
-| `GET` / `POST` | `/skills/user/` | User skill proficiency list / assign |
-| `PATCH` / `DELETE` | `/skills/user/{id}/` | Update or remove user skill proficiency |
+| Method | Endpoint | Description | Auth Required |
+| :--- | :--- | :--- | :---: |
+| `GET` | `/api/analytics/project/{project_id}/` | Fetch project dashboard KPIs | Yes |
+| `GET` | `/api/analytics/member/{member_id}/` | Fetch individual member analytics | Yes |
+| `GET` | `/api/analytics/team/{project_id}/` | Fetch team workload distribution | Yes |
+| `GET` | `/api/analytics/risk/{project_id}/` | Fetch risk analytics & distributions | Yes |
+| `POST` | `/api/ml/predict-risk/` | Execute manual risk model inference | Yes |
+
+</details>
+
+<details>
+<summary><b>5. Notifications & Skill Management APIs</b></summary>
+
+| Method | Endpoint | Description | Auth Required |
+| :--- | :--- | :--- | :---: |
+| `GET` | `/api/notifications/` | List user notifications | Yes |
+| `GET` | `/api/notifications/unread-count/` | Get unread notification count | Yes |
+| `POST` | `/api/notifications/read-all/` | Mark all notifications as read | Yes |
+| `PATCH` | `/api/notifications/{id}/read/` | Mark single notification as read | Yes |
+| `DELETE` | `/api/notifications/{id}/` | Delete notification | Yes |
+| `GET` / `POST` | `/api/skills/` | List or create skills in catalogue | Yes |
+| `GET` / `POST` | `/api/skills/user/` | List or assign user skills | Yes |
+| `PATCH` / `DELETE` | `/api/skills/user/{id}/` | Update or remove user skill proficiency | Yes |
 
 </details>
 
@@ -529,401 +473,263 @@ All endpoints are prefixed with `/api/`.
 
 ## 🛠️ Tech Stack
 
-### Frontend
-
-| Technology | Version | Purpose |
-|-----------|---------|---------|
-| React | 19 | Component-based UI framework |
-| Vite | 8 | Build tool and dev server |
-| React Router | 7 | Client-side SPA routing |
-| Axios | 1.18 | HTTP API client |
-| Tailwind CSS | 4.3 | Utility-first styling framework |
-| Framer Motion | 12.42 | UI animations |
-| Lucide React | 1.25 | UI icons |
-
-### Backend
-
-| Technology | Version | Purpose |
-|-----------|---------|---------|
-| Django | 6.0.7 | Web framework |
-| Django REST Framework | Latest | REST API layer |
-| SimpleJWT | Latest | JWT authentication |
-| django-allauth | Latest | OAuth social account management |
-| django-cors-headers | Latest | CORS handling |
-| python-decouple | Latest | Environment variable management |
-| Gunicorn | 22.0.0 | WSGI production server |
-
-### Machine Learning
-
-| Technology | Purpose |
-|-----------|---------|
-| scikit-learn | Random Forest Classifier training & inference |
-| XGBoost | Alternative gradient boosting model in training pipeline |
-| pandas | Feature engineering and dataset manipulation |
-| numpy | Numerical operations |
-| joblib | Model serialization (`.pkl`) |
-
-### Database & Storage
-
-| Technology | Purpose |
-|-----------|---------|
-| PostgreSQL 16 | Production relational database |
-| SQLite3 | Local development fallback |
-| psycopg2-binary | PostgreSQL Python adapter |
-
-### DevOps & Deployment
-
-| Technology | Purpose |
-|-----------|---------|
-| Docker | Container runtime |
-| Docker Compose | Multi-service orchestration |
-| Nginx Alpine | Static file server + reverse proxy |
-| python:3.12-slim | Backend base image |
-| node:20-alpine | Frontend multi-stage build image |
+```text
+Frontend           Backend             Database            Containerization
+┌──────────────┐   ┌──────────────┐    ┌──────────────┐    ┌──────────────┐
+│ React 19     │   │ Django 6.0   │    │ PostgreSQL16 │    │ Docker       │
+│ Vite 8       │   │ Django REST  │    │ SQLite3      │    │ Docker       │
+│ ReactRouter7 │   │ SimpleJWT    │    └──────────────┘    │ Compose      │
+│ Tailwind CSS │   │ Gunicorn 22  │    Machine Learning    │ Nginx Alpine │
+└──────────────┘   └──────────────┘    ┌──────────────┐    └──────────────┘
+                                       │ scikit-learn │
+                                       │ pandas/numpy │
+                                       └──────────────┘
+```
 
 ---
 
 ## 📁 Project Structure
 
-```
+```text
 FairSplit/
+├── docker-compose.yml          # Production orchestration (3 services)
+├── .env.example                # Root environment configuration template
+├── .dockerignore               # Global Docker context exclusions
 │
-├── 🐳 docker-compose.yml          # 3-service orchestration (postgres, backend, frontend)
-├── 📋 .env.example                # Root environment template
-├── 🚫 .dockerignore               # Docker build context exclusions
+├── backend/                    # Django Application Root
+│   ├── account/                # User authentication, profiles, OAuth
+│   ├── allocation/             # AI task allocation engine
+│   ├── analytics/              # Project, member, team, & risk analytics
+│   ├── backend/                # Project settings, URLs, WSGI
+│   ├── ml/                     # ML predictor, training code, .pkl models
+│   ├── notifications/          # In-app notifications service
+│   ├── project/                # Projects, members, email invitations
+│   ├── skills/                 # Skill catalogue and proficiencies
+│   ├── tasks/                  # Task lifecycle & assignment history
+│   ├── Dockerfile              # python:3.12-slim WSGI container
+│   ├── .env.example            # Backend environment template
+│   └── requirements.txt        # Python backend dependencies
 │
-├── backend/                       # Django application root
-│   ├── account/                   # User auth, OAuth, profile, user listing
-│   ├── allocation/                # AI scoring engine + workload manager
-│   ├── analytics/                 # Project, member, team, and risk analytics APIs
-│   ├── backend/                   # Django project settings, URLs, WSGI
-│   ├── datasets/                  # Training data CSVs for ML model
-│   ├── ml/                        # ML predictor, training pipeline, serialized models
-│   │   └── models/                # risk_model.pkl, encoders
-│   ├── notifications/             # In-app notification models and APIs
-│   ├── prediction/                # Prediction service integrating ML output with tasks
-│   ├── project/                   # Project, membership, invitation models and APIs
-│   │   └── services/              # email_service.py, invitation_service.py
-│   ├── skills/                    # Skill catalogue and user skill proficiency
-│   ├── tasks/                     # Task lifecycle, assignment, history models and APIs
-│   ├── Dockerfile                 # python:3.12-slim image with Gunicorn
-│   ├── .env.example               # Backend environment template
-│   └── requirements.txt           # Python dependencies
-│
-└── frontend/                      # React application root
+└── frontend/                   # React Application Root
     ├── src/
-    │   ├── components/            # Reusable UI components (navbar, modals, cards)
-    │   ├── context/               # AuthContext — global auth state
-    │   ├── pages/                 # Route-level pages (17 pages)
-    │   │   ├── Landing.jsx        # Public landing page
-    │   │   ├── Login.jsx / Register.jsx
-    │   │   ├── Dashboard.jsx      # Post-login overview with KPIs
-    │   │   ├── Projects.jsx       # Project list and management
-    │   │   ├── ProjectDetails.jsx
-    │   │   ├── Tasks.jsx          # Full task board with AI allocation
-    │   │   ├── Teams.jsx          # Member management and invitation flow
-    │   │   ├── Analytics.jsx      # Charts and analytics
-    │   │   ├── Prediction.jsx     # AI risk prediction dashboard
-    │   │   ├── Notifications.jsx
-    │   │   ├── Profile.jsx
-    │   │   ├── Settings.jsx
-    │   │   └── AuthCallback.jsx   # OAuth code exchange handler
-    │   ├── services/              # auth.service.js, api.js (Axios instance)
-    │   └── utils/                 # Helper functions
-    ├── nginx.conf                 # SPA routing + /api/ reverse proxy config
-    ├── Dockerfile                 # Multi-stage: node:20-alpine → nginx:alpine
-    └── .dockerignore
+    │   ├── components/         # Reusable UI elements (Navbar, Cards, Modals)
+    │   ├── context/            # Global AuthContext
+    │   ├── pages/              # 17 SPA Pages (Dashboard, Projects, Tasks, etc.)
+    │   ├── services/           # Axios instance & API services
+    │   └── utils/              # Helper utilities
+    ├── nginx.conf              # SPA routing & API reverse proxy configuration
+    ├── Dockerfile              # Multi-stage build (Node 20 → Nginx Alpine)
+    └── package.json            # Frontend dependencies
 ```
 
 ---
 
 ## 🚀 Quick Start
 
-### Prerequisites
-
-- Python 3.12+
-- Node.js 20+
-- PostgreSQL 16 (or Docker)
-
-### Backend Setup
+### Local Development Setup
 
 ```bash
-# Clone the repository
+# 1. Clone repository
 git clone https://github.com/PrakharPurwar12/FairSplit.git
 cd FairSplit
 
-# Create and activate virtual environment
+# 2. Setup Backend Virtual Environment
 python -m venv venv
-source venv/bin/activate        # Linux/macOS
-venv\Scripts\activate           # Windows
-
-# Install dependencies
+source venv/bin/activate        # On Windows: venv\Scripts\activate
 pip install -r backend/requirements.txt
 
-# Configure environment
+# 3. Configure Backend Environment
 cp backend/.env.example backend/.env
-# Edit backend/.env with your credentials
 
-# Run migrations
+# 4. Execute Migrations & Start Server
 cd backend
 python manage.py migrate
+python manage.py runserver 8000
 
-# Create superuser (optional)
-python manage.py createsuperuser
-
-# Start Django development server
-python manage.py runserver
-```
-
-### Frontend Setup
-
-```bash
+# 5. Setup & Start Frontend (in new terminal)
 cd frontend
-
-# Install Node dependencies
 npm install
-
-# Start Vite development server
 npm run dev
 ```
 
-The application will be available at `http://localhost:5173` (dev mode).
+The dev server will start at `http://localhost:5173`.
 
 ---
 
 ## 🐳 Docker Deployment
 
-The entire production stack launches with a single command.
-
-### Prerequisites
-
-- [Docker Desktop](https://www.docker.com/products/docker-desktop/) v20.10+
-
-### Setup
+To launch the complete FairSplit stack via Docker:
 
 ```bash
-# Clone the repository
-git clone https://github.com/PrakharPurwar12/FairSplit.git
-cd FairSplit
-
-# Configure credentials
+# 1. Copy environment template
 cp backend/.env.example backend/.env
-# Edit backend/.env — set GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, EMAIL_HOST_USER, etc.
-```
 
-### Build & Launch
-
-```bash
+# 2. Build and launch all services
 docker compose up -d --build
 ```
-
-This command:
-1. Starts **PostgreSQL 16** with healthcheck and persistent volume
-2. Builds and starts **Django + Gunicorn** — runs migrations + collectstatic automatically
-3. Builds a **multi-stage Nginx** image serving the React SPA
-4. Connects all services on a private `fairsplit_net` bridge network
-
-### Access Points
-
-| Service | URL |
-|---------|-----|
-| **Frontend Application** | `http://localhost` |
-| **Django Admin** | `http://localhost:8000/admin/` |
-| **API Root** | `http://localhost/api/` |
-
-### Common Operations
-
-```bash
-# View logs
-docker compose logs -f backend
-docker compose logs -f frontend
-
-# Create Django superuser
-docker compose exec backend python manage.py createsuperuser
-
-# Database shell
-docker compose exec postgres psql -U fairsplit -d fairsplit
-
-# Stop and preserve data
-docker compose down
-
-# Stop and wipe database
-docker compose down -v
-```
-
-### Docker Architecture
 
 ```mermaid
 graph LR
     Host["🖥️ Host Port 80"] --> Nginx
     Host2["🖥️ Host Port 8000"] --> Gunicorn
 
-    subgraph Network["fairsplit_net (bridge)"]
-        Nginx["📦 fairsplit_frontend\nnginx:alpine"]
-        Gunicorn["⚙️ fairsplit_backend\npython:3.12-slim"]
-        PG["🗄️ fairsplit_postgres\npostgres:16-alpine"]
+    subgraph Network["fairsplit_net (Docker Bridge)"]
+        Nginx["📦 fairsplit_frontend<br/>nginx:alpine"]
+        Gunicorn["⚙️ fairsplit_backend<br/>python:3.12-slim"]
+        PG["🗄️ fairsplit_postgres<br/>postgres:16-alpine"]
     end
 
-    Volume["💾 postgres_data\n(persistent volume)"] --> PG
+    Volume[("💾 postgres_data<br/>persistent volume")] --> PG
     Nginx -->|"proxy /api/*"| Gunicorn
     Gunicorn --> PG
+```
+
+### Docker Verification Commands
+
+```bash
+# Check container health status
+docker compose ps
+
+# View backend logs
+docker compose logs -f backend
+
+# Create Django superuser inside backend container
+docker compose exec backend python manage.py createsuperuser
 ```
 
 ---
 
 ## 🔑 Environment Variables
 
-### `backend/.env`
-
-| Variable | Example Value | Required | Description |
-|----------|--------------|----------|-------------|
-| `SECRET_KEY` | `django-insecure-...` | ✅ | Django secret key |
-| `DEBUG` | `True` | ✅ | Django debug mode |
-| `ALLOWED_HOSTS` | `localhost,127.0.0.1` | ✅ | Comma-separated allowed hosts |
-| `DB_ENGINE` | `django.db.backends.postgresql` | ✅ | Database engine |
-| `POSTGRES_DB` | `fairsplit` | ✅ | PostgreSQL database name |
-| `POSTGRES_USER` | `fairsplit` | ✅ | PostgreSQL username |
-| `POSTGRES_PASSWORD` | `yourpassword` | ✅ | PostgreSQL password |
-| `POSTGRES_HOST` | `postgres` | ✅ | PostgreSQL host (Docker: `postgres`) |
-| `POSTGRES_PORT` | `5432` | ✅ | PostgreSQL port |
-| `GOOGLE_CLIENT_ID` | `949...apps.googleusercontent.com` | ⚠️ | Google OAuth Client ID |
-| `GOOGLE_CLIENT_SECRET` | `GOCSPX-...` | ⚠️ | Google OAuth Client Secret |
-| `GOOGLE_REDIRECT_URI` | `http://localhost/auth/callback` | ⚠️ | Must match Google Cloud Console |
-| `GITHUB_CLIENT_ID` | `Ov23li...` | ⚠️ | GitHub OAuth Client ID |
-| `GITHUB_CLIENT_SECRET` | `b0fadb...` | ⚠️ | GitHub OAuth Client Secret |
-| `EMAIL_HOST` | `smtp.gmail.com` | ⚠️ | SMTP host |
-| `EMAIL_PORT` | `587` | ⚠️ | SMTP port |
-| `EMAIL_HOST_USER` | `you@gmail.com` | ⚠️ | SMTP username |
-| `EMAIL_HOST_PASSWORD` | `tlgn avcu rret tpay` | ⚠️ | Gmail App Password |
-| `FRONTEND_URL` | `http://localhost` | ✅ | Used in invitation emails |
-| `INVITATION_EXPIRY_DAYS` | `7` | ✅ | Invitation token TTL |
-
-> ⚠️ = Required for OAuth / email features. The platform runs without them, but Google login and invitation emails will be disabled.
+| Variable | Example Value | Description |
+| :--- | :--- | :--- |
+| `SECRET_KEY` | `django-insecure-...` | Django secret key |
+| `DEBUG` | `False` | Toggle debug mode |
+| `ALLOWED_HOSTS` | `localhost,127.0.0.1,backend` | Allowed HTTP hosts |
+| `DB_ENGINE` | `django.db.backends.postgresql` | Database engine (`sqlite3` or `postgresql`) |
+| `POSTGRES_DB` | `fairsplit` | PostgreSQL database name |
+| `POSTGRES_USER` | `fairsplit` | PostgreSQL database user |
+| `POSTGRES_PASSWORD` | `fairsplit_password` | PostgreSQL database password |
+| `POSTGRES_HOST` | `postgres` | Database host inside Docker network |
+| `POSTGRES_PORT` | `5432` | Database port |
+| `GOOGLE_CLIENT_ID` | `949...apps.googleusercontent.com` | Google OAuth Client ID |
+| `GOOGLE_CLIENT_SECRET` | `GOCSPX-...` | Google OAuth Client Secret |
+| `GOOGLE_REDIRECT_URI` | `http://localhost/auth/callback` | Authorized OAuth Redirect URI |
+| `GITHUB_CLIENT_ID` | `Ov23li...` | GitHub OAuth Client ID |
+| `GITHUB_CLIENT_SECRET` | `b0fadb...` | GitHub OAuth Client Secret |
+| `EMAIL_HOST_USER` | `you@gmail.com` | Gmail SMTP Username |
+| `EMAIL_HOST_PASSWORD` | `app_password_here` | Gmail App Password |
+| `FRONTEND_URL` | `http://localhost` | Client URL used in invitation links |
 
 ---
 
 ## 🔑 OAuth Configuration
 
-### Google Cloud Console
+### Google Cloud Console Setup
 
-1. Visit [Google Cloud Console → APIs & Credentials](https://console.cloud.google.com/apis/credentials)
-2. Create an OAuth 2.0 Client ID → Web Application
-3. Add **Authorized JavaScript origins**:
-   - Docker deployment: `http://localhost`
-   - Dev mode: `http://localhost:5173`
-4. Add **Authorized redirect URIs**:
-   - Docker deployment: `http://localhost/auth/callback`
-   - Dev mode: `http://localhost:5173/auth/callback`
-5. Copy Client ID and Secret to `backend/.env`
-
-### GitHub OAuth App
-
-1. Visit [GitHub Developer Settings → OAuth Apps](https://github.com/settings/developers)
-2. Create a new OAuth App
-3. Set **Callback URL**:
-   - Docker: `http://localhost/auth/callback`
-   - Dev: `http://localhost:5173/auth/callback`
-4. Copy Client ID and Secret to `backend/.env`
+1. Open [Google Cloud Console → Credentials](https://console.cloud.google.com/apis/credentials).
+2. Create an **OAuth 2.0 Client ID** (Web Application).
+3. Set **Authorized JavaScript origins**: `http://localhost`
+4. Set **Authorized redirect URIs**: `http://localhost/auth/callback`
+5. Copy Client ID and Client Secret into `backend/.env`.
 
 ---
 
-## 🌿 Development Workflow
+## 🌿 Development & Git Workflow
 
-This project follows a **feature-branch Git workflow**:
+This project follows a feature-branch workflow:
 
 ```bash
-# Start a new feature
-git checkout -b feature/your-feature-name
+# 1. Create feature branch
+git checkout -b feature/allocation-enhancements
 
-# Work, commit, push
-git add .
-git commit -m "feat: description of change"
-git push origin feature/your-feature-name
+# 2. Commit changes using structured conventions
+git commit -m "feat(allocation): add workload penalty weighting"
 
-# Merge into main after review
-git checkout main
-git pull origin main
-git merge feature/your-feature-name
-git push origin main
-
-# Clean up
-git branch -d feature/your-feature-name
-git push origin --delete feature/your-feature-name
-```
-
-### Commit Convention
-
-```
-feat:     New feature
-fix:      Bug fix
-docs:     Documentation only
-refactor: Code restructuring
-style:    Formatting, no logic change
-chore:    Build process or tooling
+# 3. Push and merge to main
+git push origin feature/allocation-enhancements
 ```
 
 ---
 
-## 🔒 Security
-
-| Layer | Mechanism |
-|-------|-----------|
-| **Authentication** | JWT access + refresh tokens, automatic rotation |
-| **OAuth** | Authorization code flow — secret never exposed to browser |
-| **CORS** | `django-cors-headers` middleware |
-| **CSRF** | `CsrfViewMiddleware` active |
-| **Secrets** | All credentials in `.env` files, excluded from Git via `.gitignore` |
-| **Docker** | No secrets baked into images; all values passed via `env_file` at runtime |
-| **Role access** | API views enforce `IsAuthenticated`; task progress update restricted to assigned member or manager |
+## 🔒 Security Implementation
 
 > [!CAUTION]
-> Never commit `backend/.env` to version control. It is intentionally excluded in `.gitignore`. Use `backend/.env.example` as a template.
+> Credentials should never be committed to Git. `backend/.env` is strictly excluded in `.gitignore`.
+
+- **Token Security**: Short-lived JWT access tokens (24h) combined with rotating refresh tokens (7d).
+- **OAuth Safety**: OAuth authorization codes are exchanged server-side; client secrets remain enclosed within the backend environment.
+- **ORM Protection**: Django ORM parameterized queries prevent SQL injection vulnerabilities.
+
+---
+
+## 🖼️ UI Gallery
+
+*(Screenshots can be added by placing images into `docs/screenshots/`)*
+
+| Landing Page | Dashboard Overview |
+| :---: | :---: |
+| ![Landing Placeholder](https://via.placeholder.com/500x300?text=FairSplit+Landing+Page) | ![Dashboard Placeholder](https://via.placeholder.com/500x300?text=Dashboard+Overview) |
+
+| Task Management Board | ML Risk Prediction |
+| :---: | :---: |
+| ![Tasks Board Placeholder](https://via.placeholder.com/500x300?text=Task+Management+Board) | ![Risk Prediction Placeholder](https://via.placeholder.com/500x300?text=ML+Risk+Prediction) |
+
+---
+
+## 💡 Architecture & Design Q&A
+
+<details>
+<summary><b>Q: Why use a combined skill score and workload score instead of purely assigning by availability?</b></summary>
+
+> Assigning tasks purely by availability leads to severe skill mismatches, where complex backend tasks get assigned to available members who lack the necessary domain skills. FairSplit's weighted scoring (`0.7 × Skill Match + 0.3 × Capacity − Fairness Fee`) ensures tasks go to qualified members while remaining mindful of capacity.
+
+</details>
+
+<details>
+<summary><b>Q: How does the ML Risk Predictor operate without locking database writes?</b></summary>
+
+> Risk evaluation occurs asynchronously during progress updates. The feature extraction pipeline extracts numerical properties, passes them to the in-memory scikit-learn model, and writes risk labels directly back to the task instance in a single atomic database operation.
+
+</details>
 
 ---
 
 ## ⚠️ Known Limitations
 
-- **No real-time updates** — the frontend polls for notifications; WebSocket support is on the roadmap.
-- **ML model trained on synthetic data** — prediction accuracy improves with real team data over time.
-- **CORS is open** (`CORS_ALLOW_ALL_ORIGINS = True`) — should be scoped to specific origins in production.
-- **No CI/CD pipeline yet** — deployments are manual; GitHub Actions is planned.
-- **Single Gunicorn worker type** — `sync` workers are used; async workers would improve throughput under load.
+- **Polling Notifications**: Notification status updates rely on periodic client requests; WebSocket infrastructure is queued for future releases.
+- **Dataset Scale**: ML model is trained on synthetic project task distributions; model accuracy will continuously scale with real workspace data.
 
 ---
 
 ## 🗺️ Roadmap
 
-| Status | Feature |
-|--------|---------|
-| ✅ Done | Core project management |
-| ✅ Done | AI task allocation engine |
-| ✅ Done | ML risk prediction |
-| ✅ Done | Google & GitHub OAuth |
-| ✅ Done | Gmail SMTP invitation emails |
-| ✅ Done | Docker production deployment |
-| ✅ Done | PostgreSQL integration |
-| 🔜 Planned | GitHub Actions CI/CD pipeline |
-| 🔜 Planned | WebSocket real-time notifications (Django Channels) |
-| 🔜 Planned | Celery + Redis for async email and background tasks |
-| 🔜 Planned | Cloud deployment (Railway / Render / AWS ECS) |
-| 🔜 Planned | ML model retraining pipeline on production data |
-| 🔜 Planned | Explainable AI — surface why a task is high risk |
-| 🔜 Planned | Kubernetes Helm chart for horizontal scaling |
-| 🔜 Planned | API rate limiting and request throttling |
+- [x] Multi-tenant project workspace management
+- [x] AI Task Allocation Engine
+- [x] Machine Learning Risk Predictor
+- [x] Google & GitHub OAuth Integration
+- [x] Docker & Docker Compose Containerization
+- [ ] WebSocket integration (Django Channels) for instant notification push
+- [ ] Async background queueing via Celery & Redis
+- [ ] Automated CI/CD deployment pipelines via GitHub Actions
 
 ---
 
-## 🤝 Contributing
+## ❓ Frequently Asked Questions
 
-Contributions are welcome. Please follow these steps:
+<details>
+<summary><b>Can FairSplit run without Docker?</b></summary>
 
-1. **Fork** the repository
-2. **Create** a feature branch: `git checkout -b feature/my-feature`
-3. **Commit** your changes: `git commit -m "feat: add my feature"`
-4. **Push**: `git push origin feature/my-feature`
-5. Open a **Pull Request** with a clear description
+> Yes. You can run Django using SQLite3 locally alongside Vite dev server. Refer to the [Quick Start](#-quick-start) section.
 
-Please ensure your changes don't break existing functionality and follow the existing code style.
+</details>
+
+<details>
+<summary><b>What happens if a task requires a skill no team member possesses?</b></summary>
+
+> The allocation engine evaluates all active members, assigns the task to the member with the highest relative capacity, and surfaces a low allocation confidence metric alongside explanatory notes in the assignment history.
+
+</details>
 
 ---
 
@@ -931,8 +737,7 @@ Please ensure your changes don't break existing functionality and follow the exi
 
 <div align="center">
 
-**Prakhar Purwar**
-
+**Prakhar Purwar**  
 *Software Developer & AI Engineer*
 
 [![GitHub](https://img.shields.io/badge/GitHub-PrakharPurwar12-181717?style=for-the-badge&logo=github)](https://github.com/PrakharPurwar12)
@@ -942,21 +747,14 @@ Please ensure your changes don't break existing functionality and follow the exi
 
 ---
 
-## 🙏 Acknowledgements
+## 📄 License
 
-- [Django](https://www.djangoproject.com/) and [Django REST Framework](https://www.django-rest-framework.org/) for the robust backend foundation
-- [scikit-learn](https://scikit-learn.org/) for the ML infrastructure
-- [React](https://react.dev/) and [Vite](https://vitejs.dev/) for the fast frontend toolchain
-- [django-allauth](https://allauth.org/) for OAuth social authentication
-- [SimpleJWT](https://django-rest-framework-simplejwt.readthedocs.io/) for JWT token lifecycle management
-- The open-source community for the ecosystem that made this project possible
+This project is licensed under the [MIT License](./LICENSE).
 
 ---
 
 <div align="center">
 
-**FairSplit** — because fair work distribution shouldn't require a spreadsheet.
-
-*Built with ❤️ as an M.Tech AI Project*
+**FairSplit** — Data-Driven Workload Optimization for Modern Teams.
 
 </div>
