@@ -13,6 +13,11 @@ class Notification(models.Model):
         ("risk_high", "High Risk Warning"),
         ("progress_updated", "Progress Updated"),
         ("task_completed", "Task Completed"),
+        ("invitation_sent", "Invitation Sent"),
+        ("invitation_opened", "Invitation Opened"),
+        ("invitation_accepted", "Invitation Accepted"),
+        ("invitation_cancelled", "Invitation Cancelled"),
+        ("invitation_expired", "Invitation Expired"),
         ("system", "System Alert"),
     )
 

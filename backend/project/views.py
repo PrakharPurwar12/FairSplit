@@ -1,16 +1,17 @@
 from django.shortcuts import render
+from rest_framework import generics, status
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated, AllowAny
 
-# Create your views here.
-from rest_framework import generics
-from rest_framework.permissions import IsAuthenticated
-
-from .models import Project, ProjectMember
+from .models import Project, ProjectMember, ProjectInvitation
 from .serializers import (
     ProjectSerializer,
     ProjectMemberSerializer,
+    ProjectInvitationSerializer,
+    CreateInvitationSerializer,
 )
-
-
+from .services.invitation_service import InvitationService
 from notifications.services import create_notification
 
 
@@ -78,7 +79,7 @@ class ProjectMemberListCreateView(generics.ListCreateAPIView):
             )
 
 
-class ProjectMemberDetailView(generics.DestroyAPIView):
+class ProjectMemberDetailView(generics.RetrieveUpdateDestroyAPIView):
 
     serializer_class = ProjectMemberSerializer
     permission_classes = [IsAuthenticated]
@@ -96,11 +97,110 @@ class ProjectMemberDetailView(generics.DestroyAPIView):
                 message=f"You were removed from project '{project.title}'.",
                 notification_type="member_removed"
             )
-        if project.manager and project.manager != user:
-            create_notification(
-                user=project.manager,
-                title="Member Removed",
-                message=f"@{user.username} was removed from project '{project.title}'.",
-                notification_type="member_removed"
-            )
         instance.delete()
+
+
+class ProjectInviteView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, project_id):
+        try:
+            project = Project.objects.get(id=project_id)
+        except Project.DoesNotExist:
+            return Response({"error": "Project not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = CreateInvitationSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        data = serializer.validated_data
+        invitation, email_sent = InvitationService.create_invitation(
+            project=project,
+            email=data["email"],
+            full_name=data.get("full_name", ""),
+            role=data.get("role", ""),
+            skills=data.get("skills", []),
+            personal_message=data.get("personal_message", ""),
+            invited_by=request.user
+        )
+
+        res_data = ProjectInvitationSerializer(invitation).data
+        res_data["email_sent"] = email_sent
+        if not email_sent:
+            res_data["message"] = (
+                "Invitation created successfully, but the email could not be delivered because Resend is not configured."
+            )
+        else:
+            res_data["message"] = "Invitation created and email sent successfully."
+
+        return Response(res_data, status=status.HTTP_201_CREATED)
+
+
+class ProjectInvitationListView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, project_id):
+        try:
+            project = Project.objects.get(id=project_id)
+        except Project.DoesNotExist:
+            return Response({"error": "Project not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        status_filter = request.query_params.get("status")
+        invitations = ProjectInvitation.objects.filter(project=project)
+
+        if status_filter:
+            invitations = invitations.filter(status=status_filter.upper())
+
+        return Response(
+            ProjectInvitationSerializer(invitations, many=True).data,
+            status=status.HTTP_200_OK
+        )
+
+
+class InvitationPreviewView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request, token):
+        invitation = InvitationService.preview_invitation(token)
+        return Response(
+            ProjectInvitationSerializer(invitation).data,
+            status=status.HTTP_200_OK
+        )
+
+
+class InvitationAcceptView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, token):
+        invitation = InvitationService.accept_invitation(token, request.user)
+        return Response(
+            ProjectInvitationSerializer(invitation).data,
+            status=status.HTTP_200_OK
+        )
+
+
+class InvitationCancelView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, invitation_id):
+        invitation = InvitationService.cancel_invitation(invitation_id, request.user)
+        return Response(
+            ProjectInvitationSerializer(invitation).data,
+            status=status.HTTP_200_OK
+        )
+
+
+class InvitationResendView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, invitation_id):
+        invitation, email_sent = InvitationService.resend_invitation(invitation_id, request.user)
+        res_data = ProjectInvitationSerializer(invitation).data
+        res_data["email_sent"] = email_sent
+        if not email_sent:
+            res_data["message"] = (
+                "Invitation updated, but email could not be resent because Resend is not configured."
+            )
+        else:
+            res_data["message"] = "Invitation email resent successfully."
+
+        return Response(res_data, status=status.HTTP_200_OK)

@@ -1,5 +1,7 @@
 # Environments
 .env
+*.env
+backend/.env
 .venv
 env/
 venv/
@@ -7,6 +9,10 @@ ENV/
 env.bak/
 venv.bak/
 myenv/
+
+# Scratch & Debug
+scratch/
+*.scratch
 
 # Python
 __pycache__/

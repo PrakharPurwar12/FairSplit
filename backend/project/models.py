@@ -69,6 +69,11 @@ class ProjectMember(models.Model):
         blank=True
     )
 
+    skills = models.JSONField(
+        default=list,
+        blank=True
+    )
+
     joined_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -76,3 +81,109 @@ class ProjectMember(models.Model):
 
     def __str__(self):
         return f"{self.project.title} - {self.user.username}"
+
+
+class ProjectInvitation(models.Model):
+    STATUS_CHOICES = (
+        ("PENDING", "Pending"),
+        ("OPENED", "Opened"),
+        ("ACCEPTED", "Accepted"),
+        ("DECLINED", "Declined"),
+        ("CANCELLED", "Cancelled"),
+        ("EXPIRED", "Expired"),
+    )
+
+    project = models.ForeignKey(
+        Project,
+        on_delete=models.CASCADE,
+        related_name="invitations"
+    )
+
+    email = models.EmailField()
+
+    full_name = models.CharField(
+        max_length=150,
+        blank=True
+    )
+
+    role = models.CharField(
+        max_length=50,
+        blank=True
+    )
+
+    skills = models.JSONField(
+        default=list,
+        blank=True
+    )
+
+    personal_message = models.TextField(
+        blank=True
+    )
+
+    invited_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="sent_invitations"
+    )
+
+    accepted_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="accepted_invitations"
+    )
+
+    invitation_token = models.CharField(
+        max_length=64,
+        unique=True,
+        db_index=True
+    )
+
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default="PENDING"
+    )
+
+    resend_count = models.PositiveIntegerField(
+        default=0
+    )
+
+    last_resent_at = models.DateTimeField(
+        null=True,
+        blank=True
+    )
+
+    expires_at = models.DateTimeField()
+
+    opened_at = models.DateTimeField(
+        null=True,
+        blank=True
+    )
+
+    accepted_at = models.DateTimeField(
+        null=True,
+        blank=True
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True
+    )
+
+    updated_at = models.DateTimeField(
+        auto_now=True
+    )
+
+    class Meta:
+        ordering = ["-created_at"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["project", "email"],
+                condition=models.Q(status="PENDING"),
+                name="unique_pending_invitation_per_project"
+            )
+        ]
+
+    def __str__(self):
+        return f"Invite ({self.email}) for {self.project.title} - {self.status}"

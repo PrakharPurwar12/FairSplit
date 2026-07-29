@@ -34,6 +34,14 @@ class RegisterView(generics.CreateAPIView):
     serializer_class = RegisterSerializer
     permission_classes = [permissions.AllowAny]
 
+    def perform_create(self, serializer):
+        user = serializer.save()
+        try:
+            from project.services.invitation_service import InvitationService
+            InvitationService.process_pending_invitations_for_user(user)
+        except Exception as e:
+            pass
+
 
 class ProfileView(generics.RetrieveUpdateAPIView):
     serializer_class = ProfileSerializer
@@ -255,6 +263,13 @@ class OAuthLoginView(APIView):
                 provider=provider,
                 defaults={"uid": uid, "extra_data": extra_data}
             )
+
+            # Auto-accept pending project invitations for user email
+            try:
+                from project.services.invitation_service import InvitationService
+                InvitationService.process_pending_invitations_for_user(user)
+            except Exception:
+                pass
 
             # Issue SimpleJWT Access & Refresh Tokens
             refresh = RefreshToken.for_user(user)
