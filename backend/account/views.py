@@ -18,6 +18,8 @@ User = get_user_model()
 
 
 def get_env_val(key, default=""):
+    if key in os.environ and os.environ[key]:
+        return os.environ[key].strip()
     env_file = os.path.join(settings.BASE_DIR, ".env")
     if os.path.exists(env_file):
         try:
