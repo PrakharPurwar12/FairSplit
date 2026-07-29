@@ -14,6 +14,7 @@ import Profile from './pages/Profile';
 import Settings from './pages/Settings';
 import Onboarding from './pages/Onboarding';
 import AuthCallback from './pages/AuthCallback';
+import InvitePreview from './pages/InvitePreview';
 import './App.css';
 
 import DashboardLayout from './components/dashboard/DashboardLayout';
@@ -30,6 +31,7 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/auth/callback" element={<AuthCallback />} />
+        <Route path="/invite/:token" element={<InvitePreview />} />
         
         {/* Private Routes */}
         <Route path="/onboarding" element={

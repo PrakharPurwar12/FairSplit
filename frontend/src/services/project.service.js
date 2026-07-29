@@ -36,6 +36,11 @@ const ProjectService = {
     return response.data;
   },
 
+  async updateProjectMember(memberId, memberData) {
+    const response = await api.patch(`/projects/members/${memberId}/`, memberData);
+    return response.data;
+  },
+
   async deleteProjectMember(memberId) {
     const response = await api.delete(`/projects/members/${memberId}/`);
     return response.data;

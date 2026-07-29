@@ -1,4 +1,5 @@
 import logging
+# pyrefly: ignore [missing-import]
 from django.db import transaction
 from django.utils import timezone
 from allocation.algorithms import build_prediction_features
