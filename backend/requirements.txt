@@ -10,4 +10,8 @@ numpy==2.4.5
 scikit-learn
 xgboost
 joblib
+gunicorn==22.0.0
 openpyxl
+django-allauth
+requests
+cryptography

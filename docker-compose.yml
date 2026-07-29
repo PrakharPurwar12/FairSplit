@@ -1,0 +1,79 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: fairsplit_postgres
+    restart: always
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-fairsplit}
+      POSTGRES_USER: ${POSTGRES_USER:-fairsplit}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-fairsplit_password}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-fairsplit} -d ${POSTGRES_DB:-fairsplit}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - fairsplit_net
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: fairsplit_backend
+    restart: always
+    ports:
+      - "8000:8000"
+    environment:
+      SECRET_KEY: ${SECRET_KEY:-django-insecure-fairsplit-production-key}
+      DB_ENGINE: ${DB_ENGINE:-django.db.backends.postgresql}
+      POSTGRES_DB: ${POSTGRES_DB:-fairsplit}
+      POSTGRES_USER: ${POSTGRES_USER:-fairsplit}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-fairsplit_password}
+      POSTGRES_HOST: ${POSTGRES_HOST:-postgres}
+      POSTGRES_PORT: ${POSTGRES_PORT:-5432}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: >
+      sh -c "python manage.py migrate &&
+             python manage.py collectstatic --noinput &&
+             gunicorn backend.wsgi:application --bind 0.0.0.0:8000"
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/admin/login/')\""]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    networks:
+      - fairsplit_net
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: fairsplit_frontend
+    restart: always
+    ports:
+      - "80:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget --quiet --tries=1 --spider http://localhost/ || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    networks:
+      - fairsplit_net
+
+networks:
+  fairsplit_net:
+    driver: bridge
+
+volumes:
+  postgres_data:
+    driver: local

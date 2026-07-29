@@ -1,447 +1,170 @@
-# FairSplit Backend
+# FairSplit — Production Docker Deployment & AI Engine
 
-An AI-powered backend for **FairSplit**, a project management platform that automates fair task allocation, predicts task completion risks using Machine Learning, and provides analytics to improve team productivity.
-
-Built using **Django**, **Django REST Framework**, **JWT Authentication**, and **Scikit-learn**.
+FairSplit is an enterprise-grade, AI-powered project management platform that automates fair task allocation, predicts task delivery risks using Machine Learning, and provides real-time team workload analytics.
 
 ---
 
-## Features
-
-### Authentication
-- User Registration
-- User Login
-- JWT Authentication
-- Protected REST APIs
-
-### Skills Management
-- Create Skills
-- Update Skills
-- Delete Skills
-- Assign Skills to Users
-- Manage Skill Proficiency Levels
-
-### Project Management
-- Create Projects
-- Update Projects
-- Delete Projects
-- Add Project Members
-- Manage Team Members
-
-### Task Management
-- Create Tasks
-- Update Tasks
-- Delete Tasks
-- Task Priorities
-- Task Difficulty Levels
-- Task Deadlines
-- Task Status Tracking
-- Completion Percentage
-- Estimated & Actual Hours
-- Required Skills for Tasks
-
----
-
-# AI Modules
-
-## Fair Task Allocation Engine
-
-Automatically assigns tasks to the most suitable team member based on:
-
-- Skill Matching
-- Skill Proficiency
-- Required Skills
-- Current Workload
-- Fairness Penalty
-- Confidence Score
-
-### Allocation Formula
-
-```
-Skill Score = Proficiency × Importance
-
-Workload Score = Maximum Workload − Assigned Hours
-
-Final Score =
-(0.7 × Skill Score)
-+
-(0.3 × Workload Score)
-− Fairness Penalty
-```
-
-The highest scoring member receives the task assignment.
-
-The allocation engine also stores:
-
-- Assignment History
-- Allocation Confidence
-- Assignment Reason
-- Matched Skills
-
----
-
-## AI Risk Prediction
-
-The backend includes a Machine Learning model that predicts whether a task is at risk of missing its deadline.
-
-### Model
-
-Random Forest Classifier
-
-### Input Features
-
-- Estimated Hours
-- Difficulty
-- Priority
-- Required Skills
-- Skill Score
-- Workload Score
-- Active Tasks
-- Days Remaining
-- Completion Percentage
-
-### Prediction Classes
-
-- Low Risk
-- Medium Risk
-- High Risk
-
-Prediction is automatically generated whenever task progress is updated.
-
----
-
-## AI Reassignment Recommendation
-
-If a task is predicted as **High Risk**, the backend recommends a better team member by reusing the allocation algorithm.
-
-Recommendation considers:
-
-- Skill Match
-- Current Workload
-- Fairness
-- Allocation Score
-
-The final reassignment decision remains with the project manager.
-
----
-
-# Analytics Module
-
-The backend provides APIs for project analytics.
-
-## Project Dashboard
-
-Returns:
-
-- Total Tasks
-- Completed Tasks
-- In Progress Tasks
-- Review Tasks
-- Todo Tasks
-- Completion Percentage
-- Risk Distribution
-
----
-
-## Member Analytics
-
-Returns:
-
-- Assigned Tasks
-- Completed Tasks
-- Active Tasks
-- Estimated Hours
-- Actual Hours
-- Average Completion
-- Workload Score
-
----
-
-## Team Analytics
-
-Returns analytics for every project member including:
-
-- Assigned Tasks
-- Completed Tasks
-- Active Tasks
-- Estimated Hours
-- Actual Hours
-- Average Completion
-- Workload Score
-
----
-
-## Risk Analytics
-
-Returns:
-
-- High Risk Tasks
-- Medium Risk Tasks
-- Low Risk Tasks
-- Average Prediction Confidence
-- High Risk Percentage
-- High Risk Task Details
-
----
-
-# Technology Stack
-
-## Backend
-
-- Python 3.x
-- Django
-- Django REST Framework
-
-## Database
-
-- SQLite
-
-## Authentication
-
-- JWT (SimpleJWT)
-
-## Machine Learning
-
-- Scikit-learn
-- Random Forest Classifier
-- Joblib
-
-## API Testing
-
-- Postman
-
----
-
-# Project Structure
-
-```
-backend/
-│
-├── account/
-├── allocation/
-├── analytics/
-├── ml/
-├── projects/
-├── skills/
-├── tasks/
-│
-├── FairSplit/
-│
-├── manage.py
-├── requirements.txt
-└── README.md
+## Production Docker Architecture
+
+```text
+                               Client Browser
+                                     │
+                                     ▼ (Port 80)
+                       Frontend Container (Nginx Alpine)
+                        [Serves Vite Build + SPA Routing]
+                                     │
+                                     ▼ (Port 8000 via Docker Bridge Network)
+                       Backend Container (Django + Gunicorn)
+                        [Python 3.12-slim + WSGI Server]
+                                     │
+                                     ▼ (Port 5432)
+                       PostgreSQL Container (Postgres 16)
+                        [Persistent Volume: postgres_data]
 ```
 
 ---
 
-# Backend Architecture
+## Quick Start (Docker Deployment)
 
-```
-                Client
-                   │
-                   ▼
-          Django REST APIs
-                   │
-      ┌────────────┼─────────────┐
-      ▼            ▼             ▼
- Authentication  Projects      Tasks
-                   │
-                   ▼
-        Fair Allocation Engine
-                   │
-                   ▼
-          Task Assignments
-                   │
-                   ▼
-      Task Progress Updates
-                   │
-                   ▼
-      Machine Learning Model
-                   │
-                   ▼
-        Risk Prediction Engine
-                   │
-                   ▼
- AI Reassignment Recommendation
-                   │
-                   ▼
-          Analytics APIs
-```
+### Prerequisites
+
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/) (v20.10+)
+- Docker Compose (v2.0+)
 
 ---
 
-# Database Modules
+### Step 1: Environment Setup
 
-## account
-
-Handles:
-
-- User Authentication
-- JWT Login
-- User Registration
-
----
-
-## skills
-
-Models:
-
-- Skill
-- UserSkill
-
-Responsible for maintaining skill information and proficiency levels.
-
----
-
-## projects
-
-Models:
-
-- Project
-- ProjectMember
-
-Responsible for project creation and member management.
-
----
-
-## tasks
-
-Models:
-
-- Task
-- TaskSkill
-- TaskAssignment
-- AssignmentHistory
-
-Responsible for task lifecycle and assignment tracking.
-
----
-
-## allocation
-
-Contains:
-
-- Fair Allocation Algorithm
-- Workload Calculation
-- Skill Scoring
-- Confidence Calculation
-- Assignment Recommendation
-
----
-
-## ml
-
-Contains:
-
-- Random Forest Model
-- Prediction Logic
-- Model Loading
-- Feature Processing
-
----
-
-## analytics
-
-Provides dashboard APIs for:
-
-- Projects
-- Members
-- Teams
-- Risks
-
----
-
-# API Modules
-
-- Authentication
-- Skills
-- Projects
-- Project Members
-- Tasks
-- Task Skills
-- Fair Allocation
-- AI Prediction
-- AI Recommendation
-- Analytics
-
----
-
-# Installation
-
-## Clone Repository
+Copy `.env.example` to `.env` at the project root:
 
 ```bash
-git clone https://github.com/<your-username>/FairSplit.git
+cp .env.example .env
 ```
 
-## Create Virtual Environment
+*(Optionally configure SMTP credentials and OAuth Client IDs in `.env`)*
+
+---
+
+### Step 2: Build & Start All Services
 
 ```bash
-python -m venv venv
+docker compose up -d --build
 ```
 
-## Activate Environment
+This single command will:
+1. Initialize the PostgreSQL 16 database container with healthchecks.
+2. Build the Django backend container on `python:3.12-slim`.
+3. Auto-apply all database migrations on PostgreSQL.
+4. Execute `collectstatic` for admin & static assets.
+5. Initialize Gunicorn WSGI workers on port 8000.
+6. Build the multi-stage React Vite production bundle on Nginx Alpine.
+7. Expose Nginx reverse proxy on port 80.
 
-### Windows
+---
+
+### Step 3: Access Services
+
+- **Frontend Application**: `http://localhost`
+- **Django Admin Console**: `http://localhost:8000/admin/`
+- **API Endpoint Health**: `http://localhost:8000/api/account/profile/`
+
+---
+
+## Docker Operations & Commands
+
+### View Container Status & Health
 
 ```bash
-venv\Scripts\activate
+docker compose ps
 ```
 
-### Linux / macOS
+### View Live Logs
 
 ```bash
-source venv/bin/activate
+# All services
+docker compose logs -f
+
+# Specific service logs
+docker compose logs -f backend
+docker compose logs -f frontend
+docker compose logs -f postgres
 ```
 
-## Install Dependencies
+### Create Django Superuser in Container
 
 ```bash
-pip install -r requirements.txt
+docker compose exec backend python manage.py createsuperuser
 ```
 
-## Apply Migrations
+### Run Django Migrations Manually
 
 ```bash
-python manage.py makemigrations
-python manage.py migrate
+docker compose exec backend python manage.py migrate
 ```
 
-## Create Superuser
+### Database Shell Access (PostgreSQL)
 
 ```bash
-python manage.py createsuperuser
+docker compose exec postgres psql -U fairsplit -d fairsplit
 ```
 
-## Run Development Server
+### Stop Services
 
 ```bash
-python manage.py runserver
-```
+# Stop containers while preserving data
+docker compose down
 
-The backend will be available at:
-
-```
-http://127.0.0.1:8000/
+# Stop containers and purge volumes (Reset Database)
+docker compose down -v
 ```
 
 ---
 
-# Future Enhancements
+## Environment Variables Configuration
 
-- Docker Support
-- PostgreSQL Integration
-- CI/CD Pipeline
-- Email Notifications
-- Real-time WebSocket Notifications
-- Explainable AI (XAI)
-- AI-based Team Formation
-- Contribution Score Prediction
+| Variable | Default Value | Description |
+| :--- | :--- | :--- |
+| `DB_ENGINE` | `django.db.backends.postgresql` | Database engine (`sqlite3` or `postgresql`) |
+| `POSTGRES_DB` | `fairsplit` | PostgreSQL database name |
+| `POSTGRES_USER` | `fairsplit` | PostgreSQL database user |
+| `POSTGRES_PASSWORD` | `fairsplit_password` | PostgreSQL database password |
+| `POSTGRES_HOST` | `postgres` | PostgreSQL hostname inside Docker network |
+| `POSTGRES_PORT` | `5432` | PostgreSQL port |
+| `SECRET_KEY` | *(Configurable)* | Django Secret Key |
+| `DEBUG` | `False` | Toggle Django Debug mode |
+| `FRONTEND_URL` | `http://localhost` | Client URL for CORS & email links |
 
 ---
 
+## Project Structure
 
+```text
+FairSplit/
+├── backend/
+│   ├── account/                 # Authentication & User Profiles
+│   ├── allocation/              # Fair Task Allocation Optimization Engine
+│   ├── analytics/               # Real-time Team & Risk Analytics
+│   ├── ml/                      # Machine Learning Predictor & RF Models
+│   ├── notifications/          # Real-time User Notifications
+│   ├── project/                 # Projects & Member Management
+│   ├── skills/                  # User Skills & Proficiency Tracking
+│   ├── tasks/                   # Task Management & Assignments
+│   ├── Dockerfile               # Backend Gunicorn Dockerfile (Python 3.12)
+│   ├── .dockerignore            # Context Exclusions for Backend
+│   └── requirements.txt         # Production Dependencies
+├── frontend/
+│   ├── src/                     # React Application Source (Vite)
+│   ├── Dockerfile               # Multi-Stage Nginx Build Dockerfile
+│   ├── nginx.conf               # SPA Routing & API Reverse Proxy Config
+│   └── .dockerignore            # Context Exclusions for Frontend
+├── docker-compose.yml           # Master Multi-Container Orchestration
+├── .dockerignore                # Root Context Exclusions
+├── .env.example                 # Environment Template File
+└── README.md                    # Project Documentation
+```
 
-# License
+---
 
-This project was developed as part of an academic M.Tech project and is intended for educational and research purposes.
+## License
+
+Developed as an academic M.Tech AI Project and open-source project management platform.

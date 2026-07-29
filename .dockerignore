@@ -1,0 +1,37 @@
+# Version Control & Environment
+.git
+.gitignore
+.env
+*.env
+backend/.env
+frontend/.env
+
+# Python & Django
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.sqlite3
+db.sqlite3
+*.log
+
+# Virtual Environments
+.venv/
+env/
+venv/
+myenv/
+
+# Node.js & Builds
+node_modules/
+dist/
+build/
+
+# IDE & OS
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Scratch & Debug
+scratch/
+*.scratch
