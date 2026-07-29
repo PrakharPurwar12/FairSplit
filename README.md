@@ -6,8 +6,8 @@
 
 <br/>
 
-[![React](https://img.shields.io/badge/React-18-61DAFB?style=for-the-badge&logo=react&logoColor=white)](https://react.dev/)
-[![Vite](https://img.shields.io/badge/Vite-5-646CFF?style=for-the-badge&logo=vite&logoColor=white)](https://vitejs.dev/)
+[![React](https://img.shields.io/badge/React-19-61DAFB?style=for-the-badge&logo=react&logoColor=white)](https://react.dev/)
+[![Vite](https://img.shields.io/badge/Vite-8-646CFF?style=for-the-badge&logo=vite&logoColor=white)](https://vitejs.dev/)
 [![Django](https://img.shields.io/badge/Django-6.0-092E20?style=for-the-badge&logo=django&logoColor=white)](https://www.djangoproject.com/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-336791?style=for-the-badge&logo=postgresql&logoColor=white)](https://www.postgresql.org/)
 [![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://www.docker.com/)
@@ -456,7 +456,7 @@ All endpoints are prefixed with `/api/`.
 |--------|----------|-------------|
 | `POST` | `/account/register/` | Register new user |
 | `POST` | `/account/login/` | Login and receive JWT pair |
-| `POST` | `/account/token/refresh/` | Refresh access token |
+| `POST` | `/account/refresh/` | Refresh access token |
 | `GET` / `PATCH` | `/account/profile/` | Get or update profile |
 | `GET` | `/account/users/` | List active users (auth required) |
 | `GET` | `/account/oauth/url/` | Get OAuth redirect URL |
@@ -465,42 +465,63 @@ All endpoints are prefixed with `/api/`.
 </details>
 
 <details>
-<summary><b>Projects & Members</b></summary>
+<summary><b>Projects & Member Invitations</b></summary>
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | `GET` / `POST` | `/projects/` | List or create projects |
 | `GET` / `PATCH` / `DELETE` | `/projects/{id}/` | Project detail, update, delete |
-| `GET` / `POST` | `/projects/{id}/members/` | List or add members |
-| `DELETE` | `/projects/{id}/members/{user_id}/` | Remove member |
+| `GET` / `POST` | `/projects/{id}/members/` | List or add project members |
+| `DELETE` | `/projects/members/{id}/` | Remove project member |
 | `POST` | `/projects/{id}/invite/` | Send invitation email |
-| `GET` | `/projects/invites/{token}/` | Preview invitation |
-| `POST` | `/projects/invites/{token}/accept/` | Accept invitation |
+| `GET` | `/projects/{id}/invitations/` | List project invitations |
+| `GET` | `/invitations/{token}/` | Preview invitation token |
+| `POST` | `/invitations/{token}/accept/` | Accept project invitation |
+| `POST` | `/invitations/{id}/cancel/` | Cancel pending invitation |
+| `POST` | `/invitations/{id}/resend/` | Resend invitation email |
 
 </details>
 
 <details>
-<summary><b>Tasks</b></summary>
+<summary><b>Tasks & Allocation</b></summary>
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | `GET` / `POST` | `/tasks/` | List or create tasks |
 | `GET` / `PATCH` / `DELETE` | `/tasks/{id}/` | Task detail, update, delete |
-| `POST` | `/tasks/{id}/allocate/` | Run AI allocation for a task |
-| `GET` | `/tasks/{id}/prediction/` | Get latest risk prediction |
-| `GET` | `/tasks/{id}/history/` | Get assignment history |
+| `PATCH` | `/tasks/{id}/progress/` | Update progress & trigger ML risk prediction |
+| `GET` / `POST` | `/tasks/{id}/skills/` | Task skill requirements |
+| `POST` | `/allocation/generate/{project_id}/` | Run AI task allocation engine for project |
+| `GET` | `/allocation/recommend/{task_id}/` | Get AI reassignment recommendation for task |
 
 </details>
 
 <details>
-<summary><b>Analytics & Prediction</b></summary>
+<summary><b>Analytics & Machine Learning</b></summary>
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| `GET` | `/analytics/project/{id}/dashboard/` | Project KPI summary |
-| `GET` | `/analytics/project/{id}/members/` | Per-member analytics |
-| `GET` | `/analytics/project/{id}/risks/` | Risk distribution analytics |
-| `POST` | `/ml/predict/` | Trigger manual risk prediction |
+| `GET` | `/analytics/project/{project_id}/` | Project KPI dashboard summary |
+| `GET` | `/analytics/member/{member_id}/` | Per-member workload analytics |
+| `GET` | `/analytics/team/{project_id}/` | Team-wide performance analytics |
+| `GET` | `/analytics/risk/{project_id}/` | Risk distribution analytics |
+| `POST` | `/ml/predict-risk/` | Run manual ML risk prediction inference |
+
+</details>
+
+<details>
+<summary><b>Notifications & Skills</b></summary>
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/notifications/` | List user notifications |
+| `GET` | `/notifications/unread-count/` | Get unread notification count |
+| `POST` | `/notifications/read-all/` | Mark all notifications as read |
+| `PATCH` | `/notifications/{id}/read/` | Mark single notification as read |
+| `DELETE` | `/notifications/{id}/` | Delete notification |
+| `GET` / `POST` | `/skills/` | Skill catalogue |
+| `GET` / `POST` | `/skills/user/` | User skill proficiency list / assign |
+| `PATCH` / `DELETE` | `/skills/user/{id}/` | Update or remove user skill proficiency |
 
 </details>
 
@@ -512,11 +533,13 @@ All endpoints are prefixed with `/api/`.
 
 | Technology | Version | Purpose |
 |-----------|---------|---------|
-| React | 18 | Component-based UI framework |
-| Vite | 5 | Build tool and dev server |
-| React Router | 6 | Client-side SPA routing |
-| Axios | Latest | HTTP API client |
-| CSS Variables | — | Design system tokens, glassmorphism |
+| React | 19 | Component-based UI framework |
+| Vite | 8 | Build tool and dev server |
+| React Router | 7 | Client-side SPA routing |
+| Axios | 1.18 | HTTP API client |
+| Tailwind CSS | 4.3 | Utility-first styling framework |
+| Framer Motion | 12.42 | UI animations |
+| Lucide React | 1.25 | UI icons |
 
 ### Backend
 
@@ -910,7 +933,7 @@ Please ensure your changes don't break existing functionality and follow the exi
 
 **Prakhar Purwar**
 
-*M.Tech | AI & Software Engineering*
+*Software Developer & AI Engineer*
 
 [![GitHub](https://img.shields.io/badge/GitHub-PrakharPurwar12-181717?style=for-the-badge&logo=github)](https://github.com/PrakharPurwar12)
 [![Email](https://img.shields.io/badge/Email-purwarprakhar00@gmail.com-EA4335?style=for-the-badge&logo=gmail&logoColor=white)](mailto:purwarprakhar00@gmail.com)
