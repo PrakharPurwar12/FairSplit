@@ -20,8 +20,11 @@ RUN pip install --no-cache-dir --default-timeout=100 -r requirements.txt
 # Copy application source code
 COPY . /app/
 
+# Collect static assets into Docker image layer at build time
+RUN SECRET_KEY=build-time-secret-key python manage.py collectstatic --noinput
+
 # Expose Django WSGI port
 EXPOSE 8000
 
-# Run Gunicorn WSGI server
-CMD ["sh", "-c", "python manage.py migrate && python manage.py collectstatic --noinput && gunicorn backend.wsgi:application --bind 0.0.0.0:${PORT:-8000} --workers 3 --threads 2 --timeout 60"]
+# Run Gunicorn WSGI server with dynamic PORT handling
+CMD ["sh", "-c", "python manage.py migrate && gunicorn backend.wsgi:application --bind 0.0.0.0:${PORT:-8000} --workers 3 --threads 2 --timeout 60"]
