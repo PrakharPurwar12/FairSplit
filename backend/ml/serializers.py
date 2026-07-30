@@ -7,9 +7,7 @@ class RiskPredictionSerializer(serializers.Serializer):
 
     difficulty = serializers.IntegerField()
 
-    priority = serializers.ChoiceField(
-        choices=["low", "medium", "high"]
-    )
+    priority = serializers.ChoiceField(choices=["low", "medium", "high"])
 
     required_skills = serializers.IntegerField()
 

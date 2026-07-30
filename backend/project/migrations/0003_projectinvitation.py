@@ -8,36 +8,90 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('project', '0002_projectmember_skills'),
+        ("project", "0002_projectmember_skills"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='ProjectInvitation',
+            name="ProjectInvitation",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('email', models.EmailField(max_length=254)),
-                ('full_name', models.CharField(blank=True, max_length=150)),
-                ('role', models.CharField(blank=True, max_length=50)),
-                ('skills', models.JSONField(blank=True, default=list)),
-                ('personal_message', models.TextField(blank=True)),
-                ('invitation_token', models.CharField(db_index=True, max_length=64, unique=True)),
-                ('status', models.CharField(choices=[('PENDING', 'Pending'), ('OPENED', 'Opened'), ('ACCEPTED', 'Accepted'), ('DECLINED', 'Declined'), ('CANCELLED', 'Cancelled'), ('EXPIRED', 'Expired')], default='PENDING', max_length=20)),
-                ('resend_count', models.PositiveIntegerField(default=0)),
-                ('last_resent_at', models.DateTimeField(blank=True, null=True)),
-                ('expires_at', models.DateTimeField()),
-                ('opened_at', models.DateTimeField(blank=True, null=True)),
-                ('accepted_at', models.DateTimeField(blank=True, null=True)),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('accepted_by', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='accepted_invitations', to=settings.AUTH_USER_MODEL)),
-                ('invited_by', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='sent_invitations', to=settings.AUTH_USER_MODEL)),
-                ('project', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='invitations', to='project.project')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("email", models.EmailField(max_length=254)),
+                ("full_name", models.CharField(blank=True, max_length=150)),
+                ("role", models.CharField(blank=True, max_length=50)),
+                ("skills", models.JSONField(blank=True, default=list)),
+                ("personal_message", models.TextField(blank=True)),
+                (
+                    "invitation_token",
+                    models.CharField(db_index=True, max_length=64, unique=True),
+                ),
+                (
+                    "status",
+                    models.CharField(
+                        choices=[
+                            ("PENDING", "Pending"),
+                            ("OPENED", "Opened"),
+                            ("ACCEPTED", "Accepted"),
+                            ("DECLINED", "Declined"),
+                            ("CANCELLED", "Cancelled"),
+                            ("EXPIRED", "Expired"),
+                        ],
+                        default="PENDING",
+                        max_length=20,
+                    ),
+                ),
+                ("resend_count", models.PositiveIntegerField(default=0)),
+                ("last_resent_at", models.DateTimeField(blank=True, null=True)),
+                ("expires_at", models.DateTimeField()),
+                ("opened_at", models.DateTimeField(blank=True, null=True)),
+                ("accepted_at", models.DateTimeField(blank=True, null=True)),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                (
+                    "accepted_by",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="accepted_invitations",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
+                (
+                    "invited_by",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="sent_invitations",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
+                (
+                    "project",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="invitations",
+                        to="project.project",
+                    ),
+                ),
             ],
             options={
-                'ordering': ['-created_at'],
-                'constraints': [models.UniqueConstraint(condition=models.Q(('status', 'PENDING')), fields=('project', 'email'), name='unique_pending_invitation_per_project')],
+                "ordering": ["-created_at"],
+                "constraints": [
+                    models.UniqueConstraint(
+                        condition=models.Q(("status", "PENDING")),
+                        fields=("project", "email"),
+                        name="unique_pending_invitation_per_project",
+                    )
+                ],
             },
         ),
     ]

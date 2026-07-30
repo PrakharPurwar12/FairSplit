@@ -1,7 +1,6 @@
 from collections import defaultdict
 
-from project.models import ProjectMember
-from tasks.models import Task, TaskAssignment
+from tasks.models import TaskAssignment
 
 
 class WorkloadManager:
@@ -15,9 +14,9 @@ class WorkloadManager:
         ).select_related("task")
 
         for assignment in assignments:
-            self.workloads[
-                assignment.assigned_to_id
-            ] += float(assignment.task.estimated_hours)
+            self.workloads[assignment.assigned_to_id] += float(
+                assignment.task.estimated_hours
+            )
 
     def get(self, user_id):
         return self.workloads[user_id]

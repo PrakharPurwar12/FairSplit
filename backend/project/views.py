@@ -1,18 +1,17 @@
-from django.shortcuts import render
+from notifications.services import create_notification
 from rest_framework import generics, status
-from rest_framework.views import APIView
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.views import APIView
 
-from .models import Project, ProjectMember, ProjectInvitation
+from .models import Project, ProjectInvitation, ProjectMember
 from .serializers import (
-    ProjectSerializer,
-    ProjectMemberSerializer,
-    ProjectInvitationSerializer,
     CreateInvitationSerializer,
+    ProjectInvitationSerializer,
+    ProjectMemberSerializer,
+    ProjectSerializer,
 )
 from .services.invitation_service import InvitationService
-from notifications.services import create_notification
 
 
 class ProjectListCreateView(generics.ListCreateAPIView):
@@ -24,7 +23,10 @@ class ProjectListCreateView(generics.ListCreateAPIView):
         user = self.request.user
         if user.is_staff or user.is_superuser:
             return Project.objects.all()
-        return (Project.objects.filter(manager=user) | Project.objects.filter(members__user=user)).distinct()
+        return (
+            Project.objects.filter(manager=user)
+            | Project.objects.filter(members__user=user)
+        ).distinct()
 
     def perform_create(self, serializer):
         project = serializer.save(manager=self.request.user)
@@ -32,7 +34,7 @@ class ProjectListCreateView(generics.ListCreateAPIView):
             user=self.request.user,
             title="Project Created",
             message=f"Project '{project.title}' was created successfully.",
-            notification_type="project_created"
+            notification_type="project_created",
         )
 
 
@@ -45,7 +47,10 @@ class ProjectDetailView(generics.RetrieveUpdateDestroyAPIView):
         user = self.request.user
         if user.is_staff or user.is_superuser:
             return Project.objects.all()
-        return (Project.objects.filter(manager=user) | Project.objects.filter(members__user=user)).distinct()
+        return (
+            Project.objects.filter(manager=user)
+            | Project.objects.filter(members__user=user)
+        ).distinct()
 
 
 class ProjectMemberListCreateView(generics.ListCreateAPIView):
@@ -56,9 +61,7 @@ class ProjectMemberListCreateView(generics.ListCreateAPIView):
     def get_queryset(self):
         project_id = self.kwargs["project_id"]
 
-        return ProjectMember.objects.filter(
-            project_id=project_id
-        )
+        return ProjectMember.objects.filter(project_id=project_id)
 
     def perform_create(self, serializer):
         member = serializer.save(project_id=self.kwargs["project_id"])
@@ -68,14 +71,14 @@ class ProjectMemberListCreateView(generics.ListCreateAPIView):
                 user=member.user,
                 title="Added to Project Team",
                 message=f"You were added to project '{project.title}' as {member.role}.",
-                notification_type="member_added"
+                notification_type="member_added",
             )
         if project.manager and project.manager != self.request.user:
             create_notification(
                 user=project.manager,
                 title="New Member Added",
                 message=f"@{member.user.username} was added to '{project.title}'.",
-                notification_type="member_added"
+                notification_type="member_added",
             )
 
 
@@ -95,7 +98,7 @@ class ProjectMemberDetailView(generics.RetrieveUpdateDestroyAPIView):
                 user=user,
                 title="Removed from Project Team",
                 message=f"You were removed from project '{project.title}'.",
-                notification_type="member_removed"
+                notification_type="member_removed",
             )
         instance.delete()
 
@@ -107,7 +110,9 @@ class ProjectInviteView(APIView):
         try:
             project = Project.objects.get(id=project_id)
         except Project.DoesNotExist:
-            return Response({"error": "Project not found."}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"error": "Project not found."}, status=status.HTTP_404_NOT_FOUND
+            )
 
         serializer = CreateInvitationSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -120,7 +125,7 @@ class ProjectInviteView(APIView):
             role=data.get("role", ""),
             skills=data.get("skills", []),
             personal_message=data.get("personal_message", ""),
-            invited_by=request.user
+            invited_by=request.user,
         )
 
         res_data = ProjectInvitationSerializer(invitation).data
@@ -142,7 +147,9 @@ class ProjectInvitationListView(APIView):
         try:
             project = Project.objects.get(id=project_id)
         except Project.DoesNotExist:
-            return Response({"error": "Project not found."}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"error": "Project not found."}, status=status.HTTP_404_NOT_FOUND
+            )
 
         status_filter = request.query_params.get("status")
         invitations = ProjectInvitation.objects.filter(project=project)
@@ -152,7 +159,7 @@ class ProjectInvitationListView(APIView):
 
         return Response(
             ProjectInvitationSerializer(invitations, many=True).data,
-            status=status.HTTP_200_OK
+            status=status.HTTP_200_OK,
         )
 
 
@@ -162,8 +169,7 @@ class InvitationPreviewView(APIView):
     def get(self, request, token):
         invitation = InvitationService.preview_invitation(token)
         return Response(
-            ProjectInvitationSerializer(invitation).data,
-            status=status.HTTP_200_OK
+            ProjectInvitationSerializer(invitation).data, status=status.HTTP_200_OK
         )
 
 
@@ -173,8 +179,7 @@ class InvitationAcceptView(APIView):
     def post(self, request, token):
         invitation = InvitationService.accept_invitation(token, request.user)
         return Response(
-            ProjectInvitationSerializer(invitation).data,
-            status=status.HTTP_200_OK
+            ProjectInvitationSerializer(invitation).data, status=status.HTTP_200_OK
         )
 
 
@@ -184,8 +189,7 @@ class InvitationCancelView(APIView):
     def post(self, request, invitation_id):
         invitation = InvitationService.cancel_invitation(invitation_id, request.user)
         return Response(
-            ProjectInvitationSerializer(invitation).data,
-            status=status.HTTP_200_OK
+            ProjectInvitationSerializer(invitation).data, status=status.HTTP_200_OK
         )
 
 
@@ -193,7 +197,9 @@ class InvitationResendView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, invitation_id):
-        invitation, email_sent = InvitationService.resend_invitation(invitation_id, request.user)
+        invitation, email_sent = InvitationService.resend_invitation(
+            invitation_id, request.user
+        )
         res_data = ProjectInvitationSerializer(invitation).data
         res_data["email_sent"] = email_sent
         if not email_sent:
@@ -203,4 +209,4 @@ class InvitationResendView(APIView):
         else:
             res_data["message"] = "Invitation email resent successfully."
 
-        return Response(res_data, status=status.HTTP_200_OK)
+        return Response(res_data, status=status.HTTP_200_OK)

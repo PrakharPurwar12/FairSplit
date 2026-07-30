@@ -11,63 +11,231 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ('project', '0001_initial'),
-        ('skills', '0001_initial'),
+        ("project", "0001_initial"),
+        ("skills", "0001_initial"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='Task',
+            name="Task",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('title', models.CharField(max_length=200)),
-                ('description', models.TextField(blank=True)),
-                ('estimated_hours', models.DecimalField(decimal_places=2, max_digits=5)),
-                ('actual_hours', models.DecimalField(decimal_places=2, default=0, max_digits=5)),
-                ('difficulty', models.PositiveSmallIntegerField(default=3, validators=[django.core.validators.MinValueValidator(1), django.core.validators.MaxValueValidator(5)])),
-                ('priority', models.CharField(choices=[('low', 'Low'), ('medium', 'Medium'), ('high', 'High')], max_length=20)),
-                ('deadline', models.DateField()),
-                ('status', models.CharField(choices=[('todo', 'To Do'), ('progress', 'In Progress'), ('review', 'Review'), ('completed', 'Completed')], default='todo', max_length=20)),
-                ('completion_percentage', models.PositiveSmallIntegerField(default=0, validators=[django.core.validators.MinValueValidator(0), django.core.validators.MaxValueValidator(100)])),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('created_by', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='created_tasks', to=settings.AUTH_USER_MODEL)),
-                ('project', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='tasks', to='project.project')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("title", models.CharField(max_length=200)),
+                ("description", models.TextField(blank=True)),
+                (
+                    "estimated_hours",
+                    models.DecimalField(decimal_places=2, max_digits=5),
+                ),
+                (
+                    "actual_hours",
+                    models.DecimalField(decimal_places=2, default=0, max_digits=5),
+                ),
+                (
+                    "difficulty",
+                    models.PositiveSmallIntegerField(
+                        default=3,
+                        validators=[
+                            django.core.validators.MinValueValidator(1),
+                            django.core.validators.MaxValueValidator(5),
+                        ],
+                    ),
+                ),
+                (
+                    "priority",
+                    models.CharField(
+                        choices=[
+                            ("low", "Low"),
+                            ("medium", "Medium"),
+                            ("high", "High"),
+                        ],
+                        max_length=20,
+                    ),
+                ),
+                ("deadline", models.DateField()),
+                (
+                    "status",
+                    models.CharField(
+                        choices=[
+                            ("todo", "To Do"),
+                            ("progress", "In Progress"),
+                            ("review", "Review"),
+                            ("completed", "Completed"),
+                        ],
+                        default="todo",
+                        max_length=20,
+                    ),
+                ),
+                (
+                    "completion_percentage",
+                    models.PositiveSmallIntegerField(
+                        default=0,
+                        validators=[
+                            django.core.validators.MinValueValidator(0),
+                            django.core.validators.MaxValueValidator(100),
+                        ],
+                    ),
+                ),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                (
+                    "created_by",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="created_tasks",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
+                (
+                    "project",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="tasks",
+                        to="project.project",
+                    ),
+                ),
             ],
         ),
         migrations.CreateModel(
-            name='AssignmentHistory',
+            name="AssignmentHistory",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('reason', models.CharField(blank=True, max_length=255)),
-                ('changed_at', models.DateTimeField(auto_now_add=True)),
-                ('changed_by', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='assignment_changes', to=settings.AUTH_USER_MODEL)),
-                ('new_member', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='new_assignments', to=settings.AUTH_USER_MODEL)),
-                ('previous_member', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='previous_assignments', to=settings.AUTH_USER_MODEL)),
-                ('task', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='history', to='tasks.task')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("reason", models.CharField(blank=True, max_length=255)),
+                ("changed_at", models.DateTimeField(auto_now_add=True)),
+                (
+                    "changed_by",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="assignment_changes",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
+                (
+                    "new_member",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="new_assignments",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
+                (
+                    "previous_member",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="previous_assignments",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
+                (
+                    "task",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="history",
+                        to="tasks.task",
+                    ),
+                ),
             ],
         ),
         migrations.CreateModel(
-            name='TaskAssignment',
+            name="TaskAssignment",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('assigned_at', models.DateTimeField(auto_now_add=True)),
-                ('assigned_by', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='assigned_by', to=settings.AUTH_USER_MODEL)),
-                ('assigned_to', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='assigned_tasks', to=settings.AUTH_USER_MODEL)),
-                ('task', models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, related_name='assignment', to='tasks.task')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("assigned_at", models.DateTimeField(auto_now_add=True)),
+                (
+                    "assigned_by",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="assigned_by",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
+                (
+                    "assigned_to",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="assigned_tasks",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
+                (
+                    "task",
+                    models.OneToOneField(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="assignment",
+                        to="tasks.task",
+                    ),
+                ),
             ],
         ),
         migrations.CreateModel(
-            name='TaskSkill',
+            name="TaskSkill",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('importance', models.PositiveSmallIntegerField(default=3, validators=[django.core.validators.MinValueValidator(1), django.core.validators.MaxValueValidator(5)])),
-                ('skill', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='task_skills', to='skills.skill')),
-                ('task', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='required_skills', to='tasks.task')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "importance",
+                    models.PositiveSmallIntegerField(
+                        default=3,
+                        validators=[
+                            django.core.validators.MinValueValidator(1),
+                            django.core.validators.MaxValueValidator(5),
+                        ],
+                    ),
+                ),
+                (
+                    "skill",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="task_skills",
+                        to="skills.skill",
+                    ),
+                ),
+                (
+                    "task",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="required_skills",
+                        to="tasks.task",
+                    ),
+                ),
             ],
             options={
-                'unique_together': {('task', 'skill')},
+                "unique_together": {("task", "skill")},
             },
         ),
     ]

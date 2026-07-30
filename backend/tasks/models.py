@@ -1,7 +1,6 @@
-from django.db import models
 from django.conf import settings
-from django.core.validators import MinValueValidator, MaxValueValidator
-
+from django.core.validators import MaxValueValidator, MinValueValidator
+from django.db import models
 from project.models import Project
 from skills.models import Skill
 
@@ -21,82 +20,51 @@ class Task(models.Model):
         ("completed", "Completed"),
     )
 
-    project = models.ForeignKey(
-        Project,
-        on_delete=models.CASCADE,
-        related_name="tasks"
-    )
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name="tasks")
 
     title = models.CharField(max_length=200)
 
     description = models.TextField(blank=True)
 
-    estimated_hours = models.DecimalField(
-        max_digits=5,
-        decimal_places=2
-    )
+    estimated_hours = models.DecimalField(max_digits=5, decimal_places=2)
 
-    actual_hours = models.DecimalField(
-        max_digits=5,
-        decimal_places=2,
-        default=0
-    )
+    actual_hours = models.DecimalField(max_digits=5, decimal_places=2, default=0)
 
     difficulty = models.PositiveSmallIntegerField(
-        default=3,
-        validators=[
-            MinValueValidator(1),
-            MaxValueValidator(5)
-        ]
+        default=3, validators=[MinValueValidator(1), MaxValueValidator(5)]
     )
 
-    priority = models.CharField(
-        max_length=20,
-        choices=PRIORITY
-    )
+    priority = models.CharField(max_length=20, choices=PRIORITY)
 
     deadline = models.DateField()
 
-    status = models.CharField(
-        max_length=20,
-        choices=STATUS,
-        default="todo"
-    )
+    status = models.CharField(max_length=20, choices=STATUS, default="todo")
 
     completion_percentage = models.PositiveSmallIntegerField(
-        default=0,
-        validators=[
-            MinValueValidator(0),
-            MaxValueValidator(100)
-        ]
+        default=0, validators=[MinValueValidator(0), MaxValueValidator(100)]
     )
-    
+
     predicted_risk = models.CharField(
-    max_length=20,
-    choices=[
-        ("Low", "Low"),
-        ("Medium", "Medium"),
-        ("High", "High"),
-        ("Unknown", "Unknown"),
-    ],
-    default="Unknown"
+        max_length=20,
+        choices=[
+            ("Low", "Low"),
+            ("Medium", "Medium"),
+            ("High", "High"),
+            ("Unknown", "Unknown"),
+        ],
+        default="Unknown",
     )
 
-    risk_confidence = models.FloatField(
-        default=0
-    )
+    risk_confidence = models.FloatField(default=0)
 
-    last_risk_update = models.DateTimeField(
-        null=True,
-        blank=True
-    )
+    last_risk_update = models.DateTimeField(null=True, blank=True)
 
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name="created_tasks",
         null=True,
-        blank=True
+        blank=True,
     )
 
     created_at = models.DateTimeField(auto_now_add=True)
@@ -110,23 +78,15 @@ class Task(models.Model):
 class TaskSkill(models.Model):
 
     task = models.ForeignKey(
-        Task,
-        on_delete=models.CASCADE,
-        related_name="required_skills"
+        Task, on_delete=models.CASCADE, related_name="required_skills"
     )
 
     skill = models.ForeignKey(
-        Skill,
-        on_delete=models.CASCADE,
-        related_name="task_skills"
+        Skill, on_delete=models.CASCADE, related_name="task_skills"
     )
 
     importance = models.PositiveSmallIntegerField(
-        default=3,
-        validators=[
-            MinValueValidator(1),
-            MaxValueValidator(5)
-        ]
+        default=3, validators=[MinValueValidator(1), MaxValueValidator(5)]
     )
 
     class Meta:
@@ -139,21 +99,17 @@ class TaskSkill(models.Model):
 class TaskAssignment(models.Model):
 
     task = models.OneToOneField(
-        Task,
-        on_delete=models.CASCADE,
-        related_name="assignment"
+        Task, on_delete=models.CASCADE, related_name="assignment"
     )
 
     assigned_to = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
-        related_name="assigned_tasks"
+        related_name="assigned_tasks",
     )
 
     assigned_by = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
-        related_name="assigned_by"
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="assigned_by"
     )
 
     assigned_at = models.DateTimeField(auto_now_add=True)
@@ -164,36 +120,29 @@ class TaskAssignment(models.Model):
 
 class AssignmentHistory(models.Model):
 
-    task = models.ForeignKey(
-        Task,
-        on_delete=models.CASCADE,
-        related_name="history"
-    )
+    task = models.ForeignKey(Task, on_delete=models.CASCADE, related_name="history")
 
     previous_member = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name="previous_assignments"
+        related_name="previous_assignments",
     )
 
     new_member = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
-        related_name="new_assignments"
+        related_name="new_assignments",
     )
 
     changed_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
-        related_name="assignment_changes"
+        related_name="assignment_changes",
     )
 
-    reason = models.CharField(
-        max_length=255,
-        blank=True
-    )
+    reason = models.CharField(max_length=255, blank=True)
 
     changed_at = models.DateTimeField(auto_now_add=True)
 

@@ -1,5 +1,6 @@
-from .models import Notification
 import logging
+
+from .models import Notification
 
 logger = logging.getLogger(__name__)
 
@@ -14,18 +15,13 @@ def create_notification(user, title, message, notification_type="system"):
     try:
         # Check if identical unread notification exists to prevent spamming
         exists = Notification.objects.filter(
-            user=user,
-            title=title,
-            is_read=False
+            user=user, title=title, is_read=False
         ).exists()
         if exists:
             return None
 
         notification = Notification.objects.create(
-            user=user,
-            title=title,
-            message=message,
-            notification_type=notification_type
+            user=user, title=title, message=message, notification_type=notification_type
         )
         return notification
     except Exception as e:
@@ -33,7 +29,9 @@ def create_notification(user, title, message, notification_type="system"):
         return None
 
 
-def notify_project_members(project, title, message, notification_type="system", exclude_user=None):
+def notify_project_members(
+    project, title, message, notification_type="system", exclude_user=None
+):
     """
     Notifies manager and all project members of a project.
     """
@@ -53,8 +51,5 @@ def notify_project_members(project, title, message, notification_type="system", 
 
     for user in users_to_notify:
         create_notification(
-            user=user,
-            title=title,
-            message=message,
-            notification_type=notification_type
+            user=user, title=title, message=message, notification_type=notification_type
         )

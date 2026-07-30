@@ -1,5 +1,6 @@
 from rest_framework import serializers
-from .models import Project, ProjectMember, ProjectInvitation
+
+from .models import Project, ProjectInvitation, ProjectMember
 
 
 class ProjectSerializer(serializers.ModelSerializer):
@@ -104,7 +105,15 @@ class ProjectInvitationSerializer(serializers.ModelSerializer):
 
 class CreateInvitationSerializer(serializers.Serializer):
     email = serializers.EmailField()
-    full_name = serializers.CharField(max_length=150, required=False, allow_blank=True, default="")
-    role = serializers.CharField(max_length=50, required=False, allow_blank=True, default="")
-    skills = serializers.ListField(child=serializers.CharField(), required=False, default=list)
-    personal_message = serializers.CharField(required=False, allow_blank=True, default="")
+    full_name = serializers.CharField(
+        max_length=150, required=False, allow_blank=True, default=""
+    )
+    role = serializers.CharField(
+        max_length=50, required=False, allow_blank=True, default=""
+    )
+    skills = serializers.ListField(
+        child=serializers.CharField(), required=False, default=list
+    )
+    personal_message = serializers.CharField(
+        required=False, allow_blank=True, default=""
+    )

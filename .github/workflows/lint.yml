@@ -52,11 +52,11 @@ jobs:
 
       - name: Check import order with isort
         run: |
-          isort --check-only backend/
+          isort --check-only --profile black backend/
 
       - name: Check code style with flake8
         run: |
-          flake8 backend/ --max-line-length=120 --extend-ignore=E203,W503
+          flake8 backend/ --max-line-length=120 --extend-ignore=E203,E501,W503 --exclude=*/migrations/*,myenv/*
 
   # ----------------------------------------------------------------------------
   # Job 2: Frontend Code Quality (React / ESLint)

@@ -1,3 +1,1 @@
-from django.contrib import admin
-
-# Register your models here.
+# Notifications app admin placeholder

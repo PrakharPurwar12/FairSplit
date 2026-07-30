@@ -1,10 +1,6 @@
 from rest_framework import serializers
-from .models import (
-    Task,
-    TaskSkill,
-    TaskAssignment,
-    AssignmentHistory
-)
+
+from .models import AssignmentHistory, Task, TaskAssignment, TaskSkill
 
 
 class TaskSerializer(serializers.ModelSerializer):
@@ -34,11 +30,9 @@ class TaskSerializer(serializers.ModelSerializer):
             "deadline",
             "status",
             "completion_percentage",
-
             "predicted_risk",
             "risk_confidence",
             "last_risk_update",
-
             "created_by",
             "created_by_name",
             "assigned_to_name",
@@ -55,6 +49,7 @@ class TaskSerializer(serializers.ModelSerializer):
             "risk_confidence",
             "last_risk_update",
         )
+
 
 class TaskSkillSerializer(serializers.ModelSerializer):
 
@@ -74,9 +69,7 @@ class TaskSkillSerializer(serializers.ModelSerializer):
 
 class TaskAssignmentSerializer(serializers.ModelSerializer):
 
-    assigned_to_name = serializers.ReadOnlyField(
-        source="assigned_to.username"
-    )
+    assigned_to_name = serializers.ReadOnlyField(source="assigned_to.username")
 
     class Meta:
         model = TaskAssignment
@@ -92,6 +85,8 @@ class TaskAssignmentSerializer(serializers.ModelSerializer):
             "assigned_by",
             "assigned_at",
         )
+
+
 class TaskProgressUpdateSerializer(serializers.ModelSerializer):
 
     class Meta:
@@ -101,19 +96,14 @@ class TaskProgressUpdateSerializer(serializers.ModelSerializer):
             "actual_hours",
         )
 
+
 class AssignmentHistorySerializer(serializers.ModelSerializer):
 
-    previous_member_name = serializers.ReadOnlyField(
-        source="previous_member.username"
-    )
+    previous_member_name = serializers.ReadOnlyField(source="previous_member.username")
 
-    new_member_name = serializers.ReadOnlyField(
-        source="new_member.username"
-    )
+    new_member_name = serializers.ReadOnlyField(source="new_member.username")
 
-    changed_by_name = serializers.ReadOnlyField(
-        source="changed_by.username"
-    )
+    changed_by_name = serializers.ReadOnlyField(source="changed_by.username")
 
     class Meta:
         model = AssignmentHistory

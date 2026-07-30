@@ -1,18 +1,16 @@
 import os
+
 import requests
-from decouple import config, Config, RepositoryEnv
+from allauth.socialaccount.models import SocialAccount
+from decouple import Config, RepositoryEnv
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from rest_framework import generics, permissions, status
-from rest_framework.views import APIView
 from rest_framework.response import Response
+from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
-from allauth.socialaccount.models import SocialAccount
 
-from .serializers import (
-    RegisterSerializer,
-    ProfileSerializer,
-)
+from .serializers import ProfileSerializer, RegisterSerializer
 
 User = get_user_model()
 
@@ -40,8 +38,9 @@ class RegisterView(generics.CreateAPIView):
         user = serializer.save()
         try:
             from project.services.invitation_service import InvitationService
+
             InvitationService.process_pending_invitations_for_user(user)
-        except Exception as e:
+        except Exception:
             pass
 
 
@@ -70,7 +69,9 @@ class OAuthURLView(APIView):
 
     def get(self, request):
         provider = request.query_params.get("provider", "google").lower()
-        redirect_uri = get_env_val("GOOGLE_REDIRECT_URI", "http://localhost/auth/callback")
+        redirect_uri = get_env_val(
+            "GOOGLE_REDIRECT_URI", "http://localhost/auth/callback"
+        )
 
         if provider == "google":
             client_id = get_env_val("GOOGLE_CLIENT_ID")
@@ -88,7 +89,9 @@ class OAuthURLView(APIView):
             )
             return Response({"url": auth_url, "provider": "github"})
         else:
-            return Response({"error": "Unsupported provider"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"error": "Unsupported provider"}, status=status.HTTP_400_BAD_REQUEST
+            )
 
 
 class OAuthLoginView(APIView):
@@ -97,10 +100,15 @@ class OAuthLoginView(APIView):
     def post(self, request):
         provider = request.data.get("provider", "").lower()
         code = request.data.get("code")
-        redirect_uri = request.data.get("redirect_uri") or get_env_val("GOOGLE_REDIRECT_URI", "http://localhost/auth/callback")
+        redirect_uri = request.data.get("redirect_uri") or get_env_val(
+            "GOOGLE_REDIRECT_URI", "http://localhost/auth/callback"
+        )
 
         if not provider or not code:
-            return Response({"error": "Provider and authorization code are required."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"error": "Provider and authorization code are required."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         email = None
         first_name = ""
@@ -113,7 +121,7 @@ class OAuthLoginView(APIView):
             if provider == "google":
                 client_id = get_env_val("GOOGLE_CLIENT_ID")
                 client_secret = get_env_val("GOOGLE_CLIENT_SECRET")
-                
+
                 # Exchange code for access token
                 token_res = requests.post(
                     "https://oauth2.googleapis.com/token",
@@ -124,20 +132,27 @@ class OAuthLoginView(APIView):
                         "redirect_uri": redirect_uri,
                         "grant_type": "authorization_code",
                     },
-                    timeout=10
+                    timeout=10,
                 )
                 if token_res.status_code != 200:
                     try:
                         err_payload = token_res.json()
                     except Exception:
                         err_payload = {"raw": token_res.text}
-                    
-                    err_msg = err_payload.get("error_description") or err_payload.get("error") or "Failed to exchange code with Google"
-                    return Response({
-                        "error": f"Google OAuth exchange error: {err_msg}",
-                        "details": err_payload
-                    }, status=status.HTTP_400_BAD_REQUEST)
-                
+
+                    err_msg = (
+                        err_payload.get("error_description")
+                        or err_payload.get("error")
+                        or "Failed to exchange code with Google"
+                    )
+                    return Response(
+                        {
+                            "error": f"Google OAuth exchange error: {err_msg}",
+                            "details": err_payload,
+                        },
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+
                 token_data = token_res.json()
                 access_token = token_data.get("access_token")
 
@@ -145,10 +160,13 @@ class OAuthLoginView(APIView):
                 user_info_res = requests.get(
                     "https://www.googleapis.com/oauth2/v3/userinfo",
                     headers={"Authorization": f"Bearer {access_token}"},
-                    timeout=10
+                    timeout=10,
                 )
                 if user_info_res.status_code != 200:
-                    return Response({"error": "Failed to fetch user profile from Google."}, status=status.HTTP_400_BAD_REQUEST)
+                    return Response(
+                        {"error": "Failed to fetch user profile from Google."},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
 
                 extra_data = user_info_res.json()
                 uid = extra_data.get("sub", "")
@@ -171,48 +189,70 @@ class OAuthLoginView(APIView):
                         "client_secret": client_secret,
                         "redirect_uri": redirect_uri,
                     },
-                    timeout=10
+                    timeout=10,
                 )
                 if token_res.status_code != 200:
                     try:
                         err_payload = token_res.json()
                     except Exception:
                         err_payload = {"raw": token_res.text}
-                    return Response({
-                        "error": "Failed to exchange authorization code with GitHub.",
-                        "details": err_payload
-                    }, status=status.HTTP_400_BAD_REQUEST)
+                    return Response(
+                        {
+                            "error": "Failed to exchange authorization code with GitHub.",
+                            "details": err_payload,
+                        },
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
 
                 token_data = token_res.json()
                 access_token = token_data.get("access_token")
 
                 if not access_token:
-                    return Response({"error": token_data.get("error_description", "Invalid code")}, status=status.HTTP_400_BAD_REQUEST)
+                    return Response(
+                        {"error": token_data.get("error_description", "Invalid code")},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
 
                 # Fetch user profile from GitHub
                 user_info_res = requests.get(
                     "https://api.github.com/user",
-                    headers={"Authorization": f"Bearer {access_token}", "Accept": "application/json"},
-                    timeout=10
+                    headers={
+                        "Authorization": f"Bearer {access_token}",
+                        "Accept": "application/json",
+                    },
+                    timeout=10,
                 )
                 if user_info_res.status_code != 200:
-                    return Response({"error": "Failed to fetch user profile from GitHub."}, status=status.HTTP_400_BAD_REQUEST)
+                    return Response(
+                        {"error": "Failed to fetch user profile from GitHub."},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
 
                 extra_data = user_info_res.json()
                 uid = str(extra_data.get("id", ""))
                 username = extra_data.get("login", "")
-                
+
                 # Fetch user emails from GitHub if email is private
                 email = extra_data.get("email")
                 if not email:
                     emails_res = requests.get(
                         "https://api.github.com/user/emails",
-                        headers={"Authorization": f"Bearer {access_token}", "Accept": "application/json"},
-                        timeout=10
+                        headers={
+                            "Authorization": f"Bearer {access_token}",
+                            "Accept": "application/json",
+                        },
+                        timeout=10,
                     )
                     if emails_res.status_code == 200:
                         emails_list = emails_res.json()
-                        primary_email = next((e for e in emails_list if e.get("primary") and e.get("verified")), None)
+                        primary_email = next(
+                            (
+                                e
+                                for e in emails_list
+                                if e.get("primary") and e.get("verified")
+                            ),
+                            None,
+                        )
                         if primary_email:
                             email = primary_email.get("email")
                         elif len(emails_list) > 0:
@@ -226,10 +266,16 @@ class OAuthLoginView(APIView):
                 last_name = " ".join(name_parts[1:]) if len(name_parts) > 1 else ""
 
             else:
-                return Response({"error": "Unsupported provider"}, status=status.HTTP_400_BAD_REQUEST)
+                return Response(
+                    {"error": "Unsupported provider"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
 
             if not email:
-                return Response({"error": "Could not retrieve email from OAuth provider."}, status=status.HTTP_400_BAD_REQUEST)
+                return Response(
+                    {"error": "Could not retrieve email from OAuth provider."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
 
             # Check if user with existing email exists
             user = User.objects.filter(email=email).first()
@@ -256,19 +302,20 @@ class OAuthLoginView(APIView):
                     email=email,
                     first_name=first_name,
                     last_name=last_name,
-                    role="member"
+                    role="member",
                 )
 
             # Link social account via django-allauth SocialAccount model
             SocialAccount.objects.get_or_create(
                 user=user,
                 provider=provider,
-                defaults={"uid": uid, "extra_data": extra_data}
+                defaults={"uid": uid, "extra_data": extra_data},
             )
 
             # Auto-accept pending project invitations for user email
             try:
                 from project.services.invitation_service import InvitationService
+
                 InvitationService.process_pending_invitations_for_user(user)
             except Exception:
                 pass
@@ -276,12 +323,17 @@ class OAuthLoginView(APIView):
             # Issue SimpleJWT Access & Refresh Tokens
             refresh = RefreshToken.for_user(user)
 
-            return Response({
-                "access": str(refresh.access_token),
-                "refresh": str(refresh),
-                "user": ProfileSerializer(user).data
-            }, status=status.HTTP_200_OK)
+            return Response(
+                {
+                    "access": str(refresh.access_token),
+                    "refresh": str(refresh),
+                    "user": ProfileSerializer(user).data,
+                },
+                status=status.HTTP_200_OK,
+            )
 
         except Exception as e:
-            return Response({"error": f"OAuth authentication failed: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
+            return Response(
+                {"error": f"OAuth authentication failed: {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )

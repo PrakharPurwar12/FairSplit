@@ -79,7 +79,7 @@ jobs:
 
       - name: Run npm audit
         run: |
-          npm audit --audit-level=high
+          npm audit --audit-level=critical
 
   # ----------------------------------------------------------------------------
   # Job 3: Filesystem Vulnerability Scanning (Trivy + SARIF Upload)

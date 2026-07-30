@@ -15,18 +15,51 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.CreateModel(
-            name='Notification',
+            name="Notification",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('title', models.CharField(max_length=255)),
-                ('message', models.TextField()),
-                ('notification_type', models.CharField(choices=[('project_created', 'Project Created'), ('member_added', 'Member Added'), ('member_removed', 'Member Removed'), ('task_created', 'Task Created'), ('task_assigned', 'Task Assigned'), ('allocation_completed', 'AI Allocation Completed'), ('risk_high', 'High Risk Warning'), ('progress_updated', 'Progress Updated'), ('task_completed', 'Task Completed'), ('system', 'System Alert')], default='system', max_length=50)),
-                ('is_read', models.BooleanField(default=False)),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('user', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='notifications', to=settings.AUTH_USER_MODEL)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("title", models.CharField(max_length=255)),
+                ("message", models.TextField()),
+                (
+                    "notification_type",
+                    models.CharField(
+                        choices=[
+                            ("project_created", "Project Created"),
+                            ("member_added", "Member Added"),
+                            ("member_removed", "Member Removed"),
+                            ("task_created", "Task Created"),
+                            ("task_assigned", "Task Assigned"),
+                            ("allocation_completed", "AI Allocation Completed"),
+                            ("risk_high", "High Risk Warning"),
+                            ("progress_updated", "Progress Updated"),
+                            ("task_completed", "Task Completed"),
+                            ("system", "System Alert"),
+                        ],
+                        default="system",
+                        max_length=50,
+                    ),
+                ),
+                ("is_read", models.BooleanField(default=False)),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                (
+                    "user",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="notifications",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
             ],
             options={
-                'ordering': ['-created_at'],
+                "ordering": ["-created_at"],
             },
         ),
     ]

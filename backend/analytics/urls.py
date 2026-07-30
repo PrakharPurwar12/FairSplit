@@ -1,30 +1,31 @@
 from django.urls import path
-from .views import ProjectDashboardView,MemberAnalyticsView, TeamAnalyticsView, RiskAnalyticsView
+
+from .views import (
+    MemberAnalyticsView,
+    ProjectDashboardView,
+    RiskAnalyticsView,
+    TeamAnalyticsView,
+)
 
 urlpatterns = [
-
     path(
         "project/<int:project_id>/",
         ProjectDashboardView.as_view(),
-        name="project-dashboard"
+        name="project-dashboard",
     ),
-    
     path(
-    "member/<int:member_id>/",
-    MemberAnalyticsView.as_view(),
-    name="member-dashboard",
+        "member/<int:member_id>/",
+        MemberAnalyticsView.as_view(),
+        name="member-dashboard",
     ),
-    
     path(
-    "team/<int:project_id>/",
-    TeamAnalyticsView.as_view(),
-    name="team-analytics",
+        "team/<int:project_id>/",
+        TeamAnalyticsView.as_view(),
+        name="team-analytics",
     ),
-    
     path(
-    "risk/<int:project_id>/",
-    RiskAnalyticsView.as_view(),
-    name="risk-analytics",
+        "risk/<int:project_id>/",
+        RiskAnalyticsView.as_view(),
+        name="risk-analytics",
     ),
-
 ]

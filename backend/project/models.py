@@ -1,8 +1,7 @@
-from django.db import models
+from django.conf import settings
 
 # Create your models here.
 from django.db import models
-from django.conf import settings
 
 
 class Project(models.Model):
@@ -20,18 +19,14 @@ class Project(models.Model):
     manager = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
-        related_name="managed_projects"
+        related_name="managed_projects",
     )
 
     start_date = models.DateField()
 
     end_date = models.DateField()
 
-    status = models.CharField(
-        max_length=20,
-        choices=STATUS,
-        default="planning"
-    )
+    status = models.CharField(max_length=20, choices=STATUS, default="planning")
 
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -53,26 +48,14 @@ class ProjectMember(models.Model):
     )
 
     project = models.ForeignKey(
-        Project,
-        on_delete=models.CASCADE,
-        related_name="members"
+        Project, on_delete=models.CASCADE, related_name="members"
     )
 
-    user = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE
-    )
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
 
-    role = models.CharField(
-        max_length=20,
-        choices=ROLE,
-        blank=True
-    )
+    role = models.CharField(max_length=20, choices=ROLE, blank=True)
 
-    skills = models.JSONField(
-        default=list,
-        blank=True
-    )
+    skills = models.JSONField(default=list, blank=True)
 
     joined_at = models.DateTimeField(auto_now_add=True)
 
@@ -94,36 +77,23 @@ class ProjectInvitation(models.Model):
     )
 
     project = models.ForeignKey(
-        Project,
-        on_delete=models.CASCADE,
-        related_name="invitations"
+        Project, on_delete=models.CASCADE, related_name="invitations"
     )
 
     email = models.EmailField()
 
-    full_name = models.CharField(
-        max_length=150,
-        blank=True
-    )
+    full_name = models.CharField(max_length=150, blank=True)
 
-    role = models.CharField(
-        max_length=50,
-        blank=True
-    )
+    role = models.CharField(max_length=50, blank=True)
 
-    skills = models.JSONField(
-        default=list,
-        blank=True
-    )
+    skills = models.JSONField(default=list, blank=True)
 
-    personal_message = models.TextField(
-        blank=True
-    )
+    personal_message = models.TextField(blank=True)
 
     invited_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
-        related_name="sent_invitations"
+        related_name="sent_invitations",
     )
 
     accepted_by = models.ForeignKey(
@@ -131,49 +101,26 @@ class ProjectInvitation(models.Model):
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name="accepted_invitations"
+        related_name="accepted_invitations",
     )
 
-    invitation_token = models.CharField(
-        max_length=64,
-        unique=True,
-        db_index=True
-    )
+    invitation_token = models.CharField(max_length=64, unique=True, db_index=True)
 
-    status = models.CharField(
-        max_length=20,
-        choices=STATUS_CHOICES,
-        default="PENDING"
-    )
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="PENDING")
 
-    resend_count = models.PositiveIntegerField(
-        default=0
-    )
+    resend_count = models.PositiveIntegerField(default=0)
 
-    last_resent_at = models.DateTimeField(
-        null=True,
-        blank=True
-    )
+    last_resent_at = models.DateTimeField(null=True, blank=True)
 
     expires_at = models.DateTimeField()
 
-    opened_at = models.DateTimeField(
-        null=True,
-        blank=True
-    )
+    opened_at = models.DateTimeField(null=True, blank=True)
 
-    accepted_at = models.DateTimeField(
-        null=True,
-        blank=True
-    )
+    accepted_at = models.DateTimeField(null=True, blank=True)
 
-    created_at = models.DateTimeField(
-        auto_now_add=True
-    )
+    created_at = models.DateTimeField(auto_now_add=True)
 
-    updated_at = models.DateTimeField(
-        auto_now=True
-    )
+    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         ordering = ["-created_at"]
@@ -181,9 +128,9 @@ class ProjectInvitation(models.Model):
             models.UniqueConstraint(
                 fields=["project", "email"],
                 condition=models.Q(status="PENDING"),
-                name="unique_pending_invitation_per_project"
+                name="unique_pending_invitation_per_project",
             )
         ]
 
     def __str__(self):
-        return f"Invite ({self.email}) for {self.project.title} - {self.status}"
+        return f"Invite ({self.email}) for {self.project.title} - {self.status}"

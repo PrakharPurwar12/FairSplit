@@ -6,13 +6,33 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('notifications', '0001_initial'),
+        ("notifications", "0001_initial"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='notification',
-            name='notification_type',
-            field=models.CharField(choices=[('project_created', 'Project Created'), ('member_added', 'Member Added'), ('member_removed', 'Member Removed'), ('task_created', 'Task Created'), ('task_assigned', 'Task Assigned'), ('allocation_completed', 'AI Allocation Completed'), ('risk_high', 'High Risk Warning'), ('progress_updated', 'Progress Updated'), ('task_completed', 'Task Completed'), ('invitation_sent', 'Invitation Sent'), ('invitation_opened', 'Invitation Opened'), ('invitation_accepted', 'Invitation Accepted'), ('invitation_cancelled', 'Invitation Cancelled'), ('invitation_expired', 'Invitation Expired'), ('system', 'System Alert')], default='system', max_length=50),
+            model_name="notification",
+            name="notification_type",
+            field=models.CharField(
+                choices=[
+                    ("project_created", "Project Created"),
+                    ("member_added", "Member Added"),
+                    ("member_removed", "Member Removed"),
+                    ("task_created", "Task Created"),
+                    ("task_assigned", "Task Assigned"),
+                    ("allocation_completed", "AI Allocation Completed"),
+                    ("risk_high", "High Risk Warning"),
+                    ("progress_updated", "Progress Updated"),
+                    ("task_completed", "Task Completed"),
+                    ("invitation_sent", "Invitation Sent"),
+                    ("invitation_opened", "Invitation Opened"),
+                    ("invitation_accepted", "Invitation Accepted"),
+                    ("invitation_cancelled", "Invitation Cancelled"),
+                    ("invitation_expired", "Invitation Expired"),
+                    ("system", "System Alert"),
+                ],
+                default="system",
+                max_length=50,
+            ),
         ),
     ]

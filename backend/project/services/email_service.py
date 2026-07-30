@@ -1,7 +1,8 @@
 import logging
+
+from decouple import config
 from django.conf import settings
 from django.core.mail import EmailMultiAlternatives
-from decouple import config
 
 logger = logging.getLogger(__name__)
 
@@ -26,22 +27,41 @@ class EmailService:
         Dispatches a production-grade HTML and Plain-Text invitation email
         using Django's configured EmailBackend (SMTP / Gmail).
         """
-        from_email = cls.get_config_val("DEFAULT_FROM_EMAIL", "FairSplit Team <noreply@fairsplit.com>")
-        frontend_url = cls.get_config_val("FRONTEND_URL", "http://localhost").rstrip("/")
+        from_email = cls.get_config_val(
+            "DEFAULT_FROM_EMAIL", "FairSplit Team <noreply@fairsplit.com>"
+        )
+        frontend_url = cls.get_config_val("FRONTEND_URL", "http://localhost").rstrip(
+            "/"
+        )
         host_user = cls.get_config_val("EMAIL_HOST_USER", "")
         host_password = cls.get_config_val("EMAIL_HOST_PASSWORD", "")
 
         # Check if SMTP credentials are set
-        if not host_user or not host_password or host_user.strip() == "" or host_password.strip() == "":
-            logger.warning("SMTP email backend is not configured (EMAIL_HOST_USER / EMAIL_HOST_PASSWORD missing). Email delivery disabled.")
+        if (
+            not host_user
+            or not host_password
+            or host_user.strip() == ""
+            or host_password.strip() == ""
+        ):
+            logger.warning(
+                "SMTP email backend is not configured (EMAIL_HOST_USER / EMAIL_HOST_PASSWORD missing). Email delivery disabled."
+            )
             return False
 
         invite_link = f"{frontend_url}/invite/{invitation.invitation_token}"
-        inviter_name = invitation.invited_by.get_full_name() or invitation.invited_by.username
+        inviter_name = (
+            invitation.invited_by.get_full_name() or invitation.invited_by.username
+        )
         project_title = invitation.project.title
         role_name = invitation.role.title() if invitation.role else "Team Member"
-        skills_str = ", ".join(invitation.skills) if invitation.skills else "General Responsibilities"
-        personal_message = invitation.personal_message.strip() if invitation.personal_message else None
+        skills_str = (
+            ", ".join(invitation.skills)
+            if invitation.skills
+            else "General Responsibilities"
+        )
+        personal_message = (
+            invitation.personal_message.strip() if invitation.personal_message else None
+        )
 
         # Build Plain Text Fallback
         plain_text = (
@@ -51,26 +71,30 @@ class EmailService:
             f"Assigned Skills: {skills_str}\n"
         )
         if personal_message:
-            plain_text += f"Message: \"{personal_message}\"\n"
-        plain_text += f"\nAccept your invitation by visiting the link below:\n{invite_link}\n\n"
-        plain_text += f"Note: This invitation will expire in 7 days.\n"
+            plain_text += f'Message: "{personal_message}"\n'
+        plain_text += (
+            f"\nAccept your invitation by visiting the link below:\n{invite_link}\n\n"
+        )
+        plain_text += "Note: This invitation will expire in 7 days.\n"
 
         # Build Modern HTML Template
-        skills_chips_html = "".join([
-            f'<span style="display:inline-block; background-color:#EFF6FF; color:#1D4ED8; font-size:12px; font-weight:600; padding:4px 10px; border-radius:9999px; margin-right:6px; margin-bottom:6px;">{s}</span>'
-            for s in (invitation.skills or ["General Responsibilities"])
-        ])
+        skills_chips_html = "".join(
+            [
+                f'<span style="display:inline-block; background-color:#EFF6FF; color:#1D4ED8; font-size:12px; font-weight:600; padding:4px 10px; border-radius:9999px; margin-right:6px; margin-bottom:6px;">{s}</span>'
+                for s in (invitation.skills or ["General Responsibilities"])
+            ]
+        )
 
         personal_message_html = ""
         if personal_message:
-            personal_message_html = f'''
+            personal_message_html = f"""
             <div style="background-color: #F8FAFC; border-left: 4px solid #3B82F6; padding: 14px 18px; border-radius: 8px; margin: 20px 0;">
                 <p style="margin:0; font-size:13px; color:#64748B; font-weight:600; text-transform:uppercase; letter-spacing:0.5px;">Personal Note from {inviter_name}</p>
                 <p style="margin:6px 0 0 0; font-size:14px; color:#334155; font-style:italic;">"{personal_message}"</p>
             </div>
-            '''
+            """
 
-        html_content = f'''
+        html_content = f"""
         <!DOCTYPE html>
         <html>
         <head>
@@ -141,7 +165,7 @@ class EmailService:
             </table>
         </body>
         </html>
-        '''
+        """
 
         subject = f"Invitation: Join {project_title} on FairSplit"
         reply_to = [invitation.invited_by.email or "support@fairsplit.com"]
@@ -152,14 +176,18 @@ class EmailService:
                 body=plain_text,
                 from_email=from_email,
                 to=[invitation.email],
-                reply_to=reply_to
+                reply_to=reply_to,
             )
             msg.attach_alternative(html_content, "text/html")
             msg.send(fail_silently=False)
-            logger.info(f"SMTP invitation email sent successfully to {invitation.email}")
+            logger.info(
+                f"SMTP invitation email sent successfully to {invitation.email}"
+            )
             return True
         except Exception as e:
-            logger.error(f"Failed to send SMTP email to {invitation.email}: {e}", exc_info=True)
+            logger.error(
+                f"Failed to send SMTP email to {invitation.email}: {e}", exc_info=True
+            )
             return False
 
 

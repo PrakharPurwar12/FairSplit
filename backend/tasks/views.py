@@ -1,20 +1,19 @@
-from django.shortcuts import render
-from rest_framework import generics
-from rest_framework.permissions import IsAuthenticated
-from .models import Task, TaskSkill
-from .serializers import TaskSerializer, TaskSkillSerializer
-from django.shortcuts import get_object_or_404
-from django.utils import timezone
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework import status
-from .models import Task, TaskAssignment
-from .serializers import TaskProgressUpdateSerializer
-from ml.services import update_task_prediction
-
 from django.db import models
-
+from django.shortcuts import get_object_or_404
+from ml.services import update_task_prediction
 from notifications.services import create_notification, notify_project_members
+from rest_framework import generics, status
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.views import APIView
+
+from .models import Task, TaskAssignment, TaskSkill
+from .serializers import (
+    TaskProgressUpdateSerializer,
+    TaskSerializer,
+    TaskSkillSerializer,
+)
+
 
 class TaskListCreateView(generics.ListCreateAPIView):
     serializer_class = TaskSerializer
@@ -24,12 +23,16 @@ class TaskListCreateView(generics.ListCreateAPIView):
         user = self.request.user
         if user.is_staff or user.is_superuser:
             return Task.objects.select_related("project", "created_by").all()
-        return Task.objects.select_related("project", "created_by").filter(
-            models.Q(created_by=user) |
-            models.Q(project__manager=user) |
-            models.Q(project__members__user=user) |
-            models.Q(assignment__assigned_to=user)
-        ).distinct()
+        return (
+            Task.objects.select_related("project", "created_by")
+            .filter(
+                models.Q(created_by=user)
+                | models.Q(project__manager=user)
+                | models.Q(project__members__user=user)
+                | models.Q(assignment__assigned_to=user)
+            )
+            .distinct()
+        )
 
     def perform_create(self, serializer):
         task = serializer.save(created_by=self.request.user)
@@ -38,7 +41,7 @@ class TaskListCreateView(generics.ListCreateAPIView):
             title="New Task Created",
             message=f"Task '{task.title}' was created in project '{task.project.title}'.",
             notification_type="task_created",
-            exclude_user=self.request.user
+            exclude_user=self.request.user,
         )
 
 
@@ -51,10 +54,10 @@ class TaskDetailView(generics.RetrieveUpdateDestroyAPIView):
         if user.is_staff or user.is_superuser:
             return Task.objects.all()
         return Task.objects.filter(
-            models.Q(created_by=user) |
-            models.Q(project__manager=user) |
-            models.Q(project__members__user=user) |
-            models.Q(assignment__assigned_to=user)
+            models.Q(created_by=user)
+            | models.Q(project__manager=user)
+            | models.Q(project__members__user=user)
+            | models.Q(assignment__assigned_to=user)
         ).distinct()
 
 
@@ -67,7 +70,8 @@ class TaskSkillListCreateView(generics.ListCreateAPIView):
 
     def perform_create(self, serializer):
         serializer.save(task_id=self.kwargs["task_id"])
-    
+
+
 class TaskProgressUpdateView(APIView):
 
     def patch(self, request, task_id):
@@ -80,26 +84,24 @@ class TaskProgressUpdateView(APIView):
         except TaskAssignment.DoesNotExist:
             return Response(
                 {"error": "Task has not been assigned."},
-                status=status.HTTP_400_BAD_REQUEST
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
         # Permission check: Allow assigned member, project manager, task creator, or admin
-        is_assigned = (assignment.assigned_to == request.user)
-        is_manager = (task.project.manager == request.user)
-        is_creator = (task.created_by == request.user)
-        is_admin = (request.user.is_staff or request.user.is_superuser)
+        is_assigned = assignment.assigned_to == request.user
+        is_manager = task.project.manager == request.user
+        is_creator = task.created_by == request.user
+        is_admin = request.user.is_staff or request.user.is_superuser
 
         if not (is_assigned or is_manager or is_creator or is_admin):
             return Response(
-                {"error": "You do not have permission to update progress for this task."},
-                status=status.HTTP_403_FORBIDDEN
+                {
+                    "error": "You do not have permission to update progress for this task."
+                },
+                status=status.HTTP_403_FORBIDDEN,
             )
 
-        serializer = TaskProgressUpdateSerializer(
-            task,
-            data=request.data,
-            partial=True
-        )
+        serializer = TaskProgressUpdateSerializer(task, data=request.data, partial=True)
 
         serializer.is_valid(raise_exception=True)
 
@@ -124,13 +126,13 @@ class TaskProgressUpdateView(APIView):
                 user=task.project.manager,
                 title="Task Completed",
                 message=f"Task '{task.title}' was marked as 100% completed by @{request.user.username}.",
-                notification_type="task_completed"
+                notification_type="task_completed",
             )
             create_notification(
                 user=request.user,
                 title="Task Completed",
                 message=f"Great job! Task '{task.title}' is completed.",
-                notification_type="task_completed"
+                notification_type="task_completed",
             )
         else:
             if task.project.manager and task.project.manager != request.user:
@@ -138,14 +140,16 @@ class TaskProgressUpdateView(APIView):
                     user=task.project.manager,
                     title="Task Progress Updated",
                     message=f"@{request.user.username} updated task '{task.title}' to {task.completion_percentage}%.",
-                    notification_type="progress_updated"
+                    notification_type="progress_updated",
                 )
 
-        return Response({
-            "message": "Task updated successfully.",
-            "task_id": task.id,
-            "status": task.status,
-            "completion_percentage": task.completion_percentage,
-            "predicted_risk": task.predicted_risk,
-            "risk_confidence": task.risk_confidence
-        })
+        return Response(
+            {
+                "message": "Task updated successfully.",
+                "task_id": task.id,
+                "status": task.status,
+                "completion_percentage": task.completion_percentage,
+                "predicted_risk": task.predicted_risk,
+                "risk_confidence": task.risk_confidence,
+            }
+        )
