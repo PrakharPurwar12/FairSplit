@@ -4,6 +4,8 @@ djangorestframework-simplejwt
 django-cors-headers
 psycopg2-binary
 python-decouple
+dj-database-url
+whitenoise
 Pillow==12.3.0
 pandas==3.0.3
 numpy==2.4.5
