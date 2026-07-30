@@ -1,0 +1,109 @@
+# ==============================================================================
+# FairSplit - Security & Vulnerability Audit Workflow
+# ==============================================================================
+# Objective: Audit Python packages (pip-audit), Node modules (npm audit),
+# and perform filesystem vulnerability scanning (Trivy) with SARIF reporting.
+# ==============================================================================
+
+name: Security Audits
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  schedule:
+    - cron: '0 0 * * 0' # Weekly scan every Sunday at midnight UTC
+
+concurrency:
+  group: security-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  # ----------------------------------------------------------------------------
+  # Job 1: Python Dependency Vulnerability Audit
+  # ----------------------------------------------------------------------------
+  python-security:
+    name: Python Vulnerability Audit (pip-audit)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+          cache-dependency-path: backend/requirements.txt
+
+      - name: Install pip-audit & backend requirements
+        run: |
+          python -m pip install --upgrade pip
+          pip install pip-audit -r backend/requirements.txt
+
+      - name: Run pip-audit
+        run: |
+          pip-audit -r backend/requirements.txt
+
+  # ----------------------------------------------------------------------------
+  # Job 2: Frontend Node Dependency Vulnerability Audit
+  # ----------------------------------------------------------------------------
+  frontend-security:
+    name: Frontend Vulnerability Audit (npm audit)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 22 LTS
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Run npm audit
+        run: |
+          npm audit --audit-level=high
+
+  # ----------------------------------------------------------------------------
+  # Job 3: Filesystem Vulnerability Scanning (Trivy + SARIF Upload)
+  # ----------------------------------------------------------------------------
+  trivy-scan:
+    name: Trivy Security Scan & SARIF Upload
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run Trivy Vulnerability Scanner (Filesystem)
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          ignore-unfixed: true
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          severity: 'CRITICAL,HIGH'
+
+      - name: Upload Trivy SARIF Report to GitHub Security Tab
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: 'trivy-results.sarif'

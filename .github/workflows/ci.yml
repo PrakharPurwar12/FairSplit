@@ -1,0 +1,138 @@
+# ==============================================================================
+# FairSplit - Continuous Integration (CI) Workflow
+# ==============================================================================
+# Objective: Validate Django backend, React frontend build, Docker Compose spec,
+# and build Docker images on every Push & Pull Request to main branch.
+# ==============================================================================
+
+name: Continuous Integration
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  # ----------------------------------------------------------------------------
+  # Job 1: Backend Validation (Django)
+  # ----------------------------------------------------------------------------
+  backend:
+    name: Backend Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    defaults:
+      run:
+        working-directory: backend
+
+    env:
+      # CI-safe environment variables (isolated testing, no production secrets required)
+      SECRET_KEY: ci-secret-key-placeholder-for-testing-purposes-only
+      DEBUG: 'False'
+      ALLOWED_HOSTS: 'localhost,127.0.0.1,backend'
+      DB_ENGINE: django.db.backends.sqlite3
+      GOOGLE_CLIENT_ID: ci-google-client-id
+      GOOGLE_CLIENT_SECRET: ci-google-client-secret
+      GITHUB_CLIENT_ID: ci-github-client-id
+      GITHUB_CLIENT_SECRET: ci-github-client-secret
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+          cache-dependency-path: backend/requirements.txt
+
+      - name: Install backend dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run Django System Check
+        run: |
+          python manage.py check
+
+      # TODO: Implement Django Unit Tests (e.g., python manage.py test)
+      # TODO: Implement Django Integration & API Tests with pytest
+
+  # ----------------------------------------------------------------------------
+  # Job 2: Frontend Build (React + Vite)
+  # ----------------------------------------------------------------------------
+  frontend:
+    name: Frontend Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 22 LTS
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        run: |
+          npm ci
+
+      - name: Build React application
+        run: |
+          npm run build
+
+      # TODO: Implement Frontend Unit & Component Tests (e.g., Vitest / React Testing Library)
+      # TODO: Implement End-to-End (E2E) UI Tests (e.g., Playwright / Cypress)
+
+      - name: Upload frontend build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-dist
+          path: frontend/dist
+          retention-days: 7
+
+  # ----------------------------------------------------------------------------
+  # Job 3: Docker Validation & Build (Docker Compose)
+  # ----------------------------------------------------------------------------
+  docker:
+    name: Docker Validation & Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Validate Docker Compose Configuration
+        run: |
+          docker compose config
+
+      - name: Build Docker Compose Images (--no-cache)
+        run: |
+          docker compose build --no-cache
+
+      # TODO: Implement Container Integration Tests
+      # TODO: Implement Docker Image Publish / Registry Push (e.g., GitHub Container Registry - GHCR)
+      # TODO: Implement Kubernetes (k8s) Deployment Pipeline & Helm Chart Release
