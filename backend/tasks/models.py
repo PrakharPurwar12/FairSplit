@@ -34,11 +34,13 @@ class Task(models.Model):
         default=3, validators=[MinValueValidator(1), MaxValueValidator(5)]
     )
 
-    priority = models.CharField(max_length=20, choices=PRIORITY)
+    priority = models.CharField(max_length=20, choices=PRIORITY, db_index=True)
 
-    deadline = models.DateField()
+    deadline = models.DateField(db_index=True)
 
-    status = models.CharField(max_length=20, choices=STATUS, default="todo")
+    status = models.CharField(
+        max_length=20, choices=STATUS, default="todo", db_index=True
+    )
 
     completion_percentage = models.PositiveSmallIntegerField(
         default=0, validators=[MinValueValidator(0), MaxValueValidator(100)]

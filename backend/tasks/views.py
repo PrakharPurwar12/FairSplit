@@ -22,9 +22,13 @@ class TaskListCreateView(generics.ListCreateAPIView):
     def get_queryset(self):
         user = self.request.user
         if user.is_staff or user.is_superuser:
-            return Task.objects.select_related("project", "created_by").all()
+            return Task.objects.select_related(
+                "project", "created_by", "assignment__assigned_to"
+            ).all()
         return (
-            Task.objects.select_related("project", "created_by")
+            Task.objects.select_related(
+                "project", "created_by", "assignment__assigned_to"
+            )
             .filter(
                 models.Q(created_by=user)
                 | models.Q(project__manager=user)
@@ -52,13 +56,21 @@ class TaskDetailView(generics.RetrieveUpdateDestroyAPIView):
     def get_queryset(self):
         user = self.request.user
         if user.is_staff or user.is_superuser:
-            return Task.objects.all()
-        return Task.objects.filter(
-            models.Q(created_by=user)
-            | models.Q(project__manager=user)
-            | models.Q(project__members__user=user)
-            | models.Q(assignment__assigned_to=user)
-        ).distinct()
+            return Task.objects.select_related(
+                "project", "created_by", "assignment__assigned_to"
+            ).all()
+        return (
+            Task.objects.select_related(
+                "project", "created_by", "assignment__assigned_to"
+            )
+            .filter(
+                models.Q(created_by=user)
+                | models.Q(project__manager=user)
+                | models.Q(project__members__user=user)
+                | models.Q(assignment__assigned_to=user)
+            )
+            .distinct()
+        )
 
 
 class TaskSkillListCreateView(generics.ListCreateAPIView):
