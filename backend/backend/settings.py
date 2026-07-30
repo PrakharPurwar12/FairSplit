@@ -17,8 +17,11 @@ from decouple import config, Config, RepositoryEnv
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# Explicitly load .env from BASE_DIR if it exists
+# Explicitly load .env from BASE_DIR or root project directory if present
 env_path = BASE_DIR / '.env'
+if not env_path.exists() and (BASE_DIR.parent / '.env').exists():
+    env_path = BASE_DIR.parent / '.env'
+
 if env_path.exists():
     config = Config(RepositoryEnv(str(env_path)))
 
@@ -27,7 +30,7 @@ if env_path.exists():
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = config('SECRET_KEY', default='django-insecure-uh#ze80b$e)o#vz(%-@*$+8^$pw!bb#ouisl*3-q$&8))q5u7r')
+SECRET_KEY = config("SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config('DEBUG', default=True, cast=bool)
@@ -170,11 +173,11 @@ if DB_ENGINE in ("django.db.backends.postgresql", "postgresql"):
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql',
-            'NAME': config('POSTGRES_DB', default='fairsplit'),
-            'USER': config('POSTGRES_USER', default='fairsplit'),
-            'PASSWORD': config('POSTGRES_PASSWORD', default='fairsplit_password'),
-            'HOST': config('POSTGRES_HOST', default='postgres'),
-            'PORT': config('POSTGRES_PORT', default='5432'),
+            'NAME': config('DATABASE_NAME', default=config('POSTGRES_DB', default='fairsplit')),
+            'USER': config('DATABASE_USER', default=config('POSTGRES_USER', default='fairsplit')),
+            'PASSWORD': config('DATABASE_PASSWORD', default=config('POSTGRES_PASSWORD', default='fairsplit_password')),
+            'HOST': config('DATABASE_HOST', default=config('POSTGRES_HOST', default='postgres')),
+            'PORT': config('DATABASE_PORT', default=config('POSTGRES_PORT', default='5432')),
         }
     }
 else:

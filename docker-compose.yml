@@ -31,7 +31,7 @@ services:
       - path: backend/.env
         required: false
     environment:
-      SECRET_KEY: ${SECRET_KEY:-django-insecure-fairsplit-production-key}
+      SECRET_KEY: ${SECRET_KEY}
       DB_ENGINE: ${DB_ENGINE:-django.db.backends.postgresql}
       POSTGRES_DB: ${POSTGRES_DB:-fairsplit}
       POSTGRES_USER: ${POSTGRES_USER:-fairsplit}
