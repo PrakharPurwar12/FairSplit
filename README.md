@@ -215,6 +215,13 @@ python manage.py migrate
 python manage.py runserver 8000
 ```
 
+### Pre-Commit Hooks
+To enforce Black formatting, isort import ordering, and Flake8 style checks automatically before every local Git commit:
+```bash
+# Install pre-commit hooks configuration
+pre-commit install
+```
+
 ### 3. Frontend Setup
 ```bash
 # Open a new terminal and navigate to frontend directory

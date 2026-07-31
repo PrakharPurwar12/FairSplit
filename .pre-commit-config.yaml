@@ -1,0 +1,32 @@
+# ==============================================================================
+# FairSplit - Pre-commit Git Hook Configuration
+# ==============================================================================
+# Objective: Enforce code formatting (black), import sorting (isort), and style
+# checking (flake8) before commits are created.
+# ==============================================================================
+
+repos:
+  - repo: https://github.com/psf/black
+    rev: 24.10.0
+    hooks:
+      - id: black
+        files: ^backend/
+
+  - repo: https://github.com/pycqa/isort
+    rev: 5.13.2
+    hooks:
+      - id: isort
+        args: ["--profile", "black"]
+        files: ^backend/
+
+  - repo: https://github.com/pycqa/flake8
+    rev: 7.1.1
+    hooks:
+      - id: flake8
+        args:
+          [
+            "--max-line-length=120",
+            "--extend-ignore=E203,E501,W503",
+            "--exclude=*/migrations/*,myenv/*",
+          ]
+        files: ^backend/
