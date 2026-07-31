@@ -3,21 +3,60 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { 
   ChevronRight, 
-  ChevronLeft, 
+  Sparkles,
   Users, 
   Cpu, 
   AlertTriangle, 
   BarChart2, 
   GitBranch,
-  Sparkles
+  LayoutDashboard,
+  Pause,
+  Play
 } from 'lucide-react';
 
-const SLIDES = [
-  { id: 'team-formation', label: 'AI Team Formation', image: '/assets/hero/team_formation_mock.png', icon: Users },
-  { id: 'task-allocation', label: 'Smart Task Allocation', image: '/assets/hero/task_allocation_mock.png', icon: Cpu },
-  { id: 'risk-analysis', label: 'Predictive Risk', image: '/assets/hero/risk_analysis_mock.png', icon: AlertTriangle },
-  { id: 'analytics', label: 'Project Analytics', image: '/assets/hero/analytics_bg.png', icon: BarChart2 },
-  { id: 'automation', label: 'Workflow Automation', image: '/assets/hero/automation_bg.png', icon: GitBranch },
+const BACKGROUND_SLIDES = [
+  {
+    id: 'dashboard',
+    title: 'Executive Dashboard',
+    tagline: 'Real-time project health & team activity overview',
+    image: '/assets/hero/analytics_dashboard.png',
+    icon: LayoutDashboard
+  },
+  {
+    id: 'team-formation',
+    title: 'AI Team Formation',
+    tagline: 'Intelligent skill matching & compatibility scoring',
+    image: '/assets/hero/team_formation_mock.png',
+    icon: Users
+  },
+  {
+    id: 'task-allocation',
+    title: 'Smart Task Allocation',
+    tagline: 'Automated workload balancing & capacity planning',
+    image: '/assets/hero/task_allocation_mock.png',
+    icon: Cpu
+  },
+  {
+    id: 'risk-analysis',
+    title: 'Predictive Risk Analysis',
+    tagline: 'ML delay forecasts & team burnout warnings',
+    image: '/assets/hero/risk_analysis_mock.png',
+    icon: AlertTriangle
+  },
+  {
+    id: 'analytics',
+    title: 'Project Analytics',
+    tagline: 'Burndown charts & team velocity metrics',
+    image: '/assets/hero/analytics_bg.png',
+    icon: BarChart2
+  },
+  {
+    id: 'automation',
+    title: 'Workflow Automation',
+    tagline: 'AI workflow orchestration & status transitions',
+    image: '/assets/hero/automation_bg.png',
+    icon: GitBranch
+  }
 ];
 
 const Hero = () => {
@@ -25,11 +64,7 @@ const Hero = () => {
   const [isPaused, setIsPaused] = useState(false);
 
   const nextSlide = useCallback(() => {
-    setCurrentIndex((prev) => (prev + 1) % SLIDES.length);
-  }, []);
-
-  const prevSlide = useCallback(() => {
-    setCurrentIndex((prev) => (prev - 1 + SLIDES.length) % SLIDES.length);
+    setCurrentIndex((prev) => (prev + 1) % BACKGROUND_SLIDES.length);
   }, []);
 
   useEffect(() => {
@@ -38,193 +73,153 @@ const Hero = () => {
     return () => clearInterval(timer);
   }, [isPaused, nextSlide]);
 
-  const currentSlide = SLIDES[currentIndex];
+  const currentSlide = BACKGROUND_SLIDES[currentIndex];
+  const IconComponent = currentSlide.icon;
 
-  const stagger = {
+  const containerVariants = {
     hidden: { opacity: 0 },
-    visible: { opacity: 1, transition: { staggerChildren: 0.06, delayChildren: 0.1 } }
+    visible: {
+      opacity: 1,
+      transition: { staggerChildren: 0.08, delayChildren: 0.1 }
+    }
   };
-  const fadeUp = {
-    hidden: { y: 14, opacity: 0 },
-    visible: { y: 0, opacity: 1, transition: { duration: 0.45, ease: [0.25, 0.46, 0.45, 0.94] } }
+
+  const itemVariants = {
+    hidden: { y: 18, opacity: 0 },
+    visible: { y: 0, opacity: 1, transition: { duration: 0.55, ease: [0.25, 0.46, 0.45, 0.94] } }
   };
 
   return (
-    <section className="relative w-full overflow-hidden bg-white dark:bg-[#060911]">
-
-      {/* ── Ambient glow — sits behind everything ── */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        <div className="block dark:hidden">
-          <div className="absolute top-[-10%] left-[5%] w-[50vw] h-[50vw] rounded-full bg-gradient-radial from-indigo-100/50 to-transparent blur-[80px]"></div>
-          <div className="absolute top-[5%] right-[-5%] w-[40vw] h-[40vw] rounded-full bg-gradient-radial from-blue-50/50 to-transparent blur-[80px]"></div>
-        </div>
-        <div className="hidden dark:block">
-          <div className="absolute top-[-5%] left-[10%] w-[45vw] h-[45vw] rounded-full bg-blue-900/12 blur-[100px]"></div>
-          <div className="absolute top-[10%] right-[-5%] w-[30vw] h-[30vw] rounded-full bg-indigo-900/8 blur-[100px]"></div>
-        </div>
-      </div>
-
-      {/* ── Hero copy ── */}
-      <div className="relative z-10 pt-24 sm:pt-28 px-4 sm:px-6 lg:px-8">
-        <motion.div 
-          variants={stagger}
-          initial="hidden"
-          animate="visible"
-          className="flex flex-col items-center text-center max-w-3xl mx-auto"
-        >
-          {/* Badge */}
-          <motion.div variants={fadeUp} className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/80 dark:bg-white/[0.06] border border-gray-200/80 dark:border-white/10 backdrop-blur-sm w-max mb-3 sm:mb-4 shadow-sm">
-            <Sparkles className="w-3.5 h-3.5 text-indigo-500 dark:text-blue-400" />
-            <span className="text-[10px] sm:text-[11px] font-bold text-gray-700 dark:text-gray-200 tracking-widest uppercase">FairSplit AI v2.0</span>
-          </motion.div>
-          
-          {/* Headline */}
-          <motion.h1 variants={fadeUp} className="text-[2rem] sm:text-5xl md:text-[3.4rem] lg:text-[3.8rem] leading-[1.08] font-black tracking-tight text-gray-900 dark:text-white mb-3 sm:mb-4">
-            Build Smarter Teams.<br className="hidden sm:block"/>
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 via-blue-500 to-cyan-500 dark:from-indigo-400 dark:via-blue-400 dark:to-cyan-400">Predict Risks.</span>{' '}
-            <br className="hidden sm:block"/>
-            Deliver Faster.
-          </motion.h1>
-          
-          {/* Subtitle */}
-          <motion.p variants={fadeUp} className="text-sm sm:text-base md:text-lg text-gray-500 dark:text-gray-400 max-w-xl leading-relaxed mb-4 sm:mb-5 px-2">
-            AI-powered task allocation, workload balancing, and ML risk prediction — so your team delivers every project on time.
-          </motion.p>
-          
-          {/* CTA Buttons */}
-          <motion.div variants={fadeUp} className="flex flex-wrap justify-center items-center gap-3">
-            <Link
-              to="/register"
-              className="group flex items-center gap-2 bg-gray-900 dark:bg-white text-white dark:text-gray-900 px-6 sm:px-7 py-2.5 sm:py-3 rounded-full text-xs sm:text-sm font-bold transition-all hover:bg-black dark:hover:bg-gray-100 shadow-lg shadow-gray-900/10 dark:shadow-white/10 hover:shadow-xl hover:scale-[1.03] active:scale-[0.97]"
-            >
-              Get Started Free
-              <ChevronRight size={15} className="group-hover:translate-x-0.5 transition-transform" />
-            </Link>
-            <a
-              href="#features"
-              className="flex items-center gap-2 text-gray-600 dark:text-gray-300 px-6 sm:px-7 py-2.5 sm:py-3 rounded-full text-xs sm:text-sm font-semibold bg-white/80 dark:bg-white/[0.06] hover:bg-gray-100 dark:hover:bg-white/10 transition-all border border-gray-200 dark:border-white/10 backdrop-blur-sm"
-            >
-              See How It Works
-            </a>
-          </motion.div>
-        </motion.div>
-      </div>
-
-      {/* ── Product showcase — floating glass card, tight gap below CTA ── */}
-      <motion.div
-        initial={{ opacity: 0, y: 40 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.7, delay: 0.35, ease: [0.25, 0.46, 0.45, 0.94] }}
-        className="relative z-10 mt-6 sm:mt-8 px-4 sm:px-6 lg:px-8 pb-4 sm:pb-6"
-        onMouseEnter={() => setIsPaused(true)}
-        onMouseLeave={() => setIsPaused(false)}
-      >
-        <div className="max-w-5xl mx-auto">
-
-          {/* Feature navigation pills — above the product window */}
-          <div className="flex items-center justify-center gap-1 sm:gap-1.5 flex-wrap mb-3 sm:mb-4">
-            {SLIDES.map((slide, idx) => {
-              const Icon = slide.icon;
-              const active = idx === currentIndex;
-              return (
-                <button
-                  key={slide.id}
-                  onClick={() => setCurrentIndex(idx)}
-                  className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full text-[10px] sm:text-xs font-semibold transition-all cursor-pointer whitespace-nowrap ${
-                    active
-                      ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900 shadow-md'
-                      : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-white/[0.06]'
-                  }`}
-                >
-                  <Icon className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                  <span className="hidden sm:inline">{slide.label}</span>
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Glass product window */}
-          <div 
-            className="relative rounded-xl sm:rounded-2xl overflow-hidden bg-white/50 dark:bg-white/[0.03] backdrop-blur-xl border border-gray-200/70 dark:border-white/[0.08]"
-            style={{ 
-              boxShadow: 'var(--hero-card-shadow, 0 25px 50px -12px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.03))'
-            }}
+    <section 
+      className="relative w-full min-h-[90vh] lg:min-h-screen flex flex-col justify-between items-center overflow-hidden bg-white dark:bg-[#060911] text-gray-900 dark:text-white select-none pt-28 pb-10 px-4 sm:px-6 lg:px-8"
+      onMouseEnter={() => setIsPaused(true)}
+      onMouseLeave={() => setIsPaused(false)}
+    >
+      {/* ── CINEMATIC BACKGROUND SLIDESHOW LAYER ── */}
+      <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={currentSlide.id}
+            initial={{ opacity: 0, scale: 1.08, x: 12 }}
+            animate={{ opacity: 1, scale: 1.0, x: 0 }}
+            exit={{ opacity: 0, scale: 0.98 }}
+            transition={{ duration: 1.4, ease: [0.25, 0.46, 0.45, 0.94] }}
+            className="absolute inset-0 w-full h-full"
           >
-            {/* Thin Mac-style title bar */}
-            <div className="flex items-center gap-1.5 px-3.5 py-2 bg-gray-50/80 dark:bg-white/[0.03] border-b border-gray-200/50 dark:border-white/[0.05]">
-              <div className="w-[9px] h-[9px] rounded-full bg-[#FF5F57]"></div>
-              <div className="w-[9px] h-[9px] rounded-full bg-[#FFBD2E]"></div>
-              <div className="w-[9px] h-[9px] rounded-full bg-[#28CA41]"></div>
-              <span className="ml-2 text-[10px] font-medium text-gray-400 dark:text-gray-500 tracking-wide">FairSplit — {currentSlide.label}</span>
-            </div>
+            <img 
+              src={currentSlide.image} 
+              alt={currentSlide.title}
+              className="w-full h-full object-cover object-top filter brightness-[0.95] dark:brightness-90 contrast-[1.05]"
+              loading="eager"
+            />
+          </motion.div>
+        </AnimatePresence>
 
-            {/* Image viewport */}
-            <div className="relative w-full bg-gray-100 dark:bg-[#0B1022] overflow-hidden" style={{ aspectRatio: '16 / 9' }}>
-              
-              <AnimatePresence mode="wait">
-                <motion.img
-                  key={currentSlide.id}
-                  src={currentSlide.image}
-                  alt={currentSlide.label}
-                  loading="lazy"
-                  initial={{ opacity: 0, x: 30, scale: 0.98 }}
-                  animate={{ opacity: 1, x: 0, scale: 1 }}
-                  exit={{ opacity: 0, x: -30, scale: 0.98 }}
-                  transition={{ duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] }}
-                  className="absolute inset-0 w-full h-full object-contain object-center"
-                />
-              </AnimatePresence>
+        {/* ── ADAPTIVE OVERLAYS FOR MAXIMUM READABILITY ── */}
+        {/* Light Theme Adaptive Mask */}
+        <div className="absolute inset-0 block dark:hidden bg-white/80 backdrop-blur-[3px] bg-gradient-to-b from-white/90 via-white/75 to-white pointer-events-none"></div>
 
-              {/* Minimal overlays — just enough to soften the edges, NOT hide content */}
-              {/* Top: ~12% soft blend */}
-              <div className="absolute inset-x-0 top-0 h-[12%] bg-gradient-to-b from-gray-100/80 dark:from-[#0B1022]/80 to-transparent pointer-events-none"></div>
-              {/* Bottom: ~10% soft blend */}
-              <div className="absolute inset-x-0 bottom-0 h-[10%] bg-gradient-to-t from-gray-100/60 dark:from-[#0B1022]/60 to-transparent pointer-events-none"></div>
+        {/* Dark Theme Adaptive Mask */}
+        <div className="absolute inset-0 hidden dark:block bg-[#060911]/80 backdrop-blur-[3px] bg-gradient-to-b from-[#060911]/90 via-[#060911]/75 to-[#060911] pointer-events-none"></div>
 
-              {/* Navigation arrows */}
-              <button
-                onClick={prevSlide}
-                className="absolute left-2.5 sm:left-4 top-1/2 -translate-y-1/2 z-10 p-1.5 sm:p-2 rounded-full bg-white/80 dark:bg-black/50 text-gray-600 dark:text-gray-300 hover:bg-white dark:hover:bg-black/70 border border-gray-200/50 dark:border-white/10 shadow-md backdrop-blur-sm transition-all cursor-pointer"
-                title="Previous"
-              >
-                <ChevronLeft className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-              </button>
-              <button
-                onClick={nextSlide}
-                className="absolute right-2.5 sm:right-4 top-1/2 -translate-y-1/2 z-10 p-1.5 sm:p-2 rounded-full bg-white/80 dark:bg-black/50 text-gray-600 dark:text-gray-300 hover:bg-white dark:hover:bg-black/70 border border-gray-200/50 dark:border-white/10 shadow-md backdrop-blur-sm transition-all cursor-pointer"
-                title="Next"
-              >
-                <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-              </button>
+        {/* Ambient Radial Glow */}
+        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[500px] bg-gradient-radial from-indigo-500/10 dark:from-blue-500/15 via-transparent to-transparent blur-3xl pointer-events-none"></div>
+      </div>
 
-              {/* Pagination dots — bottom center inside viewport */}
-              <div className="absolute bottom-2.5 sm:bottom-3 left-1/2 -translate-x-1/2 z-10 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/30 dark:bg-black/50 backdrop-blur-sm">
-                {SLIDES.map((_, idx) => (
-                  <button
-                    key={idx}
-                    onClick={() => setCurrentIndex(idx)}
-                    className={`rounded-full transition-all cursor-pointer ${
-                      idx === currentIndex
-                        ? 'w-5 h-1.5 bg-white'
-                        : 'w-1.5 h-1.5 bg-white/40 hover:bg-white/60'
-                    }`}
-                    title={`Slide ${idx + 1}`}
-                  />
-                ))}
-              </div>
-            </div>
-          </div>
+      {/* ── HERO CONTENT LAYER ── */}
+      <motion.div 
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+        className="relative z-10 flex flex-col items-center text-center max-w-4xl mx-auto my-auto"
+      >
+        {/* Version Badge */}
+        <motion.div 
+          variants={itemVariants} 
+          className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/80 dark:bg-white/[0.06] border border-gray-200/80 dark:border-white/10 backdrop-blur-md w-max mb-4 sm:mb-6 shadow-sm"
+        >
+          <Sparkles className="w-3.5 h-3.5 text-indigo-600 dark:text-blue-400 animate-pulse" />
+          <span className="text-[10px] sm:text-xs font-bold text-gray-800 dark:text-gray-200 tracking-widest uppercase">FairSplit AI v2.0</span>
+        </motion.div>
 
-          {/* Bottom glow reflection under the card */}
-          <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[60%] h-16 bg-gradient-radial from-indigo-500/8 dark:from-blue-500/10 to-transparent blur-2xl pointer-events-none"></div>
-        </div>
+        {/* Headline */}
+        <motion.h1 
+          variants={itemVariants} 
+          className="text-3xl sm:text-5xl md:text-6xl lg:text-[4.2rem] leading-[1.08] font-black tracking-tight text-gray-900 dark:text-white mb-4 sm:mb-6"
+        >
+          Build Smarter Teams.<br className="hidden sm:block"/>
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 via-blue-600 to-cyan-600 dark:from-indigo-400 dark:via-blue-400 dark:to-cyan-400">Predict Risks.</span>{' '}
+          <span className="hidden sm:inline"><br/></span>
+          Deliver Faster.
+        </motion.h1>
+
+        {/* Subtitle */}
+        <motion.p 
+          variants={itemVariants} 
+          className="text-base sm:text-lg md:text-xl text-gray-600 dark:text-gray-300 max-w-2xl leading-relaxed font-medium mb-6 sm:mb-8 px-2"
+        >
+          FairSplit uses Artificial Intelligence to intelligently assign tasks, balance workloads, predict project risks, and help teams deliver projects faster.
+        </motion.p>
+
+        {/* CTA Buttons */}
+        <motion.div 
+          variants={itemVariants} 
+          className="flex flex-wrap justify-center items-center gap-3 sm:gap-4"
+        >
+          <Link
+            to="/register"
+            className="group flex items-center gap-2 bg-gray-900 dark:bg-white text-white dark:text-gray-900 px-7 sm:px-8 py-3.5 rounded-full text-xs sm:text-sm font-bold transition-all hover:bg-black dark:hover:bg-gray-100 shadow-xl shadow-gray-900/10 dark:shadow-white/10 hover:scale-105 active:scale-95"
+          >
+            Get Started Free
+            <ChevronRight size={16} className="group-hover:translate-x-1 transition-transform" />
+          </Link>
+          <a
+            href="#features"
+            className="flex items-center gap-2 text-gray-700 dark:text-gray-200 px-7 sm:px-8 py-3.5 rounded-full text-xs sm:text-sm font-bold bg-white/80 dark:bg-white/10 hover:bg-white dark:hover:bg-white/20 backdrop-blur-md transition-all border border-gray-200 dark:border-white/15 shadow-sm hover:scale-105 active:scale-95"
+          >
+            See How It Works
+          </a>
+        </motion.div>
       </motion.div>
 
-      {/* Dark-mode shadow variable */}
-      <style>{`
-        .dark section { --hero-card-shadow: 0 25px 60px -12px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.04), 0 0 80px -20px rgba(59,130,246,0.08); }
-      `}</style>
+      {/* ── CINEMATIC BACKGROUND SLIDE INDICATOR PILLS ── */}
+      <div className="relative z-10 w-full max-w-2xl mx-auto mt-8 flex flex-col items-center gap-3">
+        {/* Active Feature Tagline */}
+        <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/70 dark:bg-white/[0.06] border border-gray-200/60 dark:border-white/10 backdrop-blur-md shadow-sm">
+          <div className="w-5 h-5 rounded-full bg-indigo-500/15 dark:bg-blue-400/20 flex items-center justify-center text-indigo-600 dark:text-blue-400 shrink-0">
+            <IconComponent className="w-3 h-3" />
+          </div>
+          <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">
+            {currentSlide.title}: <span className="font-normal text-gray-500 dark:text-gray-400">{currentSlide.tagline}</span>
+          </span>
+          <button 
+            onClick={() => setIsPaused(!isPaused)} 
+            className="ml-1 p-0.5 text-gray-400 hover:text-gray-600 dark:hover:text-white rounded transition-colors"
+            title={isPaused ? "Resume auto-slide" : "Pause auto-slide"}
+          >
+            {isPaused ? <Play className="w-3 h-3 text-indigo-600 dark:text-blue-400" /> : <Pause className="w-3 h-3 text-indigo-600 dark:text-blue-400" />}
+          </button>
+        </div>
 
+        {/* Feature Navigation Dots / Tabs */}
+        <div className="flex items-center gap-1.5 flex-wrap justify-center">
+          {BACKGROUND_SLIDES.map((slide, idx) => {
+            const isActive = idx === currentIndex;
+            return (
+              <button
+                key={slide.id}
+                onClick={() => setCurrentIndex(idx)}
+                className={`h-1.5 rounded-full transition-all duration-300 cursor-pointer ${
+                  isActive
+                    ? 'w-7 bg-indigo-600 dark:bg-blue-400 shadow-sm'
+                    : 'w-2 bg-gray-300 dark:bg-white/20 hover:bg-gray-400 dark:hover:bg-white/40'
+                }`}
+                title={`View ${slide.title}`}
+              />
+            );
+          })}
+        </div>
+      </div>
     </section>
   );
 };

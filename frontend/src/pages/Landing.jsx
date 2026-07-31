@@ -2,7 +2,6 @@ import React from 'react';
 
 import Navbar from '../components/landing/navbar/Navbar';
 import Hero from '../components/landing/hero/Hero';
-import ImageSlider from '../components/landing/showcase/ImageSlider';
 import Features from '../components/landing/features/Features';
 import HowItWorks from '../components/landing/howItWorks/HowItWorks';
 import Modules from '../components/landing/modules/Modules';
@@ -16,12 +15,10 @@ const Landing = () => {
       {/* Editorial Spotlight Effect - Dark Mode Only */}
       <div className="hidden dark:block fixed top-[-20%] left-1/2 -translate-x-1/2 w-[1000px] h-[800px] bg-gradient-to-br from-info via-accent to-primary rounded-full blur-[120px] -z-10 pointer-events-none opacity-40 mix-blend-screen"></div>
 
-
       <Navbar />
 
       <main className="flex flex-col w-full relative z-10">
         <Hero />
-        <ImageSlider />
         <Features />
         <HowItWorks />
         <Modules />
