@@ -95,7 +95,7 @@ const Hero = () => {
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
     >
-      {/* ── ENVIRONMENTAL BACKGROUND SLIDESHOW LAYER ── */}
+      {/* ── CLEAN HERO BACKGROUND SLIDESHOW LAYER ── */}
       <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
         <AnimatePresence initial={false}>
           <motion.div
@@ -103,24 +103,24 @@ const Hero = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 1.2, ease: "easeInOut" }}
+            transition={{ duration: 1.0, ease: "easeInOut" }}
             className="absolute inset-0 w-full h-full"
           >
             <img 
               src={currentSlide.image} 
               alt={currentSlide.title}
-              className="w-full h-full object-cover object-[center_20%] scale-[1.12] opacity-65 brightness-[0.94] contrast-[1.12] saturate-[0.88] dark:opacity-28 dark:brightness-100 dark:contrast-100 dark:saturate-100 transition-all duration-700"
+              className="w-full h-full object-cover object-top opacity-50 dark:opacity-40"
               loading="eager"
             />
           </motion.div>
         </AnimatePresence>
 
-        {/* ── SINGLE ADAPTIVE OVERLAY (ENVIRONMENTAL CONTEXT LAYER) ── */}
-        {/* Light Theme: Refined subtle 12% white tint overlay (Linear/Notion style) */}
-        <div className="absolute inset-0 block dark:hidden bg-white/12 pointer-events-none"></div>
+        {/* ── MINIMAL SINGLE ADAPTIVE OVERLAY ── */}
+        {/* Light Theme: Subtle 20% white tint */}
+        <div className="absolute inset-0 block dark:hidden bg-white/20 pointer-events-none"></div>
 
-        {/* Dark Theme: Approved dark tint overlay (UNTOUCHED) */}
-        <div className="absolute inset-0 hidden dark:block bg-[#060911]/40 pointer-events-none"></div>
+        {/* Dark Theme: Subtle 45% dark tint */}
+        <div className="absolute inset-0 hidden dark:block bg-[#060911]/45 pointer-events-none"></div>
       </div>
 
       {/* ── HERO CONTENT LAYER ── */}
