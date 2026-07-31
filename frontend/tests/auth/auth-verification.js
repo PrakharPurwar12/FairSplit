@@ -1,7 +1,7 @@
 /* global process */
 import axios from 'axios';
 
-const BASE_URL = 'http://127.0.0.1:8000/api';
+const BASE_URL = process.env.VITE_API_BASE_URL || 'https://fairsplit-backend-e67j.onrender.com/api';
 const rand = Math.floor(Math.random() * 1000000);
 const username = `verify_user_${rand}`;
 const email = `verify_${rand}@example.com`;

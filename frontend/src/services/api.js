@@ -2,7 +2,7 @@ import axios from 'axios';
 
 // Create Axios instance with base URL from environment
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000/api',
+  baseURL: import.meta.env.VITE_API_BASE_URL || 'https://fairsplit-backend-e67j.onrender.com/api',
   headers: {
     'Content-Type': 'application/json',
   },
@@ -38,7 +38,7 @@ api.interceptors.response.use(
 
         // Attempt to refresh token (using native axios to avoid interceptor loop)
         const response = await axios.post(
-          `${import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000/api'}/account/refresh/`,
+          `${import.meta.env.VITE_API_BASE_URL || 'https://fairsplit-backend-e67j.onrender.com/api'}/account/refresh/`,
           { refresh: refreshToken }
         );
 
