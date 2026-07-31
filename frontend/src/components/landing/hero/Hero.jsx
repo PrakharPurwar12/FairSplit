@@ -17,32 +17,32 @@ import {
 const SLIDES = [
   {
     id: 'collaboration',
-    title: 'AI Team Collaboration',
-    tagline: 'Intelligent Team Formation & Dynamic Skill Matching',
-    image: '/assets/hero/collaboration_bg.png',
+    title: 'AI Team Formation',
+    tagline: 'Team Cards, Skill Matching & Compatibility Scoring',
+    image: '/assets/hero/team_formation_mock.png',
     icon: Users,
     glow: 'from-blue-600/30 via-indigo-600/20 to-transparent'
   },
   {
     id: 'allocation',
     title: 'Smart Task Allocation',
-    tagline: 'Automated Workload Capacity & Skill Optimization',
-    image: '/assets/hero/allocation_bg.png',
+    tagline: 'Kanban Workload Balancing & Automated Work Assignment',
+    image: '/assets/hero/task_allocation_mock.png',
     icon: Cpu,
     glow: 'from-purple-600/30 via-indigo-600/20 to-transparent'
   },
   {
     id: 'risk',
     title: 'Predictive Risk Analysis',
-    tagline: 'ML-Powered Delivery Risk & Bottleneck Forecasting',
-    image: '/assets/hero/risk_bg.png',
+    tagline: 'Timeline Forecast, ML Risk Scores & Burnout Warning System',
+    image: '/assets/hero/risk_analysis_mock.png',
     icon: AlertTriangle,
     glow: 'from-amber-600/30 via-red-600/20 to-transparent'
   },
   {
     id: 'analytics',
     title: 'Project Analytics',
-    tagline: 'Executive KPIs, Completion Velocity & Capacity Metrics',
+    tagline: 'Executive KPIs, Burndown Charts & Completion Velocity',
     image: '/assets/hero/analytics_bg.png',
     icon: BarChart2,
     glow: 'from-emerald-600/30 via-teal-600/20 to-transparent'
@@ -50,7 +50,7 @@ const SLIDES = [
   {
     id: 'automation',
     title: 'Workflow Automation',
-    tagline: 'Seamless Pipeline Orchestration & Reduced Management Overhead',
+    tagline: 'Automation Pipelines, Task Flow & AI Status Transitions',
     image: '/assets/hero/automation_bg.png',
     icon: GitBranch,
     glow: 'from-cyan-600/30 via-blue-600/20 to-transparent'
