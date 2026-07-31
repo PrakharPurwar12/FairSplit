@@ -109,17 +109,17 @@ const Hero = () => {
             <img 
               src={currentSlide.image} 
               alt={currentSlide.title}
-              className="w-full h-full object-cover object-[center_20%] scale-[1.12] opacity-38 dark:opacity-28 transition-opacity duration-700"
+              className="w-full h-full object-cover object-[center_20%] scale-[1.12] opacity-65 brightness-[0.94] contrast-[1.12] saturate-[0.88] dark:opacity-28 dark:brightness-100 dark:contrast-100 dark:saturate-100 transition-all duration-700"
               loading="eager"
             />
           </motion.div>
         </AnimatePresence>
 
         {/* ── SINGLE ADAPTIVE OVERLAY (ENVIRONMENTAL CONTEXT LAYER) ── */}
-        {/* Light Theme: Subtle white tint overlay */}
-        <div className="absolute inset-0 block dark:hidden bg-white/25 pointer-events-none"></div>
+        {/* Light Theme: Refined subtle 12% white tint overlay (Linear/Notion style) */}
+        <div className="absolute inset-0 block dark:hidden bg-white/12 pointer-events-none"></div>
 
-        {/* Dark Theme: Subtle dark tint overlay */}
+        {/* Dark Theme: Approved dark tint overlay (UNTOUCHED) */}
         <div className="absolute inset-0 hidden dark:block bg-[#060911]/40 pointer-events-none"></div>
       </div>
 
