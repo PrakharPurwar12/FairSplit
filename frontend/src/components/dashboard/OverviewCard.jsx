@@ -1,8 +1,14 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 
-const OverviewCard = ({ title, value, trend, icon: Icon, isLoading = true }) => {
+const OverviewCard = ({ title, value, trend, icon: Icon, path, isLoading = true }) => {
+  const navigate = useNavigate();
+
   return (
-    <div className="relative p-6 rounded-xl border border-gray-200/60 dark:border-white/5 bg-white dark:bg-[#111111]/80 shadow-sm hover:shadow-md hover:-translate-y-1 hover:shadow-gray-200/50 dark:hover:shadow-black/50 transition-all duration-300 group overflow-hidden flex flex-col justify-between min-h-[140px]">
+    <div 
+      onClick={() => path && navigate(path)}
+      className="relative p-6 rounded-xl border border-gray-200/60 dark:border-white/5 bg-white dark:bg-[#111111]/80 shadow-sm hover:shadow-md hover:-translate-y-1 hover:shadow-gray-200/50 dark:hover:shadow-black/50 transition-all duration-300 group overflow-hidden flex flex-col justify-between min-h-[140px] cursor-pointer"
+    >
       
       {/* Decorative gradient blur in background */}
       <div className="absolute -top-12 -right-12 w-32 h-32 bg-blue-500/5 rounded-full blur-3xl group-hover:bg-blue-500/10 transition-colors duration-500 pointer-events-none"></div>

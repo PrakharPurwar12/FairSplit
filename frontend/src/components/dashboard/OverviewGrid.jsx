@@ -10,10 +10,10 @@ const OverviewGrid = ({
   isLoading = true 
 }) => {
   const cards = [
-    { title: 'Active Projects', icon: FolderKanban, value: activeProjects, trend: 'Currently active' },
-    { title: 'Total Tasks', icon: CheckSquare, value: totalTasks, trend: 'In workspace' },
-    { title: 'Team Members', icon: Users, value: totalMembers, trend: 'Across projects' },
-    { title: 'High Risk Tasks', icon: AlertTriangle, value: highRiskTasks, trend: 'AI risk flagged' },
+    { title: 'Active Projects', icon: FolderKanban, value: activeProjects, trend: 'Currently active', path: '/projects' },
+    { title: 'Total Tasks', icon: CheckSquare, value: totalTasks, trend: 'In workspace', path: '/tasks' },
+    { title: 'Team Members', icon: Users, value: totalMembers, trend: 'Across projects', path: '/teams' },
+    { title: 'High Risk Tasks', icon: AlertTriangle, value: highRiskTasks, trend: 'AI risk flagged', path: '/prediction' },
   ];
 
   return (
@@ -24,7 +24,8 @@ const OverviewGrid = ({
           title={card.title} 
           value={card.value}
           trend={card.trend}
-          icon={card.icon} 
+          icon={card.icon}
+          path={card.path} 
           isLoading={isLoading} 
         />
       ))}
