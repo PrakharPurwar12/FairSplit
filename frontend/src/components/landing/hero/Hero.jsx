@@ -95,7 +95,7 @@ const Hero = () => {
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
     >
-      {/* ── BACKGROUND ENVIRONMENTAL LAYER (Z-0) ── */}
+      {/* ── BACKGROUND SLIDESHOW LAYER ── */}
       <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
         <AnimatePresence initial={false}>
           <motion.div
@@ -109,18 +109,18 @@ const Hero = () => {
             <img 
               src={currentSlide.image} 
               alt={currentSlide.title}
-              className="w-full h-full object-cover object-top opacity-60 dark:opacity-35 transition-opacity duration-700"
+              className="w-full h-full object-cover object-top opacity-60 dark:opacity-40"
               loading="eager"
             />
           </motion.div>
         </AnimatePresence>
 
-        {/* ── ATMOSPHERIC MIDGROUND LAYER (Z-10) ── */}
-        {/* Light Theme: Subtle top-to-bottom directional gradient (anchors top, enhances center readability, blends to bottom) */}
-        <div className="absolute inset-0 block dark:hidden bg-gradient-to-b from-white/20 via-white/40 to-white/95 pointer-events-none z-10"></div>
+        {/* ── SINGLE SIMPLE OVERLAY (NO GRADIENTS, NO BLOBS, NO FOG) ── */}
+        {/* Light Theme: Single 15% subtle white tint */}
+        <div className="absolute inset-0 block dark:hidden bg-white/15 pointer-events-none"></div>
 
-        {/* Dark Theme: Atmospheric dark directional gradient */}
-        <div className="absolute inset-0 hidden dark:block bg-gradient-to-b from-[#060911]/35 via-[#060911]/65 to-[#060911] pointer-events-none z-10"></div>
+        {/* Dark Theme: Single 35% subtle dark tint */}
+        <div className="absolute inset-0 hidden dark:block bg-[#060911]/35 pointer-events-none"></div>
       </div>
 
       {/* ── FOREGROUND HERO CONTENT LAYER (Z-20) ── */}
