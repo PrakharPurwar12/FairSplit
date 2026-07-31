@@ -15,17 +15,22 @@ const WelcomeHero = ({ userName, isLoading = true }) => {
     return () => clearInterval(interval);
   }, []);
 
+  const formattedName = typeof userName === 'string' ? userName.trim() : '';
+  const greetingText = formattedName ? `${greetingInfo.text}, ${formattedName}` : greetingInfo.text;
+
   return (
     <div className="flex flex-col gap-5 w-full">
       <div className="space-y-2">
         <h1 className="text-3xl sm:text-4xl font-semibold tracking-tight text-gray-900 dark:text-white flex items-center gap-2">
-          {greetingInfo.text}
           {isLoading ? (
-            <div className="h-9 w-36 bg-gray-200 dark:bg-white/10 rounded-lg animate-pulse ml-1"></div>
+            <>
+              <span>{greetingInfo.text}</span>
+              <div className="h-9 w-36 bg-gray-200 dark:bg-white/10 rounded-lg animate-pulse"></div>
+            </>
           ) : (
-            <span>, {userName}</span>
+            <span>{greetingText}</span>
           )}
-          <span className="inline-block animate-wave origin-bottom-right ml-1">{greetingInfo.emoji}</span>
+          <span className="inline-block animate-wave origin-bottom-right">{greetingInfo.emoji}</span>
         </h1>
         <p className="text-[15px] sm:text-base text-gray-500/90 dark:text-gray-400/90 font-medium">
           {greetingInfo.subtitle}
