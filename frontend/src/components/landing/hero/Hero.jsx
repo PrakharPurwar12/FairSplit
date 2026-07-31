@@ -95,7 +95,7 @@ const Hero = () => {
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
     >
-      {/* ── ACTUAL PRODUCT SCREENSHOT BACKGROUND ── */}
+      {/* ── ENVIRONMENTAL BACKGROUND SLIDESHOW LAYER ── */}
       <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
         <AnimatePresence initial={false}>
           <motion.div
@@ -103,24 +103,24 @@ const Hero = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 1.0, ease: "easeInOut" }}
+            transition={{ duration: 1.2, ease: "easeInOut" }}
             className="absolute inset-0 w-full h-full"
           >
             <img 
               src={currentSlide.image} 
               alt={currentSlide.title}
-              className="w-full h-full object-cover object-top opacity-85 dark:opacity-75 filter contrast-[1.10] brightness-[1.02] dark:brightness-95"
+              className="w-full h-full object-cover object-[center_20%] scale-[1.12] opacity-38 dark:opacity-28 transition-opacity duration-700"
               loading="eager"
             />
           </motion.div>
         </AnimatePresence>
 
-        {/* ── SINGLE ADAPTIVE OVERLAY (NO BLUR, NO BLOBS, NO WHITE FOG) ── */}
-        {/* Light Theme: 20% White tint + soft edge vignette */}
-        <div className="absolute inset-0 block dark:hidden bg-white/20 bg-[radial-gradient(ellipse_at_center,transparent_70%,rgba(255,255,255,0.45)_100%)] pointer-events-none"></div>
+        {/* ── SINGLE ADAPTIVE OVERLAY (ENVIRONMENTAL CONTEXT LAYER) ── */}
+        {/* Light Theme: Subtle white tint overlay */}
+        <div className="absolute inset-0 block dark:hidden bg-white/25 pointer-events-none"></div>
 
-        {/* Dark Theme: 32% Dark tint + soft edge vignette */}
-        <div className="absolute inset-0 hidden dark:block bg-[#060911]/32 bg-[radial-gradient(ellipse_at_center,transparent_70%,rgba(6,9,17,0.55)_100%)] pointer-events-none"></div>
+        {/* Dark Theme: Subtle dark tint overlay */}
+        <div className="absolute inset-0 hidden dark:block bg-[#060911]/40 pointer-events-none"></div>
       </div>
 
       {/* ── HERO CONTENT LAYER ── */}
@@ -130,9 +130,6 @@ const Hero = () => {
         animate="visible"
         className="relative z-10 flex flex-col items-center text-center max-w-4xl mx-auto my-auto"
       >
-        {/* Subtle Adaptive Text Spotlight (Protects Text Readability Scoped to Text Box Only) */}
-        <div className="absolute -inset-6 sm:-inset-10 -z-10 bg-[radial-gradient(ellipse_at_center,rgba(255,255,255,0.82)_0%,rgba(255,255,255,0.42)_55%,transparent_100%)] dark:bg-[radial-gradient(ellipse_at_center,rgba(6,9,17,0.82)_0%,rgba(6,9,17,0.42)_55%,transparent_100%)] pointer-events-none rounded-full"></div>
-
         {/* Version Badge */}
         <motion.div 
           variants={itemVariants} 
@@ -145,10 +142,10 @@ const Hero = () => {
         {/* Headline */}
         <motion.h1 
           variants={itemVariants} 
-          className="text-3xl sm:text-5xl md:text-6xl lg:text-[4.2rem] leading-[1.08] font-black tracking-tight text-gray-950 dark:text-white [text-shadow:_0_1px_12px_rgba(255,255,255,0.9),_0_2px_4px_rgba(255,255,255,0.8)] dark:[text-shadow:_0_2px_16px_rgba(0,0,0,0.95),_0_1px_4px_rgba(0,0,0,0.9)] mb-4 sm:mb-6"
+          className="text-3xl sm:text-5xl md:text-6xl lg:text-[4.2rem] leading-[1.08] font-black tracking-tight text-gray-900 dark:text-white mb-4 sm:mb-6"
         >
           Build Smarter Teams.<br className="hidden sm:block"/>
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 via-blue-600 to-cyan-600 dark:from-indigo-400 dark:via-blue-400 dark:to-cyan-300 drop-shadow-sm">Predict Risks.</span>{' '}
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 via-blue-600 to-cyan-600 dark:from-indigo-400 dark:via-blue-400 dark:to-cyan-400">Predict Risks.</span>{' '}
           <span className="hidden sm:inline"><br/></span>
           Deliver Faster.
         </motion.h1>
@@ -156,7 +153,7 @@ const Hero = () => {
         {/* Subtitle */}
         <motion.p 
           variants={itemVariants} 
-          className="text-base sm:text-lg md:text-xl text-gray-900 dark:text-gray-100 max-w-2xl leading-relaxed font-semibold [text-shadow:_0_1px_10px_rgba(255,255,255,0.9)] dark:[text-shadow:_0_2px_12px_rgba(0,0,0,0.95)] mb-6 sm:mb-8 px-2"
+          className="text-base sm:text-lg md:text-xl text-gray-600 dark:text-gray-300 max-w-2xl leading-relaxed font-medium mb-6 sm:mb-8 px-2"
         >
           FairSplit uses Artificial Intelligence to intelligently assign tasks, balance workloads, predict project risks, and help teams deliver projects faster.
         </motion.p>
