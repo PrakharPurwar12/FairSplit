@@ -66,8 +66,9 @@ jobs:
         run: |
           python manage.py check
 
-      # TODO: Implement Django Unit Tests (e.g., python manage.py test)
-      # TODO: Implement Django Integration & API Tests with pytest
+      - name: Run Django Unit Tests
+        run: |
+          python manage.py test
 
   # ----------------------------------------------------------------------------
   # Job 2: Frontend Build (React + Vite)

@@ -277,7 +277,11 @@ GOOGLE_CLIENT_ID = config("GOOGLE_CLIENT_ID", default="")
 GOOGLE_CLIENT_SECRET = config("GOOGLE_CLIENT_SECRET", default="")
 GOOGLE_REDIRECT_URI = config(
     "GOOGLE_REDIRECT_URI",
-    default=f"{FRONTEND_URL.rstrip('/')}/auth/callback" if FRONTEND_URL else "http://localhost/auth/callback"
+    default=(
+        f"{FRONTEND_URL.rstrip('/')}/auth/callback"
+        if FRONTEND_URL
+        else "http://localhost/auth/callback"
+    ),
 )
 GITHUB_CLIENT_ID = config("GITHUB_CLIENT_ID", default="")
 GITHUB_CLIENT_SECRET = config("GITHUB_CLIENT_SECRET", default="")
