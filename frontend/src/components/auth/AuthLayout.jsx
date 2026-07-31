@@ -131,8 +131,8 @@ const AuthLayout = ({ children, title, subtitle }) => {
           </div>
           
           <div className="mt-6 flex justify-center gap-6 text-xs font-medium text-text-muted">
-            <a href="#" className="hover:text-text transition-colors">Privacy Policy</a>
-            <a href="#" className="hover:text-text transition-colors">Terms of Service</a>
+            <span className="hover:text-text transition-colors cursor-pointer" onClick={() => alert('FairSplit Privacy Policy: Your data is encrypted and used solely for AI task allocation.')}>Privacy Policy</span>
+            <span className="hover:text-text transition-colors cursor-pointer" onClick={() => alert('FairSplit Terms of Service: Authorized workspace use only.')}>Terms of Service</span>
           </div>
         </motion.div>
       </div>

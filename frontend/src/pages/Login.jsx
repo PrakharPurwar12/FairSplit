@@ -101,9 +101,13 @@ const Login = () => {
                 Remember me
               </span>
             </label>
-            <a href="#" className="text-xs font-bold text-primary hover:text-primary-hover transition-colors">
+            <button
+              type="button"
+              onClick={() => setError('Password reset functionality is disabled. Please contact your system administrator.')}
+              className="text-xs font-bold text-primary hover:text-primary-hover transition-colors"
+            >
               Forgot password?
-            </a>
+            </button>
           </div>
         </div>
 
