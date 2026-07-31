@@ -20,21 +20,39 @@ const Analytics = () => {
   const [error, setError] = useState(null);
   const [toast, setToast] = useState(null);
 
+  const context = useOutletContext();
+
+  // Sync with DashboardLayout context project changes
+  useEffect(() => {
+    if (context?.selectedProjectId && context.selectedProjectId !== selectedProjectId) {
+      setSelectedProjectId(context.selectedProjectId);
+    }
+  }, [context?.selectedProjectId, selectedProjectId]);
+
   // Fetch projects list
   useEffect(() => {
+    let isMounted = true;
     const loadProjects = async () => {
       try {
         const data = await ProjectService.getProjects();
-        setProjects(data);
-        if (data.length > 0 && !selectedProjectId) {
-          setSelectedProjectId(data[0].id.toString());
+        if (isMounted) {
+          setProjects(data);
+          if (data.length > 0 && !selectedProjectId) {
+            setSelectedProjectId(data[0].id.toString());
+          } else if (data.length === 0) {
+            setIsLoading(false);
+          }
         }
       } catch (err) {
         console.error('Failed to load projects list:', err);
-        setError('Failed to fetch projects.');
+        if (isMounted) {
+          setError('Failed to fetch projects.');
+          setIsLoading(false);
+        }
       }
     };
     loadProjects();
+    return () => { isMounted = false; };
   }, [selectedProjectId]);
 
   // Fetch analytics for selected project

@@ -70,7 +70,10 @@ const Dashboard = () => {
   }, [fetchDashboardData]);
 
   const fetchRiskData = useCallback(async () => {
-    if (!selectedProjectId) return;
+    if (!selectedProjectId) {
+      setIsRiskLoading(false);
+      return;
+    }
     await Promise.resolve(); // Defer state updates to avoid synchronous useEffect rendering issues
     setIsRiskLoading(true);
     setRiskError(null);

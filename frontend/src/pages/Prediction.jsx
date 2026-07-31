@@ -38,32 +38,44 @@ const Prediction = () => {
 
   // Fetch initial project list
   useEffect(() => {
+    let isMounted = true;
     const fetchProjectsList = async () => {
       try {
         const data = await ProjectService.getProjects();
-        setProjects(data);
-        if (data.length > 0 && !selectedProjectId) {
-          setSelectedProjectId(data[0].id.toString());
+        if (isMounted) {
+          setProjects(data);
+          if (data.length > 0 && !selectedProjectId) {
+            setSelectedProjectId(data[0].id.toString());
+          } else if (data.length === 0) {
+            setIsLoading(false);
+          }
         }
       } catch (err) {
         console.error('Failed to load projects list:', err);
+        if (isMounted) {
+          setError('Failed to fetch projects.');
+          setIsLoading(false);
+        }
       }
     };
     fetchProjectsList();
+    return () => { isMounted = false; };
   }, [selectedProjectId]);
 
   // Sync with DashboardLayout context project changes
   useEffect(() => {
-    if (context?.selectedProjectId) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (context?.selectedProjectId && context.selectedProjectId !== selectedProjectId) {
       setSelectedProjectId(context.selectedProjectId);
     }
-  }, [context?.selectedProjectId]);
+  }, [context?.selectedProjectId, selectedProjectId]);
 
   // Fetch risk analytics
   const fetchRiskAnalytics = useCallback(async () => {
-    if (!selectedProjectId) return;
-    await Promise.resolve(); // Defer state updates to satisfy eslint rule
+    if (!selectedProjectId) {
+      setIsLoading(false);
+      return;
+    }
+    await Promise.resolve();
     setIsLoading(true);
     setError(null);
     try {
@@ -78,7 +90,6 @@ const Prediction = () => {
   }, [selectedProjectId]);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchRiskAnalytics();
   }, [fetchRiskAnalytics]);
 
