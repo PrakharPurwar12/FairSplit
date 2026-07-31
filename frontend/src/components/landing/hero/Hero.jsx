@@ -95,7 +95,7 @@ const Hero = () => {
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
     >
-      {/* ── CLEAN HERO BACKGROUND SLIDESHOW LAYER ── */}
+      {/* ── BACKGROUND ENVIRONMENTAL LAYER (Z-0) ── */}
       <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
         <AnimatePresence initial={false}>
           <motion.div
@@ -109,26 +109,26 @@ const Hero = () => {
             <img 
               src={currentSlide.image} 
               alt={currentSlide.title}
-              className="w-full h-full object-cover object-top opacity-50 dark:opacity-40"
+              className="w-full h-full object-cover object-top opacity-60 dark:opacity-35 transition-opacity duration-700"
               loading="eager"
             />
           </motion.div>
         </AnimatePresence>
 
-        {/* ── MINIMAL SINGLE ADAPTIVE OVERLAY ── */}
-        {/* Light Theme: Subtle 20% white tint */}
-        <div className="absolute inset-0 block dark:hidden bg-white/20 pointer-events-none"></div>
+        {/* ── ATMOSPHERIC MIDGROUND LAYER (Z-10) ── */}
+        {/* Light Theme: Subtle top-to-bottom directional gradient (anchors top, enhances center readability, blends to bottom) */}
+        <div className="absolute inset-0 block dark:hidden bg-gradient-to-b from-white/20 via-white/40 to-white/95 pointer-events-none z-10"></div>
 
-        {/* Dark Theme: Subtle 45% dark tint */}
-        <div className="absolute inset-0 hidden dark:block bg-[#060911]/45 pointer-events-none"></div>
+        {/* Dark Theme: Atmospheric dark directional gradient */}
+        <div className="absolute inset-0 hidden dark:block bg-gradient-to-b from-[#060911]/35 via-[#060911]/65 to-[#060911] pointer-events-none z-10"></div>
       </div>
 
-      {/* ── HERO CONTENT LAYER ── */}
+      {/* ── FOREGROUND HERO CONTENT LAYER (Z-20) ── */}
       <motion.div 
         variants={containerVariants}
         initial="hidden"
         animate="visible"
-        className="relative z-10 flex flex-col items-center text-center max-w-4xl mx-auto my-auto"
+        className="relative z-20 flex flex-col items-center text-center max-w-4xl mx-auto my-auto"
       >
         {/* Version Badge */}
         <motion.div 
@@ -180,7 +180,7 @@ const Hero = () => {
       </motion.div>
 
       {/* ── CINEMATIC BACKGROUND SLIDE INDICATOR PILLS ── */}
-      <div className="relative z-10 w-full max-w-2xl mx-auto mt-8 flex flex-col items-center gap-3">
+      <div className="relative z-20 w-full max-w-2xl mx-auto mt-8 flex flex-col items-center gap-3">
         {/* Active Feature Tagline */}
         <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/70 dark:bg-white/[0.06] border border-gray-200/60 dark:border-white/10 backdrop-blur-md shadow-sm">
           <div className="w-5 h-5 rounded-full bg-indigo-500/15 dark:bg-blue-400/20 flex items-center justify-center text-indigo-600 dark:text-blue-400 shrink-0">
