@@ -119,10 +119,10 @@ const Hero = () => {
           Deliver Faster.
         </motion.h1>
 
-        {/* Subtitle - Pure White (#FFFFFF) in both Light and Dark mode */}
+        {/* Subtitle - Adaptive Neutral Text for 100% Readability Across All Slides */}
         <motion.p 
           variants={itemVariants} 
-          className="text-base sm:text-lg md:text-xl text-white max-w-2xl leading-relaxed font-semibold sm:font-medium mb-6 sm:mb-8 px-2"
+          className="text-base sm:text-lg md:text-xl text-gray-900 dark:text-gray-200 max-w-2xl leading-relaxed font-semibold sm:font-medium mb-6 sm:mb-8 px-2"
         >
           FairSplit uses Artificial Intelligence to intelligently assign tasks, balance workloads, predict project risks, and help teams deliver projects faster.
         </motion.p>
