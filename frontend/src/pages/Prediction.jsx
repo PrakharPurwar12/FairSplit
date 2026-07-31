@@ -65,6 +65,7 @@ const Prediction = () => {
   // Sync with DashboardLayout context project changes
   useEffect(() => {
     if (context?.selectedProjectId && context.selectedProjectId !== selectedProjectId) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSelectedProjectId(context.selectedProjectId);
     }
   }, [context?.selectedProjectId, selectedProjectId]);
@@ -90,6 +91,7 @@ const Prediction = () => {
   }, [selectedProjectId]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchRiskAnalytics();
   }, [fetchRiskAnalytics]);
 

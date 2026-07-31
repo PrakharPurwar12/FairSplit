@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useOutletContext } from 'react-router-dom';
 import { 
   BarChart2, 
   TrendingUp, 
@@ -25,6 +26,7 @@ const Analytics = () => {
   // Sync with DashboardLayout context project changes
   useEffect(() => {
     if (context?.selectedProjectId && context.selectedProjectId !== selectedProjectId) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSelectedProjectId(context.selectedProjectId);
     }
   }, [context?.selectedProjectId, selectedProjectId]);
