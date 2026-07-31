@@ -64,14 +64,24 @@ class UserListView(generics.ListAPIView):
         return qs
 
 
+def get_oauth_redirect_uri():
+    explicit_uri = get_env_val("GOOGLE_REDIRECT_URI")
+    if explicit_uri and explicit_uri != "http://localhost/auth/callback":
+        return explicit_uri
+
+    frontend_url = get_env_val("FRONTEND_URL")
+    if frontend_url:
+        return f"{frontend_url.rstrip('/')}/auth/callback"
+
+    return explicit_uri or "http://localhost/auth/callback"
+
+
 class OAuthURLView(APIView):
     permission_classes = [permissions.AllowAny]
 
     def get(self, request):
         provider = request.query_params.get("provider", "google").lower()
-        redirect_uri = get_env_val(
-            "GOOGLE_REDIRECT_URI", "http://localhost/auth/callback"
-        )
+        redirect_uri = get_oauth_redirect_uri()
 
         if provider == "google":
             client_id = get_env_val("GOOGLE_CLIENT_ID")
@@ -100,9 +110,7 @@ class OAuthLoginView(APIView):
     def post(self, request):
         provider = request.data.get("provider", "").lower()
         code = request.data.get("code")
-        redirect_uri = request.data.get("redirect_uri") or get_env_val(
-            "GOOGLE_REDIRECT_URI", "http://localhost/auth/callback"
-        )
+        redirect_uri = request.data.get("redirect_uri") or get_oauth_redirect_uri()
 
         if not provider or not code:
             return Response(
