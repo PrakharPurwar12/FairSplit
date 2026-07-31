@@ -73,6 +73,13 @@ class Task(models.Model):
 
     updated_at = models.DateTimeField(auto_now=True)
 
+    class Meta:
+        indexes = [
+            models.Index(fields=["project", "status"], name="idx_task_proj_status"),
+            models.Index(fields=["project", "predicted_risk"], name="idx_task_proj_risk"),
+            models.Index(fields=["project", "deadline"], name="idx_task_proj_deadline"),
+        ]
+
     def __str__(self):
         return self.title
 
