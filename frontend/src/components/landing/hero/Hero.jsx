@@ -87,8 +87,8 @@ const Hero = () => {
           </motion.div>
         </AnimatePresence>
 
-        {/* ── SINGLE SIMPLE OVERLAY (SUBTLE 8% LIGHT TINT, 35% DARK TINT) ── */}
-        <div className="absolute inset-0 block dark:hidden bg-white/08 pointer-events-none"></div>
+        {/* ── SINGLE SIMPLE OVERLAY (ULTRA-SUBTLE 2% LIGHT TINT, 35% DARK TINT) ── */}
+        <div className="absolute inset-0 block dark:hidden bg-white/02 pointer-events-none"></div>
         <div className="absolute inset-0 hidden dark:block bg-[#060911]/35 pointer-events-none"></div>
       </div>
 
@@ -119,10 +119,10 @@ const Hero = () => {
           Deliver Faster.
         </motion.h1>
 
-        {/* Subtitle - Dark Neutral Contrast for Light Mode */}
+        {/* Subtitle - Pure White (#FFFFFF) in both Light and Dark mode */}
         <motion.p 
           variants={itemVariants} 
-          className="text-base sm:text-lg md:text-xl text-gray-900 dark:text-gray-300 max-w-2xl leading-relaxed font-semibold sm:font-medium mb-6 sm:mb-8 px-2"
+          className="text-base sm:text-lg md:text-xl text-white max-w-2xl leading-relaxed font-semibold sm:font-medium mb-6 sm:mb-8 px-2"
         >
           FairSplit uses Artificial Intelligence to intelligently assign tasks, balance workloads, predict project risks, and help teams deliver projects faster.
         </motion.p>
