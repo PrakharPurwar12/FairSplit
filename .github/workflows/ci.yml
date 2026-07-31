@@ -134,6 +134,20 @@ jobs:
         run: |
           docker compose build --no-cache
 
-      # TODO: Implement Container Integration Tests
-      # TODO: Implement Docker Image Publish / Registry Push (e.g., GitHub Container Registry - GHCR)
-      # TODO: Implement Kubernetes (k8s) Deployment Pipeline & Helm Chart Release
+  # ----------------------------------------------------------------------------
+  # Job 4: Deployment Health Verification
+  # ----------------------------------------------------------------------------
+  deployment-verification:
+    name: Deployment Health Verification
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    needs: [backend, frontend, docker]
+
+    steps:
+      - name: Verify Backend Production Endpoint Health
+        run: |
+          curl -f -s https://fairsplit-backend-e67j.onrender.com/api/health/ | grep -q "healthy" || exit 1
+
+      - name: Verify Frontend Production Homepage Health
+        run: |
+          curl -f -s https://fair-split-5w3v.vercel.app/ > /dev/null || exit 1
