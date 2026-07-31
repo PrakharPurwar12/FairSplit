@@ -2,6 +2,7 @@ import React from 'react';
 
 import Navbar from '../components/landing/navbar/Navbar';
 import Hero from '../components/landing/hero/Hero';
+import ImageSlider from '../components/landing/showcase/ImageSlider';
 import Features from '../components/landing/features/Features';
 import HowItWorks from '../components/landing/howItWorks/HowItWorks';
 import Modules from '../components/landing/modules/Modules';
@@ -20,6 +21,7 @@ const Landing = () => {
 
       <main className="flex flex-col w-full relative z-10">
         <Hero />
+        <ImageSlider />
         <Features />
         <HowItWorks />
         <Modules />
