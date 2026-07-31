@@ -91,7 +91,7 @@ const Hero = () => {
 
   return (
     <section 
-      className="relative w-full min-h-[90vh] lg:min-h-screen flex flex-col justify-between items-center overflow-hidden bg-white dark:bg-[#060911] text-gray-900 dark:text-white select-none pt-28 pb-10 px-4 sm:px-6 lg:px-8"
+      className="relative w-full min-h-[90vh] lg:min-h-screen flex flex-col justify-between items-center overflow-hidden bg-white dark:bg-[#060911] text-gray-900 dark:text-white pt-28 pb-10 px-4 sm:px-6 lg:px-8"
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
     >
