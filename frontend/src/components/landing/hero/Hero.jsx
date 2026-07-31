@@ -95,41 +95,32 @@ const Hero = () => {
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
     >
-      {/* ── CINEMATIC BACKGROUND SLIDESHOW LAYER ── */}
+      {/* ── ACTUAL PRODUCT SCREENSHOT BACKGROUND ── */}
       <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
         <AnimatePresence mode="wait">
           <motion.div
             key={currentSlide.id}
-            initial={{ opacity: 0, scale: 1.05, x: 10 }}
-            animate={{ opacity: 1, scale: 1.0, x: 0 }}
-            exit={{ opacity: 0, scale: 0.98 }}
-            transition={{ duration: 1.2, ease: [0.25, 0.46, 0.45, 0.94] }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.6, ease: "easeInOut" }}
             className="absolute inset-0 w-full h-full"
           >
             <img 
               src={currentSlide.image} 
               alt={currentSlide.title}
-              className="w-full h-full object-cover object-top filter contrast-[1.12] brightness-[1.02] saturate-[1.05] dark:contrast-[1.15] dark:brightness-[0.95] dark:saturate-[1.05] transition-all duration-700"
+              className="w-full h-full object-cover object-top opacity-85 dark:opacity-75 filter contrast-[1.12] brightness-[1.02] dark:brightness-95"
               loading="eager"
             />
           </motion.div>
         </AnimatePresence>
 
-        {/* ── ADAPTIVE OVERLAYS FOR CRISP PRODUCT SHOWCASING (STRIPE / LINEAR / VERCEL STYLE) ── */}
-        {/* Light Theme: Subtle 10-12% center tint, edge vignette, smooth section blend */}
-        <div className="absolute inset-0 block dark:hidden pointer-events-none">
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_40%,rgba(255,255,255,0.10)_0%,rgba(255,255,255,0.20)_65%,rgba(255,255,255,0.45)_100%)]"></div>
-          <div className="absolute inset-0 bg-gradient-to-b from-white/30 via-transparent to-white"></div>
-        </div>
+        {/* ── SINGLE ADAPTIVE OVERLAY (NO BLUR, NO BLOBS, NO WHITE FOG) ── */}
+        {/* Light Theme: 20% White tint + soft edge vignette */}
+        <div className="absolute inset-0 block dark:hidden bg-white/20 bg-[radial-gradient(ellipse_at_center,transparent_70%,rgba(255,255,255,0.45)_100%)] pointer-events-none"></div>
 
-        {/* Dark Theme: Subtle 28-30% dark center tint, edge vignette, smooth section blend */}
-        <div className="absolute inset-0 hidden dark:block pointer-events-none">
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_40%,rgba(6,9,17,0.28)_0%,rgba(6,9,17,0.42)_65%,rgba(6,9,17,0.72)_100%)]"></div>
-          <div className="absolute inset-0 bg-gradient-to-b from-[#060911]/40 via-transparent to-[#060911]"></div>
-        </div>
-
-        {/* Subtle Ambient Accent Glow */}
-        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[500px] bg-gradient-radial from-indigo-500/08 dark:from-blue-500/12 via-transparent to-transparent blur-3xl pointer-events-none"></div>
+        {/* Dark Theme: 32% Dark tint + soft edge vignette */}
+        <div className="absolute inset-0 hidden dark:block bg-[#060911]/32 bg-[radial-gradient(ellipse_at_center,transparent_70%,rgba(6,9,17,0.55)_100%)] pointer-events-none"></div>
       </div>
 
       {/* ── HERO CONTENT LAYER ── */}
