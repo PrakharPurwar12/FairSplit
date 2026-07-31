@@ -87,8 +87,8 @@ const Hero = () => {
           </motion.div>
         </AnimatePresence>
 
-        {/* ── SINGLE SIMPLE OVERLAY (SUBTLE 8% NEUTRAL DARK TINT, NO BLUR IN LIGHT MODE, 35% DARK TINT IN DARK MODE) ── */}
-        <div className="absolute inset-0 block dark:hidden bg-[#0f172a]/[0.08] pointer-events-none"></div>
+        {/* ── SUBTLE VIGNETTE OVERLAY: TRANSPARENT CENTER, DARK EDGES IN LIGHT MODE, 35% DARK TINT IN DARK MODE ── */}
+        <div className="absolute inset-0 block dark:hidden bg-[radial-gradient(ellipse_at_center,transparent_40%,rgba(17,24,39,0.15)_100%)] pointer-events-none"></div>
         <div className="absolute inset-0 hidden dark:block bg-[#060911]/35 pointer-events-none"></div>
       </div>
 
