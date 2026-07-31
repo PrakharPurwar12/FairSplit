@@ -1,80 +1,54 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { 
-  ChevronRight, 
-  Sparkles,
-  Users, 
-  Cpu, 
-  AlertTriangle, 
-  BarChart2, 
-  GitBranch,
-  LayoutDashboard,
-  Pause,
-  Play
-} from 'lucide-react';
+import { ChevronRight, Sparkles } from 'lucide-react';
 
 const BACKGROUND_SLIDES = [
   {
     id: 'dashboard',
     title: 'Executive Dashboard',
-    tagline: 'Real-time project health & team activity overview',
     image: '/assets/hero/analytics_dashboard.png',
-    icon: LayoutDashboard
   },
   {
     id: 'team-formation',
     title: 'AI Team Formation',
-    tagline: 'Intelligent skill matching & compatibility scoring',
     image: '/assets/hero/team_formation_mock.png',
-    icon: Users
   },
   {
     id: 'task-allocation',
     title: 'Smart Task Allocation',
-    tagline: 'Automated workload balancing & capacity planning',
     image: '/assets/hero/task_allocation_mock.png',
-    icon: Cpu
   },
   {
     id: 'risk-analysis',
     title: 'Predictive Risk Analysis',
-    tagline: 'ML delay forecasts & team burnout warnings',
     image: '/assets/hero/risk_analysis_mock.png',
-    icon: AlertTriangle
   },
   {
     id: 'analytics',
     title: 'Project Analytics',
-    tagline: 'Burndown charts & team velocity metrics',
     image: '/assets/hero/analytics_bg.png',
-    icon: BarChart2
   },
   {
     id: 'automation',
     title: 'Workflow Automation',
-    tagline: 'AI workflow orchestration & status transitions',
     image: '/assets/hero/automation_bg.png',
-    icon: GitBranch
   }
 ];
 
 const Hero = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [isPaused, setIsPaused] = useState(false);
 
   const nextSlide = useCallback(() => {
     setCurrentIndex((prev) => (prev + 1) % BACKGROUND_SLIDES.length);
   }, []);
 
   useEffect(() => {
-    if (isPaused) return;
-    const timer = setInterval(nextSlide, 5000);
+    const timer = setInterval(nextSlide, 2500);
     return () => clearInterval(timer);
-  }, [isPaused, nextSlide]);
+  }, [nextSlide]);
 
   const currentSlide = BACKGROUND_SLIDES[currentIndex];
-  const IconComponent = currentSlide.icon;
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -91,11 +65,9 @@ const Hero = () => {
 
   return (
     <section 
-      className="relative w-full min-h-[90vh] lg:min-h-screen flex flex-col justify-between items-center overflow-hidden bg-white dark:bg-[#060911] text-gray-900 dark:text-white pt-28 pb-10 px-4 sm:px-6 lg:px-8"
-      onMouseEnter={() => setIsPaused(true)}
-      onMouseLeave={() => setIsPaused(false)}
+      className="relative w-full min-h-[90vh] lg:min-h-screen flex flex-col justify-center items-center overflow-hidden bg-white dark:bg-[#060911] text-gray-900 dark:text-white pt-28 pb-16 px-4 sm:px-6 lg:px-8"
     >
-      {/* ── BACKGROUND SLIDESHOW LAYER ── */}
+      {/* ── CONTINUOUS INFINITE BACKGROUND SLIDESHOW ── */}
       <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
         <AnimatePresence initial={false}>
           <motion.div
@@ -115,11 +87,8 @@ const Hero = () => {
           </motion.div>
         </AnimatePresence>
 
-        {/* ── SINGLE SIMPLE OVERLAY (NO GRADIENTS, NO BLOBS, NO FOG) ── */}
-        {/* Light Theme: Single 15% subtle white tint */}
-        <div className="absolute inset-0 block dark:hidden bg-white/15 pointer-events-none"></div>
-
-        {/* Dark Theme: Single 35% subtle dark tint */}
+        {/* ── SINGLE SIMPLE OVERLAY (SUBTLE 8% LIGHT TINT, 35% DARK TINT) ── */}
+        <div className="absolute inset-0 block dark:hidden bg-white/08 pointer-events-none"></div>
         <div className="absolute inset-0 hidden dark:block bg-[#060911]/35 pointer-events-none"></div>
       </div>
 
@@ -150,10 +119,10 @@ const Hero = () => {
           Deliver Faster.
         </motion.h1>
 
-        {/* Subtitle */}
+        {/* Subtitle - Dark Neutral Contrast for Light Mode */}
         <motion.p 
           variants={itemVariants} 
-          className="text-base sm:text-lg md:text-xl text-gray-600 dark:text-gray-300 max-w-2xl leading-relaxed font-medium mb-6 sm:mb-8 px-2"
+          className="text-base sm:text-lg md:text-xl text-gray-900 dark:text-gray-300 max-w-2xl leading-relaxed font-semibold sm:font-medium mb-6 sm:mb-8 px-2"
         >
           FairSplit uses Artificial Intelligence to intelligently assign tasks, balance workloads, predict project risks, and help teams deliver projects faster.
         </motion.p>
@@ -178,45 +147,6 @@ const Hero = () => {
           </a>
         </motion.div>
       </motion.div>
-
-      {/* ── CINEMATIC BACKGROUND SLIDE INDICATOR PILLS ── */}
-      <div className="relative z-20 w-full max-w-2xl mx-auto mt-8 flex flex-col items-center gap-3">
-        {/* Active Feature Tagline */}
-        <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/70 dark:bg-white/[0.06] border border-gray-200/60 dark:border-white/10 backdrop-blur-md shadow-sm">
-          <div className="w-5 h-5 rounded-full bg-indigo-500/15 dark:bg-blue-400/20 flex items-center justify-center text-indigo-600 dark:text-blue-400 shrink-0">
-            <IconComponent className="w-3 h-3" />
-          </div>
-          <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">
-            {currentSlide.title}: <span className="font-normal text-gray-500 dark:text-gray-400">{currentSlide.tagline}</span>
-          </span>
-          <button 
-            onClick={() => setIsPaused(!isPaused)} 
-            className="ml-1 p-0.5 text-gray-400 hover:text-gray-600 dark:hover:text-white rounded transition-colors"
-            title={isPaused ? "Resume auto-slide" : "Pause auto-slide"}
-          >
-            {isPaused ? <Play className="w-3 h-3 text-indigo-600 dark:text-blue-400" /> : <Pause className="w-3 h-3 text-indigo-600 dark:text-blue-400" />}
-          </button>
-        </div>
-
-        {/* Feature Navigation Dots / Tabs */}
-        <div className="flex items-center gap-1.5 flex-wrap justify-center">
-          {BACKGROUND_SLIDES.map((slide, idx) => {
-            const isActive = idx === currentIndex;
-            return (
-              <button
-                key={slide.id}
-                onClick={() => setCurrentIndex(idx)}
-                className={`h-1.5 rounded-full transition-all duration-300 cursor-pointer ${
-                  isActive
-                    ? 'w-7 bg-indigo-600 dark:bg-blue-400 shadow-sm'
-                    : 'w-2 bg-gray-300 dark:bg-white/20 hover:bg-gray-400 dark:hover:bg-white/40'
-                }`}
-                title={`View ${slide.title}`}
-              />
-            );
-          })}
-        </div>
-      </div>
     </section>
   );
 };
