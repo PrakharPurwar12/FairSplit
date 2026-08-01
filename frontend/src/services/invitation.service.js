@@ -28,8 +28,15 @@ const InvitationService = {
   },
 
   async resendInvitation(invitationId) {
-    const response = await api.post(`/invitations/${invitationId}/resend/`);
-    return response.data;
+    console.log('[RESEND TRACE: INVITATION_SERVICE BEFORE AXIOS] invitationId:', invitationId);
+    try {
+      const response = await api.post(`/invitations/${invitationId}/resend/`);
+      console.log('[RESEND TRACE: INVITATION_SERVICE AXIOS SUCCESS] status:', response.status, 'data:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('[RESEND TRACE: INVITATION_SERVICE AXIOS ERROR] error:', error);
+      throw error;
+    }
   },
 };
 

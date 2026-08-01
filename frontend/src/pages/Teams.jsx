@@ -205,7 +205,9 @@ const Teams = () => {
   const [toast, setToast] = useState(null);
 
   const showToast = (message, type = 'success') => {
+    console.log('[RESEND TRACE: BEFORE TOAST]', { message, type });
     setToast({ message, type });
+    console.log('[RESEND TRACE: AFTER TOAST] Toast set in state');
   };
 
   // Helper to parse backend errors into user-friendly messages
@@ -705,19 +707,32 @@ const Teams = () => {
 
   // Resend Invitation Handler
   const handleResendInvitation = async (invitation) => {
-    if (!invitation || !invitation.id) return;
+    console.log('[RESEND TRACE: INSIDE HANDLER START] invitation:', invitation);
+    if (!invitation || !invitation.id) {
+      console.warn('[RESEND TRACE: INVALID INVITATION OBJECT]', invitation);
+      return;
+    }
 
     // Rule 6: Never send repeated requests while cooldown is active
     const activeCooldownSecs = getRemainingCooldown(invitation);
+    console.log('[RESEND TRACE: COOLDOWN CHECK] activeCooldownSecs:', activeCooldownSecs);
     if (activeCooldownSecs > 0) {
       showToast(`Please wait ${formatCooldownTime(activeCooldownSecs)} before resending this invitation again.`, 'warning');
       return;
     }
 
     setActionLoadingId(invitation.id);
+    console.log('[RESEND TRACE: BEFORE AXIOS CALL] invitation_id:', invitation.id);
     try {
       const res = await InvitationService.resendInvitation(invitation.id);
+      console.log('[RESEND TRACE: AFTER AXIOS SUCCESS] raw res object:', res);
       const emailSent = (res?.email_sent !== false) && (res?.data?.email_sent !== false);
+      console.log('[RESEND TRACE: EMAIL_SENT EVALUATION]', {
+        'res?.email_sent': res?.email_sent,
+        'res?.data?.email_sent': res?.data?.email_sent,
+        calculatedEmailSent: emailSent
+      });
+
       if (!emailSent) {
         showToast('Invitation updated, but email could not be resent.', 'warning');
       } else {
@@ -731,6 +746,7 @@ const Teams = () => {
       setActiveDirectoryTab('invitations');
       fetchTeamData();
     } catch (err) {
+      console.error('[RESEND TRACE: AFTER AXIOS ERROR IN TEAMS]', err);
       const parsed = parseInvitationError(err, invitation.id);
       showToast(parsed.message, 'error');
     } finally {
@@ -1098,7 +1114,10 @@ const Teams = () => {
                         <div className="pt-3 border-t border-gray-100 dark:border-white/5 flex gap-2">
                           <button
                             disabled={isActionLoading || isCooldownActive}
-                            onClick={() => handleResendInvitation(inv)}
+                            onClick={() => {
+                              console.log('[RESEND TRACE: ONCLICK FIRED] invitation:', inv);
+                              handleResendInvitation(inv);
+                            }}
                             className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 ${
                               isCooldownActive
                                 ? 'bg-gray-100 dark:bg-white/5 text-gray-400 dark:text-gray-500 cursor-not-allowed border border-gray-200/50 dark:border-white/5'
