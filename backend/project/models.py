@@ -114,6 +114,10 @@ class ProjectInvitation(models.Model):
 
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="PENDING")
 
+    email_sent = models.BooleanField(default=False)
+
+    email_delivery_error = models.TextField(blank=True, default="")
+
     resend_count = models.PositiveIntegerField(default=0)
 
     last_resent_at = models.DateTimeField(null=True, blank=True)

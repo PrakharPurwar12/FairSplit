@@ -669,7 +669,7 @@ const Teams = () => {
         personal_message: inviteMessage.trim(),
       });
 
-      const emailSent = res.data?.email_sent !== false;
+      const emailSent = (res?.email_sent !== false) && (res?.data?.email_sent !== false);
       if (!emailSent) {
         showToast('Invitation created successfully, but the email could not be delivered.', 'warning');
       } else {
@@ -717,7 +717,7 @@ const Teams = () => {
     setActionLoadingId(invitation.id);
     try {
       const res = await InvitationService.resendInvitation(invitation.id);
-      const emailSent = res.data?.email_sent !== false;
+      const emailSent = (res?.email_sent !== false) && (res?.data?.email_sent !== false);
       if (!emailSent) {
         showToast('Invitation updated, but email could not be resent.', 'warning');
       } else {

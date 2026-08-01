@@ -69,14 +69,31 @@ class InvitationService:
             invited_by=invited_by,
             invitation_token=token,
             status="PENDING",
+            email_sent=False,
+            email_delivery_error="",
             expires_at=expires_at,
         )
 
-        # Send email
-        email_sent = EmailService.send_invitation_email(invitation)
+        try:
+            # Send email
+            EmailService.send_invitation_email(invitation)
+            invitation.email_sent = True
+            invitation.email_delivery_error = ""
+            invitation.save(update_fields=["email_sent", "email_delivery_error", "updated_at"])
+            email_sent = True
+        except Exception as e:
+            err_msg = str(e)
+            logger.error(
+                f"[PERSISTED INVITATION EMAIL FAILURE] Invite ID: {invitation.id} | Recipient: {email_clean} | Error: {err_msg}",
+                exc_info=True,
+            )
+            invitation.email_sent = False
+            invitation.email_delivery_error = err_msg
+            invitation.save(update_fields=["email_sent", "email_delivery_error", "updated_at"])
+            email_sent = False
 
-        # Create notification for manager ONLY if email was sent successfully
         if email_sent:
+            # Create notification for manager ONLY when email is sent successfully
             Notification.objects.create(
                 user=invited_by,
                 title="Invitation Sent",
@@ -247,6 +264,13 @@ class InvitationService:
                     f"Please wait {mins}m {secs}s before resending this invitation again."
                 )
 
+        # Backup state in case email dispatch fails
+        old_token = invitation.invitation_token
+        old_expires = invitation.expires_at
+        old_resend_count = invitation.resend_count
+        old_last_resent = invitation.last_resent_at
+        old_status = invitation.status
+
         # Refresh token and extend expiry
         invitation.invitation_token = generate_secure_token()
         invitation.expires_at = timezone.now() + timedelta(days=7)
@@ -264,8 +288,23 @@ class InvitationService:
             ]
         )
 
-        # Send fresh email
-        email_sent = EmailService.send_invitation_email(invitation)
+        try:
+            # Send fresh email
+            EmailService.send_invitation_email(invitation)
+            invitation.email_sent = True
+            invitation.email_delivery_error = ""
+            invitation.save(update_fields=["email_sent", "email_delivery_error", "updated_at"])
+            email_sent = True
+        except Exception as e:
+            err_msg = str(e)
+            logger.error(
+                f"[PERSISTED RESEND EMAIL FAILURE] Invite ID: {invitation.id} | Recipient: {invitation.email} | Error: {err_msg}",
+                exc_info=True,
+            )
+            invitation.email_sent = False
+            invitation.email_delivery_error = err_msg
+            invitation.save(update_fields=["email_sent", "email_delivery_error", "updated_at"])
+            email_sent = False
 
         if email_sent:
             Notification.objects.create(

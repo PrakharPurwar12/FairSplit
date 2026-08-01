@@ -11,6 +11,7 @@ from .serializers import (
     ProjectMemberSerializer,
     ProjectSerializer,
 )
+from .services.email_service import EmailDeliveryError
 from .services.invitation_service import InvitationService
 
 
@@ -132,7 +133,7 @@ class ProjectInviteView(APIView):
         res_data["email_sent"] = email_sent
         if not email_sent:
             res_data["message"] = (
-                "Invitation created successfully, but the email could not be delivered because Resend is not configured."
+                "Invitation created successfully, but email delivery failed. You can attempt to resend it."
             )
         else:
             res_data["message"] = "Invitation created and email sent successfully."
@@ -200,11 +201,12 @@ class InvitationResendView(APIView):
         invitation, email_sent = InvitationService.resend_invitation(
             invitation_id, request.user
         )
+
         res_data = ProjectInvitationSerializer(invitation).data
         res_data["email_sent"] = email_sent
         if not email_sent:
             res_data["message"] = (
-                "Invitation updated, but email could not be resent because Resend is not configured."
+                "Invitation updated, but email delivery failed. You can attempt to resend again."
             )
         else:
             res_data["message"] = "Invitation email resent successfully."

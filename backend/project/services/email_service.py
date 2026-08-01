@@ -7,6 +7,11 @@ from django.core.mail import EmailMultiAlternatives
 logger = logging.getLogger(__name__)
 
 
+class EmailDeliveryError(Exception):
+    """Custom exception raised when email delivery fails."""
+    pass
+
+
 class EmailService:
     @staticmethod
     def get_config_val(key, default=""):
@@ -28,13 +33,30 @@ class EmailService:
         using Django's configured EmailBackend (SMTP / Gmail).
         """
         from_email = cls.get_config_val(
-            "DEFAULT_FROM_EMAIL", "FairSplit Team <noreply@fairsplit.com>"
+            "DEFAULT_FROM_EMAIL",
+            getattr(settings, "DEFAULT_FROM_EMAIL", "FairSplit Team <noreply@fairsplit.com>"),
         )
         frontend_url = cls.get_config_val("FRONTEND_URL", "http://localhost").rstrip(
             "/"
         )
-        host_user = cls.get_config_val("EMAIL_HOST_USER", "")
-        host_password = cls.get_config_val("EMAIL_HOST_PASSWORD", "")
+        host_user = cls.get_config_val(
+            "EMAIL_HOST_USER", getattr(settings, "EMAIL_HOST_USER", "")
+        )
+        host_password = cls.get_config_val(
+            "EMAIL_HOST_PASSWORD", getattr(settings, "EMAIL_HOST_PASSWORD", "")
+        )
+
+        subject = f"Invitation: Join {invitation.project.title} on FairSplit"
+
+        # Structured Logging: Email Function Called
+        logger.info(
+            f"[INVITE CREATED & EMAIL FUNCTION CALLED] "
+            f"InviteID: {invitation.id} | "
+            f"Recipient: {invitation.email} | "
+            f"Sender: {from_email} | "
+            f"Subject: {subject} | "
+            f"Project: {invitation.project.title}"
+        )
 
         # Check if SMTP credentials are set
         if (
@@ -43,14 +65,17 @@ class EmailService:
             or host_user.strip() == ""
             or host_password.strip() == ""
         ):
-            logger.warning(
-                "SMTP email backend is not configured (EMAIL_HOST_USER / EMAIL_HOST_PASSWORD missing). Email delivery disabled."
+            err_msg = "SMTP email backend is not configured (EMAIL_HOST_USER or EMAIL_HOST_PASSWORD missing)."
+            logger.error(
+                f"[SMTP ERROR] {err_msg} Cannot deliver invite email to {invitation.email}"
             )
-            return False
+            raise EmailDeliveryError(err_msg)
 
         invite_link = f"{frontend_url}/invite/{invitation.invitation_token}"
         inviter_name = (
             invitation.invited_by.get_full_name() or invitation.invited_by.username
+            if invitation.invited_by
+            else "Project Manager"
         )
         project_title = invitation.project.title
         role_name = invitation.role.title() if invitation.role else "Team Member"
@@ -167,8 +192,8 @@ class EmailService:
         </html>
         """
 
-        subject = f"Invitation: Join {project_title} on FairSplit"
-        reply_to = [invitation.invited_by.email or "support@fairsplit.com"]
+        sender_user_email = invitation.invited_by.email if invitation.invited_by and invitation.invited_by.email else ""
+        reply_to = [sender_user_email] if sender_user_email else ["support@fairsplit.com"]
 
         try:
             msg = EmailMultiAlternatives(
@@ -179,16 +204,23 @@ class EmailService:
                 reply_to=reply_to,
             )
             msg.attach_alternative(html_content, "text/html")
-            msg.send(fail_silently=False)
+            smtp_resp = msg.send(fail_silently=False)
             logger.info(
-                f"SMTP invitation email sent successfully to {invitation.email}"
+                f"[SMTP RESPONSE SUCCESS] Sent invitation email to {invitation.email} | "
+                f"SMTP Result Code: {smtp_resp} | Sender: {from_email}"
             )
             return True
         except Exception as e:
             logger.error(
-                f"Failed to send SMTP email to {invitation.email}: {e}", exc_info=True
+                f"[SMTP EXCEPTION] Failed to send SMTP invitation email to {invitation.email}: {e}",
+                exc_info=True,
             )
-            return False
+            raise EmailDeliveryError(f"Email delivery to {invitation.email} failed: {str(e)}") from e
+
+
+# Provider abstraction alias for backwards compatibility
+ResendEmailService = EmailService
+
 
 
 # Provider abstraction alias for backwards compatibility

@@ -266,11 +266,19 @@ EMAIL_BACKEND = config(
 EMAIL_HOST = config("EMAIL_HOST", default="smtp.gmail.com")
 EMAIL_PORT = config("EMAIL_PORT", cast=int, default=587)
 EMAIL_USE_TLS = config("EMAIL_USE_TLS", cast=bool, default=True)
+EMAIL_USE_SSL = config("EMAIL_USE_SSL", cast=bool, default=False)
+EMAIL_TIMEOUT = config("EMAIL_TIMEOUT", cast=int, default=10)
 EMAIL_HOST_USER = config("EMAIL_HOST_USER", default="")
 EMAIL_HOST_PASSWORD = config("EMAIL_HOST_PASSWORD", default="")
-DEFAULT_FROM_EMAIL = config(
-    "DEFAULT_FROM_EMAIL", default="FairSplit Team <noreply@fairsplit.com>"
-)
+
+default_from = config("DEFAULT_FROM_EMAIL", default="")
+if default_from and default_from.strip():
+    DEFAULT_FROM_EMAIL = default_from.strip()
+elif EMAIL_HOST_USER:
+    DEFAULT_FROM_EMAIL = f"FairSplit Team <{EMAIL_HOST_USER}>"
+else:
+    DEFAULT_FROM_EMAIL = "FairSplit Team <noreply@fairsplit.com>"
+
 
 # OAuth Configuration (Google & GitHub)
 GOOGLE_CLIENT_ID = config("GOOGLE_CLIENT_ID", default="")
