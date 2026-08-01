@@ -282,9 +282,14 @@ MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
 # Email Configuration (IPv4 Forced Django SMTP Backend)
-EMAIL_BACKEND = config(
-    "EMAIL_BACKEND", default="backend.email_backend.IPv4EmailBackend"
-)
+raw_email_backend = config("EMAIL_BACKEND", default="backend.email_backend.IPv4EmailBackend")
+if raw_email_backend in [
+    "django.core.mail.backends.smtp.EmailBackend",
+    "backend.email_backend.IPv4EmailBackend",
+]:
+    EMAIL_BACKEND = "backend.email_backend.IPv4EmailBackend"
+else:
+    EMAIL_BACKEND = raw_email_backend
 EMAIL_HOST = config("EMAIL_HOST", default="smtp.gmail.com")
 EMAIL_PORT = config("EMAIL_PORT", cast=int, default=587)
 EMAIL_USE_TLS = config("EMAIL_USE_TLS", cast=bool, default=True)
