@@ -1,5 +1,7 @@
+import logging
 from notifications.services import create_notification
 from rest_framework import generics, status
+from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -13,6 +15,8 @@ from .serializers import (
 )
 from .services.email_service import EmailDeliveryError
 from .services.invitation_service import InvitationService
+
+logger = logging.getLogger(__name__)
 
 
 class ProjectListCreateView(generics.ListCreateAPIView):
@@ -108,26 +112,76 @@ class ProjectInviteView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, project_id):
+        logger.info(
+            f"[INVITE REQUEST RECEIVED] Project ID: {project_id} | "
+            f"User: {request.user} ({request.user.id}) | Payload: {request.data}"
+        )
+
         try:
             project = Project.objects.get(id=project_id)
         except Project.DoesNotExist:
+            logger.warning(
+                f"[INVITE 404 ERROR] Project ID {project_id} does not exist."
+            )
             return Response(
-                {"error": "Project not found."}, status=status.HTTP_404_NOT_FOUND
+                {"error": f"Project with ID {project_id} not found."},
+                status=status.HTTP_404_NOT_FOUND,
             )
 
         serializer = CreateInvitationSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
+        if not serializer.is_valid():
+            logger.error(
+                f"[INVITE 400 SERIALIZER ERROR] Project ID: {project_id} | "
+                f"User: {request.user} | Serializer Errors: {serializer.errors} | "
+                f"Payload: {request.data}"
+            )
+            return Response(
+                {
+                    "error": "Invalid invitation payload.",
+                    "details": serializer.errors,
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         data = serializer.validated_data
-        invitation, email_sent = InvitationService.create_invitation(
-            project=project,
-            email=data["email"],
-            full_name=data.get("full_name", ""),
-            role=data.get("role", ""),
-            skills=data.get("skills", []),
-            personal_message=data.get("personal_message", ""),
-            invited_by=request.user,
-        )
+
+        try:
+            invitation, email_sent = InvitationService.create_invitation(
+                project=project,
+                email=data["email"],
+                full_name=data.get("full_name", ""),
+                role=data.get("role", ""),
+                skills=data.get("skills", []),
+                personal_message=data.get("personal_message", ""),
+                invited_by=request.user,
+            )
+        except PermissionDenied as pe:
+            logger.error(
+                f"[INVITE 403 PERMISSION DENIED] Project ID: {project_id} | "
+                f"User: {request.user} | Detail: {pe}"
+            )
+            return Response(
+                {"error": str(pe)}, status=status.HTTP_403_FORBIDDEN
+            )
+        except ValidationError as ve:
+            err_detail = ve.detail if hasattr(ve, "detail") else str(ve)
+            logger.error(
+                f"[INVITE 400 VALIDATION ERROR] Project ID: {project_id} | "
+                f"User: {request.user} | Detail: {err_detail}"
+            )
+            return Response(
+                {"error": err_detail}, status=status.HTTP_400_BAD_REQUEST
+            )
+        except Exception as exc:
+            logger.error(
+                f"[INVITE 500 UNEXPECTED EXCEPTION] Project ID: {project_id} | "
+                f"User: {request.user} | Exception: {exc}",
+                exc_info=True,
+            )
+            return Response(
+                {"error": f"Failed to process invitation: {str(exc)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
 
         res_data = ProjectInvitationSerializer(invitation).data
         res_data["email_sent"] = email_sent
@@ -137,6 +191,11 @@ class ProjectInviteView(APIView):
             )
         else:
             res_data["message"] = "Invitation created and email sent successfully."
+
+        logger.info(
+            f"[INVITE 201 SUCCESS] Invite ID: {invitation.id} | "
+            f"Recipient: {invitation.email} | EmailSent: {email_sent}"
+        )
 
         return Response(res_data, status=status.HTTP_201_CREATED)
 
@@ -198,9 +257,42 @@ class InvitationResendView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, invitation_id):
-        invitation, email_sent = InvitationService.resend_invitation(
-            invitation_id, request.user
+        logger.info(
+            f"[RESEND REQUEST RECEIVED] Invitation ID: {invitation_id} | "
+            f"User: {request.user} ({request.user.id})"
         )
+
+        try:
+            invitation, email_sent = InvitationService.resend_invitation(
+                invitation_id, request.user
+            )
+        except PermissionDenied as pe:
+            logger.error(
+                f"[RESEND 403 PERMISSION DENIED] Invitation ID: {invitation_id} | "
+                f"User: {request.user} | Detail: {pe}"
+            )
+            return Response(
+                {"error": str(pe)}, status=status.HTTP_403_FORBIDDEN
+            )
+        except ValidationError as ve:
+            err_detail = ve.detail if hasattr(ve, "detail") else str(ve)
+            logger.error(
+                f"[RESEND 400 VALIDATION ERROR] Invitation ID: {invitation_id} | "
+                f"User: {request.user} | Detail: {err_detail}"
+            )
+            return Response(
+                {"error": err_detail}, status=status.HTTP_400_BAD_REQUEST
+            )
+        except Exception as exc:
+            logger.error(
+                f"[RESEND 500 UNEXPECTED EXCEPTION] Invitation ID: {invitation_id} | "
+                f"User: {request.user} | Exception: {exc}",
+                exc_info=True,
+            )
+            return Response(
+                {"error": f"Failed to resend invitation: {str(exc)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
 
         res_data = ProjectInvitationSerializer(invitation).data
         res_data["email_sent"] = email_sent
@@ -210,5 +302,10 @@ class InvitationResendView(APIView):
             )
         else:
             res_data["message"] = "Invitation email resent successfully."
+
+        logger.info(
+            f"[RESEND 200 SUCCESS] Invitation ID: {invitation.id} | "
+            f"Recipient: {invitation.email} | EmailSent: {email_sent}"
+        )
 
         return Response(res_data, status=status.HTTP_200_OK)
