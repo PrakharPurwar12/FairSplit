@@ -281,9 +281,9 @@ STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
-# Email Configuration (Django SMTP Backend)
+# Email Configuration (IPv4 Forced Django SMTP Backend)
 EMAIL_BACKEND = config(
-    "EMAIL_BACKEND", default="django.core.mail.backends.smtp.EmailBackend"
+    "EMAIL_BACKEND", default="backend.email_backend.IPv4EmailBackend"
 )
 EMAIL_HOST = config("EMAIL_HOST", default="smtp.gmail.com")
 EMAIL_PORT = config("EMAIL_PORT", cast=int, default=587)
