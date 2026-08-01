@@ -57,14 +57,16 @@ def socket_diag(request):
         diag_results["ipv6_error"] = str(e)
         diag_results["ipv6_success"] = False
 
-    # 4. Summary
-    if diag_results.get("ipv4_success") and not diag_results.get("ipv6_success"):
-        diag_results["summary"] = "IPv6 FAILS, IPv4 SUCCEEDS"
-    elif not diag_results.get("ipv4_success") and not diag_results.get("ipv6_success"):
-        diag_results["summary"] = "BOTH IPv4 AND IPv6 FAIL"
-    elif diag_results.get("ipv4_success") and diag_results.get("ipv6_success"):
-        diag_results["summary"] = "BOTH IPv4 AND IPv6 SUCCEED"
-    else:
-        diag_results["summary"] = "IPv4 FAILS, IPv6 SUCCEEDS"
+    # 5. Try Port 465 SSL IPv4
+    try:
+        s465 = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s465.settimeout(10)
+        res465 = s465.connect_ex(("smtp.gmail.com", 465))
+        s465.close()
+        diag_results["port465_ipv4_connect_ex"] = res465
+        diag_results["port465_ipv4_success"] = (res465 == 0)
+    except Exception as e:
+        diag_results["port465_ipv4_error"] = str(e)
+        diag_results["port465_ipv4_success"] = False
 
     return JsonResponse(diag_results, status=200)
