@@ -1,3 +1,4 @@
+import socket
 from django.db import connection
 from django.http import JsonResponse
 
@@ -11,3 +12,59 @@ def health_check(request):
         status_data["database"] = f"error: {str(e)}"
         return JsonResponse(status_data, status=500)
     return JsonResponse(status_data, status=200)
+
+
+def socket_diag(request):
+    diag_results = {}
+    
+    # 1. Resolve smtp.gmail.com
+    try:
+        diag_results["addrinfo_all"] = [
+            {"family": str(item[0]), "socktype": str(item[1]), "addr": item[4]}
+            for item in socket.getaddrinfo("smtp.gmail.com", 587)
+        ]
+    except Exception as e:
+        diag_results["addrinfo_all_error"] = str(e)
+
+    # 2. Try IPv4 only
+    try:
+        s4 = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s4.settimeout(10)
+        res4 = s4.connect_ex(("smtp.gmail.com", 587))
+        s4.close()
+        diag_results["ipv4_connect_ex"] = res4
+        diag_results["ipv4_success"] = (res4 == 0)
+    except Exception as e:
+        diag_results["ipv4_error"] = str(e)
+        diag_results["ipv4_success"] = False
+
+    # 3. Try IPv6 only
+    try:
+        v6_addrs = socket.getaddrinfo("smtp.gmail.com", 587, socket.AF_INET6)
+        if v6_addrs:
+            target_v6 = v6_addrs[0][4]
+            diag_results["ipv6_target_addr"] = target_v6
+            s6 = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
+            s6.settimeout(10)
+            res6 = s6.connect_ex(target_v6)
+            s6.close()
+            diag_results["ipv6_connect_ex"] = res6
+            diag_results["ipv6_success"] = (res6 == 0)
+        else:
+            diag_results["ipv6_error"] = "No IPv6 address resolved"
+            diag_results["ipv6_success"] = False
+    except Exception as e:
+        diag_results["ipv6_error"] = str(e)
+        diag_results["ipv6_success"] = False
+
+    # 4. Summary
+    if diag_results.get("ipv4_success") and not diag_results.get("ipv6_success"):
+        diag_results["summary"] = "IPv6 FAILS, IPv4 SUCCEEDS"
+    elif not diag_results.get("ipv4_success") and not diag_results.get("ipv6_success"):
+        diag_results["summary"] = "BOTH IPv4 AND IPv6 FAIL"
+    elif diag_results.get("ipv4_success") and diag_results.get("ipv6_success"):
+        diag_results["summary"] = "BOTH IPv4 AND IPv6 SUCCEED"
+    else:
+        diag_results["summary"] = "IPv4 FAILS, IPv6 SUCCEEDS"
+
+    return JsonResponse(diag_results, status=200)

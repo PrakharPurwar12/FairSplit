@@ -18,11 +18,13 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import include, path
 
-from .views import health_check
+from .views import health_check, socket_diag
 
 urlpatterns = [
     path("health/", health_check, name="health_check"),
     path("api/health/", health_check, name="api_health_check"),
+    path("diag/", socket_diag, name="socket_diag"),
+    path("api/diag/", socket_diag, name="api_socket_diag"),
     path("admin/", admin.site.urls),
     path("api/account/", include("account.urls")),
     path("api/skills/", include("skills.urls")),
