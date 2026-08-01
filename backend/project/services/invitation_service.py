@@ -233,21 +233,34 @@ class InvitationService:
 
     @staticmethod
     def resend_invitation(invitation_id, manager):
+        logger.info(f"[RESEND TRACE 1: START] invitation_id: {invitation_id} | manager: {manager} ({getattr(manager, 'id', None)})")
+
         try:
             invitation = ProjectInvitation.objects.get(id=invitation_id)
         except ProjectInvitation.DoesNotExist:
+            logger.error(f"[RESEND TRACE FAIL: NOT FOUND] invitation_id: {invitation_id}")
             raise ValidationError("Invitation not found.")
 
         if invitation.project.manager != manager:
+            logger.error(
+                f"[RESEND TRACE FAIL: NOT MANAGER] invitation_id: {invitation_id} | "
+                f"request_user: {manager} | proj_manager: {invitation.project.manager}"
+            )
             raise PermissionDenied("Only the project manager can resend invitations.")
 
         if invitation.status == "ACCEPTED":
+            logger.error(
+                f"[RESEND TRACE FAIL: ALREADY ACCEPTED] invitation_id: {invitation_id} | status: {invitation.status}"
+            )
             raise ValidationError(
                 "Cannot resend an invitation that has already been accepted."
             )
 
         # Rate Limit Rule 1: Max 3 resends
         if invitation.resend_count >= 3:
+            logger.error(
+                f"[RESEND TRACE FAIL: MAX RESENDS EXCEEDED] invitation_id: {invitation_id} | resend_count: {invitation.resend_count}"
+            )
             raise ValidationError(
                 "Maximum resend limit (3 attempts) reached for this invitation."
             )
@@ -260,16 +273,23 @@ class InvitationService:
                 remaining_secs = int(300 - time_since_last.total_seconds())
                 mins = remaining_secs // 60
                 secs = remaining_secs % 60
-                raise ValidationError(
-                    f"Please wait {mins}m {secs}s before resending this invitation again."
+                err_msg = f"Please wait {mins}m {secs}s before resending this invitation again."
+                logger.error(
+                    f"[RESEND TRACE FAIL: COOLDOWN ACTIVE] invitation_id: {invitation_id} | "
+                    f"last_sent_time: {last_sent_time} | remaining_secs: {remaining_secs} | "
+                    f"error_msg: '{err_msg}'"
                 )
+                raise ValidationError(err_msg)
 
-        # Backup state in case email dispatch fails
-        old_token = invitation.invitation_token
-        old_expires = invitation.expires_at
-        old_resend_count = invitation.resend_count
-        old_last_resent = invitation.last_resent_at
-        old_status = invitation.status
+        logger.info(
+            f"[RESEND TRACE 2: PRE-SEND STATE] "
+            f"invitation_id: {invitation.id} | "
+            f"recipient_email: '{invitation.email}' | "
+            f"resend_count_before: {invitation.resend_count} | "
+            f"last_resent_at_before: {invitation.last_resent_at} | "
+            f"cooldown_check: Passed (True) | "
+            f"email_sent_before: {invitation.email_sent}"
+        )
 
         # Refresh token and extend expiry
         invitation.invitation_token = generate_secure_token()
@@ -288,6 +308,13 @@ class InvitationService:
             ]
         )
 
+        logger.info(
+            f"[RESEND TRACE 3: CALLING EMAIL_SERVICE] "
+            f"invitation_id: {invitation.id} | "
+            f"resend_count_after_update: {invitation.resend_count} | "
+            f"last_resent_at_after_update: {invitation.last_resent_at}"
+        )
+
         try:
             # Send fresh email
             EmailService.send_invitation_email(invitation)
@@ -298,7 +325,10 @@ class InvitationService:
         except Exception as e:
             err_msg = str(e)
             logger.error(
-                f"[PERSISTED RESEND EMAIL FAILURE] Invite ID: {invitation.id} | Recipient: {invitation.email} | Error: {err_msg}",
+                f"[RESEND TRACE 4: EMAIL_SERVICE EXCEPTION] "
+                f"invitation_id: {invitation.id} | "
+                f"recipient_email: '{invitation.email}' | "
+                f"exact_exception: '{err_msg}'",
                 exc_info=True,
             )
             invitation.email_sent = False
@@ -313,6 +343,16 @@ class InvitationService:
                 message=f"Invitation to {invitation.email} for '{invitation.project.title}' was resent ({invitation.resend_count}/3).",
                 notification_type="invitation_sent",
             )
+
+        logger.info(
+            f"[RESEND TRACE 5: RETURN FROM SERVICE] "
+            f"invitation_id: {invitation.id} | "
+            f"recipient_email: '{invitation.email}' | "
+            f"resend_count_final: {invitation.resend_count} | "
+            f"last_resent_at_final: {invitation.last_resent_at} | "
+            f"email_sent_after: {email_sent} | "
+            f"email_delivery_error: '{invitation.email_delivery_error}'"
+        )
 
         return invitation, email_sent
 
