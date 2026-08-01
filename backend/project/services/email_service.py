@@ -1,8 +1,7 @@
 import logging
-
+import requests
 from decouple import config
 from django.conf import settings
-from django.core.mail import EmailMultiAlternatives
 
 logger = logging.getLogger(__name__)
 
@@ -29,58 +28,29 @@ class EmailService:
     @classmethod
     def send_invitation_email(cls, invitation):
         """
-        Dispatches a production-grade HTML and Plain-Text invitation email
-        using Django's configured EmailBackend (SMTP / Gmail).
+        Dispatches an HTML and Plain-Text invitation email using the Brevo Transactional Email HTTP API (v3).
+        Documentation: https://developers.brevo.com/reference/sendtransacemail
         """
-        from_email = cls.get_config_val(
-            "DEFAULT_FROM_EMAIL",
-            getattr(settings, "DEFAULT_FROM_EMAIL", "FairSplit Team <noreply@fairsplit.com>"),
-        )
-        frontend_url = cls.get_config_val("FRONTEND_URL", "http://localhost").rstrip(
-            "/"
-        )
-        host_user = cls.get_config_val(
-            "EMAIL_HOST_USER", getattr(settings, "EMAIL_HOST_USER", "")
-        )
-        host_password = cls.get_config_val(
-            "EMAIL_HOST_PASSWORD", getattr(settings, "EMAIL_HOST_PASSWORD", "")
-        )
+        api_key = cls.get_config_val("BREVO_API_KEY", getattr(settings, "BREVO_API_KEY", ""))
+        sender_email = cls.get_config_val("BREVO_SENDER_EMAIL", getattr(settings, "BREVO_SENDER_EMAIL", "purwarprakhar00@gmail.com"))
+        sender_name = cls.get_config_val("BREVO_SENDER_NAME", getattr(settings, "BREVO_SENDER_NAME", "FairSplit Team"))
+        frontend_url = cls.get_config_val("FRONTEND_URL", "http://localhost").rstrip("/")
 
         subject = f"Invitation: Join {invitation.project.title} on FairSplit"
 
-        smtp_host = cls.get_config_val("EMAIL_HOST", getattr(settings, "EMAIL_HOST", "smtp.gmail.com"))
-        smtp_port = cls.get_config_val("EMAIL_PORT", getattr(settings, "EMAIL_PORT", 587))
-        smtp_tls = cls.get_config_val("EMAIL_USE_TLS", getattr(settings, "EMAIL_USE_TLS", True))
-        smtp_ssl = cls.get_config_val("EMAIL_USE_SSL", getattr(settings, "EMAIL_USE_SSL", False))
-        smtp_timeout = getattr(settings, "EMAIL_TIMEOUT", 10)
-
-        # Structured Logging: Email Function Called & SMTP Parameters
         logger.info(
-            f"[RESEND/INVITE EMAIL FUNCTION CALLED] "
+            f"[BREVO EMAIL FUNCTION CALLED] "
             f"InviteID: {invitation.id} | "
-            f"Recipient Email: '{invitation.email}' | "
-            f"Sender Email: '{from_email}' | "
+            f"Recipient: '{invitation.email}' | "
+            f"Sender: '{sender_name} <{sender_email}>' | "
             f"Subject: '{subject}' | "
             f"Project: '{invitation.project.title}' | "
-            f"SMTP Host: '{smtp_host}' | "
-            f"SMTP Port: {smtp_port} | "
-            f"TLS: {smtp_tls} | "
-            f"SSL: {smtp_ssl} | "
-            f"Timeout: {smtp_timeout}s | "
-            f"Host User: '{host_user}'"
+            f"API Key Set?: {bool(api_key)}"
         )
 
-        # Check if SMTP credentials are set
-        if (
-            not host_user
-            or not host_password
-            or host_user.strip() == ""
-            or host_password.strip() == ""
-        ):
-            err_msg = f"SMTP email backend is not configured (EMAIL_HOST_USER='{host_user}' or EMAIL_HOST_PASSWORD missing)."
-            logger.error(
-                f"[SMTP CONFIG ERROR] {err_msg} Cannot deliver invite email to {invitation.email}"
-            )
+        if not api_key or api_key.strip() == "":
+            err_msg = "Brevo HTTP API is not configured (BREVO_API_KEY missing or empty)."
+            logger.error(f"[BREVO CONFIG ERROR] {err_msg} Cannot deliver invite email to {invitation.email}")
             raise EmailDeliveryError(err_msg)
 
         invite_link = f"{frontend_url}/invite/{invitation.invitation_token}"
@@ -209,45 +179,64 @@ class EmailService:
             if invitation.invited_by and invitation.invited_by.email
             else ""
         )
-        reply_to = [sender_user_email] if sender_user_email else ["support@fairsplit.com"]
+
+        # Construct Brevo v3 Transactional Email Payload
+        brevo_url = "https://api.brevo.com/v3/smtp/email"
+        headers = {
+            "accept": "application/json",
+            "api-key": api_key,
+            "content-type": "application/json",
+        }
+
+        recipient_name = invitation.full_name.strip() if invitation.full_name else invitation.email.split("@")[0]
+        payload = {
+            "sender": {
+                "name": sender_name,
+                "email": sender_email,
+            },
+            "to": [
+                {
+                    "email": invitation.email,
+                    "name": recipient_name,
+                }
+            ],
+            "subject": subject,
+            "htmlContent": html_content,
+            "textContent": plain_text,
+        }
+
+        if sender_user_email:
+            payload["replyTo"] = {"email": sender_user_email}
 
         try:
-            msg = EmailMultiAlternatives(
-                subject=subject,
-                body=plain_text,
-                from_email=from_email,
-                to=[invitation.email],
-                reply_to=reply_to,
-            )
-            msg.attach_alternative(html_content, "text/html")
-            smtp_resp = msg.send(fail_silently=False)
-            message_id = getattr(msg, "extra_headers", {}).get("Message-ID", "Generated By SMTP")
-
-            logger.info(
-                f"[SMTP RESPONSE SUCCESS] "
-                f"InviteID: {invitation.id} | "
-                f"Recipient: '{invitation.email}' | "
-                f"Sender: '{from_email}' | "
-                f"SMTP Host: '{smtp_host}:{smtp_port}' | "
-                f"SMTP Result Code: {smtp_resp} | "
-                f"Message-ID: '{message_id}'"
-            )
-            return True
+            resp = requests.post(brevo_url, headers=headers, json=payload, timeout=10)
+            
+            if resp.status_code == 201:
+                data = resp.json()
+                message_id = data.get("messageId", "Brevo-201-Success")
+                logger.info(
+                    f"[BREVO SUCCESS 201] Sent invitation email to {invitation.email} | "
+                    f"MessageID: '{message_id}' | Status: 201"
+                )
+                return True
+            else:
+                # Log FULL Brevo response body on failure
+                logger.error(
+                    f"[BREVO API FAILURE] Failed to send email to {invitation.email} via Brevo HTTP API | "
+                    f"HTTP Status: {resp.status_code} | "
+                    f"Full Response Body: {resp.text}"
+                )
+                raise EmailDeliveryError(
+                    f"Brevo HTTP API delivery failed (Status {resp.status_code}): {resp.text}"
+                )
+        except EmailDeliveryError:
+            raise
         except Exception as e:
             logger.error(
-                f"[SMTP EXCEPTION TRACEBACK] Failed to send SMTP email for Invite ID {invitation.id}:\n"
-                f"Recipient Email: '{invitation.email}' | Sender Email: '{from_email}' | "
-                f"SMTP Host: '{smtp_host}:{smtp_port}' | Error: {e}",
+                f"[BREVO EXCEPTION] HTTP request exception sending invitation email to {invitation.email}: {e}",
                 exc_info=True,
             )
-            raise EmailDeliveryError(
-                f"SMTP failure sending to '{invitation.email}' via '{smtp_host}:{smtp_port}': {str(e)}"
-            ) from e
-
-
-# Provider abstraction alias for backwards compatibility
-ResendEmailService = EmailService
-
+            raise EmailDeliveryError(f"Brevo HTTP request failed for {invitation.email}: {str(e)}") from e
 
 
 # Provider abstraction alias for backwards compatibility

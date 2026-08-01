@@ -298,13 +298,10 @@ EMAIL_TIMEOUT = config("EMAIL_TIMEOUT", cast=int, default=10)
 EMAIL_HOST_USER = config("EMAIL_HOST_USER", default="")
 EMAIL_HOST_PASSWORD = config("EMAIL_HOST_PASSWORD", default="")
 
-default_from = config("DEFAULT_FROM_EMAIL", default="")
-if default_from and default_from.strip():
-    DEFAULT_FROM_EMAIL = default_from.strip()
-elif EMAIL_HOST_USER:
-    DEFAULT_FROM_EMAIL = f"FairSplit Team <{EMAIL_HOST_USER}>"
-else:
-    DEFAULT_FROM_EMAIL = "FairSplit Team <noreply@fairsplit.com>"
+# Brevo Transactional Email HTTP API Configuration
+BREVO_API_KEY = config("BREVO_API_KEY", default="")
+BREVO_SENDER_EMAIL = config("BREVO_SENDER_EMAIL", default="purwarprakhar00@gmail.com")
+BREVO_SENDER_NAME = config("BREVO_SENDER_NAME", default="FairSplit Team")
 
 
 # OAuth Configuration (Google & GitHub)
