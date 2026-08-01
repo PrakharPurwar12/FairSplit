@@ -186,15 +186,17 @@ class ProjectInviteView(APIView):
         res_data = ProjectInvitationSerializer(invitation).data
         res_data["email_sent"] = email_sent
         if not email_sent:
+            err_msg = invitation.email_delivery_error or "Unknown SMTP error"
+            res_data["email_delivery_error"] = err_msg
             res_data["message"] = (
-                "Invitation created successfully, but email delivery failed. You can attempt to resend it."
+                f"Invitation created successfully, but email delivery failed: {err_msg}"
             )
         else:
             res_data["message"] = "Invitation created and email sent successfully."
 
         logger.info(
-            f"[INVITE 201 SUCCESS] Invite ID: {invitation.id} | "
-            f"Recipient: {invitation.email} | EmailSent: {email_sent}"
+            f"[INVITE 201 RESPONSE] Invite ID: {invitation.id} | "
+            f"Recipient: {invitation.email} | EmailSent: {email_sent} | Error: {invitation.email_delivery_error}"
         )
 
         return Response(res_data, status=status.HTTP_201_CREATED)
@@ -297,15 +299,17 @@ class InvitationResendView(APIView):
         res_data = ProjectInvitationSerializer(invitation).data
         res_data["email_sent"] = email_sent
         if not email_sent:
+            err_msg = invitation.email_delivery_error or "Unknown SMTP error"
+            res_data["email_delivery_error"] = err_msg
             res_data["message"] = (
-                "Invitation updated, but email delivery failed. You can attempt to resend again."
+                f"Invitation updated, but email delivery failed: {err_msg}"
             )
         else:
             res_data["message"] = "Invitation email resent successfully."
 
         logger.info(
-            f"[RESEND 200 SUCCESS] Invitation ID: {invitation.id} | "
-            f"Recipient: {invitation.email} | EmailSent: {email_sent}"
+            f"[RESEND 200 RESPONSE] Invitation ID: {invitation.id} | "
+            f"Recipient: {invitation.email} | EmailSent: {email_sent} | Error: {invitation.email_delivery_error}"
         )
 
         return Response(res_data, status=status.HTTP_200_OK)
