@@ -131,7 +131,7 @@ const Tasks = () => {
   // EDIT TASK
   const openEditModal = (task) => {
     setSelectedTask(task);
-    setProjectId(task.project.toString());
+    setProjectId((task.project?.id ?? task.project ?? '').toString());
     setTitle(task.title);
     setDescription(task.description || '');
     setEstimatedHours(parseFloat(task.estimated_hours).toString());
@@ -297,7 +297,8 @@ const Tasks = () => {
           task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
           (task.description || '').toLowerCase().includes(searchQuery.toLowerCase());
         
-        const matchesProject = projectFilter === 'all' || task.project.toString() === projectFilter;
+        const taskProjectId = (task.project?.id ?? task.project ?? '').toString();
+        const matchesProject = projectFilter === 'all' || taskProjectId === projectFilter;
         const matchesStatus = statusFilter === 'all' || task.status === statusFilter;
         const matchesPriority = priorityFilter === 'all' || task.priority === priorityFilter;
 

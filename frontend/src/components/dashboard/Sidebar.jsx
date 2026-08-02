@@ -91,6 +91,7 @@ const Sidebar = ({ isMobileOpen, isCollapsed, toggleMobileSidebar, toggleCollaps
               label={item.label}
               to={item.to}
               isCollapsed={isCollapsed}
+              onClick={isMobileOpen ? toggleMobileSidebar : undefined}
             />
           ))}
         </nav>
@@ -136,7 +137,11 @@ const Sidebar = ({ isMobileOpen, isCollapsed, toggleMobileSidebar, toggleCollaps
             )}
             
             {!isCollapsed && (
-              <Link to="/settings" className="p-1.5 shrink-0 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-white/10 rounded-md transition-colors">
+              <Link 
+                to="/settings" 
+                onClick={isMobileOpen ? toggleMobileSidebar : undefined}
+                className="p-1.5 shrink-0 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-white/10 rounded-md transition-colors"
+              >
                 <Settings size={16} />
               </Link>
             )}

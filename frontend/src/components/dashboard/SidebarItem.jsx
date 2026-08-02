@@ -2,10 +2,11 @@ import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 
-const SidebarItem = ({ icon: Icon, label, to, isCollapsed }) => {
+const SidebarItem = ({ icon: Icon, label, to, isCollapsed, onClick }) => {
   return (
     <NavLink
       to={to}
+      onClick={onClick}
       className={({ isActive }) =>
         `relative flex items-center h-10 px-3 mb-1 rounded-md transition-all duration-200 group outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${
           isActive

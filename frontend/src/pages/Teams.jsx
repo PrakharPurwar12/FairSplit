@@ -548,7 +548,8 @@ const Teams = () => {
   const isDuplicateMember = useMemo(() => {
     if (!addProjectId || !addUserId) return false;
     return members.some(
-      m => m.project.toString() === addProjectId.toString() && m.user.toString() === addUserId.toString()
+      m => (m.project?.id ?? m.project ?? '').toString() === addProjectId.toString() &&
+           (m.user?.id ?? m.user ?? '').toString() === addUserId.toString()
     );
   }, [members, addProjectId, addUserId]);
 
@@ -556,8 +557,8 @@ const Teams = () => {
   const comboboxFilteredUsers = useMemo(() => {
     const existingMemberUserIds = new Set(
       members
-        .filter(m => addProjectId && m.project.toString() === addProjectId.toString())
-        .map(m => m.user.toString())
+        .filter(m => addProjectId && (m.project?.id ?? m.project ?? '').toString() === addProjectId.toString())
+        .map(m => (m.user?.id ?? m.user ?? '').toString())
     );
 
     return allSystemUsers.filter(u => {
@@ -689,8 +690,8 @@ const Teams = () => {
 
       if (parsed.type === 'duplicate_pending') {
         const found = invitations.find(
-          inv => inv.project.toString() === addProjectId.toString() &&
-                 inv.email.toLowerCase() === inviteEmail.trim().toLowerCase() &&
+          inv => (inv.project?.id ?? inv.project ?? '').toString() === addProjectId.toString() &&
+                 (inv.email || '').toLowerCase() === inviteEmail.trim().toLowerCase() &&
                  (inv.status === 'PENDING' || inv.status === 'OPENED')
         );
         setExistingPendingInv(found || { email: inviteEmail.trim(), id: null });
