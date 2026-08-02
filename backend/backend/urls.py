@@ -18,7 +18,7 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import include, path
 
-from .views import health_check, socket_diag
+from .views import health_check, send_test_email, socket_diag
 
 urlpatterns = [
     path("", health_check, name="root_health_check"),
@@ -26,6 +26,7 @@ urlpatterns = [
     path("api/health/", health_check, name="api_health_check"),
     path("diag/", socket_diag, name="socket_diag"),
     path("api/diag/", socket_diag, name="api_socket_diag"),
+    path("api/diag/send-test-email/", send_test_email, name="api_send_test_email"),
     path("admin/", admin.site.urls),
     path("api/account/", include("account.urls")),
     path("api/skills/", include("skills.urls")),

@@ -1,7 +1,11 @@
+import json
 import socket
+import traceback
 from django.conf import settings
+from django.core.mail import send_mail
 from django.db import connection
 from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
 
 
 def health_check(request):
@@ -75,3 +79,52 @@ def socket_diag(request):
         diag_results["port465_ipv4_success"] = False
 
     return JsonResponse(diag_results, status=200)
+
+
+@csrf_exempt
+def send_test_email(request):
+    if request.method != "POST":
+        return JsonResponse({"error": "POST method required"}, status=405)
+
+    to_email = None
+    try:
+        if request.body:
+            body_data = json.loads(request.body.decode("utf-8"))
+            to_email = body_data.get("to_email") or body_data.get("recipient")
+    except Exception:
+        pass
+
+    if not to_email:
+        to_email = request.POST.get("to_email") or request.POST.get("recipient")
+
+    if not to_email:
+        return JsonResponse(
+            {"success": False, "error": "Recipient email ('to_email') is required in POST body."},
+            status=400,
+        )
+
+    response_data = {
+        "success": False,
+        "recipient": to_email,
+        "exception_type": None,
+        "exception_message": None,
+    }
+
+    try:
+        sent_count = send_mail(
+            subject="FairSplit Diagnostic Email",
+            message="This is a test email sent from the FairSplit Django diagnostic endpoint.",
+            from_email=getattr(settings, "DEFAULT_FROM_EMAIL", None),
+            recipient_list=[to_email],
+            fail_silently=False,
+        )
+        response_data["success"] = True
+        response_data["sent_count"] = sent_count
+        return JsonResponse(response_data, status=200)
+    except Exception as e:
+        response_data["success"] = False
+        response_data["exception_type"] = type(e).__name__
+        response_data["exception_message"] = str(e)
+        if getattr(settings, "DEBUG", False):
+            response_data["traceback"] = traceback.format_exc()
+        return JsonResponse(response_data, status=500)
