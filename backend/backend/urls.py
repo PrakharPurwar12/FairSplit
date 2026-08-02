@@ -21,6 +21,7 @@ from django.urls import include, path
 from .views import health_check, socket_diag
 
 urlpatterns = [
+    path("", health_check, name="root_health_check"),
     path("health/", health_check, name="health_check"),
     path("api/health/", health_check, name="api_health_check"),
     path("diag/", socket_diag, name="socket_diag"),
