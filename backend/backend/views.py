@@ -111,15 +111,14 @@ def send_test_email(request):
     }
 
     try:
-        sent_count = send_mail(
-            subject="FairSplit Diagnostic Email",
-            message="This is a test email sent from the FairSplit Django diagnostic endpoint.",
-            from_email=getattr(settings, "DEFAULT_FROM_EMAIL", None),
-            recipient_list=[to_email],
-            fail_silently=False,
+        from project.services.email_service import EmailService
+        EmailService.send_email(
+            to_email=to_email,
+            subject="FairSplit Diagnostic Email (Brevo HTTPS)",
+            text_content="This is a test email sent from the FairSplit Django diagnostic endpoint via Brevo HTTPS API.",
         )
         response_data["success"] = True
-        response_data["sent_count"] = sent_count
+        response_data["sent_count"] = 1
         return JsonResponse(response_data, status=200)
     except Exception as e:
         response_data["success"] = False

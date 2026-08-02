@@ -26,6 +26,80 @@ class EmailService:
         return default
 
     @classmethod
+    def send_email(cls, to_email, subject, text_content, html_content=None, recipient_name=None):
+        """
+        Generic reusable method to send transactional emails via Brevo HTTPS API (v3).
+        """
+        api_key = cls.get_config_val("BREVO_API_KEY", getattr(settings, "BREVO_API_KEY", ""))
+        sender_email = cls.get_config_val("BREVO_SENDER_EMAIL", getattr(settings, "BREVO_SENDER_EMAIL", "purwarprakhar00@gmail.com"))
+        sender_name = cls.get_config_val("BREVO_SENDER_NAME", getattr(settings, "BREVO_SENDER_NAME", "FairSplit Team"))
+
+        logger.info(
+            f"[BREVO SEND_EMAIL CALLED] "
+            f"Recipient: '{to_email}' | "
+            f"Sender: '{sender_name} <{sender_email}>' | "
+            f"Subject: '{subject}' | "
+            f"API Key Set?: {bool(api_key)}"
+        )
+
+        if not api_key or api_key.strip() == "":
+            err_msg = "Brevo HTTP API is not configured (BREVO_API_KEY missing or empty)."
+            logger.error(f"[BREVO CONFIG ERROR] {err_msg} Cannot deliver email to {to_email}")
+            raise EmailDeliveryError(err_msg)
+
+        brevo_url = "https://api.brevo.com/v3/smtp/email"
+        headers = {
+            "accept": "application/json",
+            "api-key": api_key,
+            "content-type": "application/json",
+        }
+
+        recip_name = recipient_name or to_email.split("@")[0]
+        payload = {
+            "sender": {
+                "name": sender_name,
+                "email": sender_email,
+            },
+            "to": [
+                {
+                    "email": to_email,
+                    "name": recip_name,
+                }
+            ],
+            "subject": subject,
+            "textContent": text_content,
+        }
+        if html_content:
+            payload["htmlContent"] = html_content
+
+        try:
+            resp = requests.post(brevo_url, headers=headers, json=payload, timeout=10)
+            if resp.status_code == 201:
+                data = resp.json()
+                message_id = data.get("messageId", "Brevo-201-Success")
+                logger.info(
+                    f"[BREVO SUCCESS 201] Sent email to {to_email} | MessageID: '{message_id}'"
+                )
+                return True
+            else:
+                logger.error(
+                    f"[BREVO API FAILURE] Failed to send email to {to_email} | "
+                    f"HTTP Status: {resp.status_code} | "
+                    f"Response: {resp.text}"
+                )
+                raise EmailDeliveryError(
+                    f"Brevo HTTP API delivery failed (Status {resp.status_code}): {resp.text}"
+                )
+        except EmailDeliveryError:
+            raise
+        except Exception as e:
+            logger.error(
+                f"[BREVO EXCEPTION] HTTP request exception sending email to {to_email}: {e}",
+                exc_info=True,
+            )
+            raise EmailDeliveryError(f"Brevo HTTP request failed for {to_email}: {str(e)}") from e
+
+    @classmethod
     def send_invitation_email(cls, invitation):
         """
         Dispatches an HTML and Plain-Text invitation email using the Brevo Transactional Email HTTP API (v3).
