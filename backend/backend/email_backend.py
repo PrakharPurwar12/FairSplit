@@ -86,9 +86,6 @@ class IPv4EmailBackend(DjangoEmailBackend):
     Custom Django EmailBackend that uses IPv4SMTP / IPv4SMTP_SSL to force IPv4 socket connections.
     """
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        if self.use_ssl:
-            self.connection_class = IPv4SMTP_SSL
-        else:
-            self.connection_class = IPv4SMTP
+    @property
+    def connection_class(self):
+        return IPv4SMTP_SSL if self.use_ssl else IPv4SMTP
