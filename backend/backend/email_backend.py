@@ -1,6 +1,7 @@
 import logging
-import socket
 import smtplib
+import socket
+
 from django.core.mail.backends.smtp import EmailBackend as DjangoEmailBackend
 
 logger = logging.getLogger(__name__)

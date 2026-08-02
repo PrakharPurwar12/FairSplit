@@ -1,4 +1,5 @@
 import logging
+
 import requests
 from decouple import config
 from django.conf import settings
@@ -8,6 +9,7 @@ logger = logging.getLogger(__name__)
 
 class EmailDeliveryError(Exception):
     """Custom exception raised when email delivery fails."""
+
     pass
 
 
@@ -31,7 +33,9 @@ class EmailService:
         Generic reusable method to send transactional emails via Brevo HTTPS API (v3).
         """
         api_key = cls.get_config_val("BREVO_API_KEY", getattr(settings, "BREVO_API_KEY", ""))
-        sender_email = cls.get_config_val("BREVO_SENDER_EMAIL", getattr(settings, "BREVO_SENDER_EMAIL", "purwarprakhar00@gmail.com"))
+        sender_email = cls.get_config_val(
+            "BREVO_SENDER_EMAIL", getattr(settings, "BREVO_SENDER_EMAIL", "purwarprakhar00@gmail.com")
+        )
         sender_name = cls.get_config_val("BREVO_SENDER_NAME", getattr(settings, "BREVO_SENDER_NAME", "FairSplit Team"))
 
         logger.info(
@@ -77,9 +81,7 @@ class EmailService:
             if resp.status_code == 201:
                 data = resp.json()
                 message_id = data.get("messageId", "Brevo-201-Success")
-                logger.info(
-                    f"[BREVO SUCCESS 201] Sent email to {to_email} | MessageID: '{message_id}'"
-                )
+                logger.info(f"[BREVO SUCCESS 201] Sent email to {to_email} | MessageID: '{message_id}'")
                 return True
             else:
                 logger.error(
@@ -87,9 +89,7 @@ class EmailService:
                     f"HTTP Status: {resp.status_code} | "
                     f"Response: {resp.text}"
                 )
-                raise EmailDeliveryError(
-                    f"Brevo HTTP API delivery failed (Status {resp.status_code}): {resp.text}"
-                )
+                raise EmailDeliveryError(f"Brevo HTTP API delivery failed (Status {resp.status_code}): {resp.text}")
         except EmailDeliveryError:
             raise
         except Exception as e:
@@ -106,7 +106,9 @@ class EmailService:
         Documentation: https://developers.brevo.com/reference/sendtransacemail
         """
         api_key = cls.get_config_val("BREVO_API_KEY", getattr(settings, "BREVO_API_KEY", ""))
-        sender_email = cls.get_config_val("BREVO_SENDER_EMAIL", getattr(settings, "BREVO_SENDER_EMAIL", "purwarprakhar00@gmail.com"))
+        sender_email = cls.get_config_val(
+            "BREVO_SENDER_EMAIL", getattr(settings, "BREVO_SENDER_EMAIL", "purwarprakhar00@gmail.com")
+        )
         sender_name = cls.get_config_val("BREVO_SENDER_NAME", getattr(settings, "BREVO_SENDER_NAME", "FairSplit Team"))
         frontend_url = cls.get_config_val("FRONTEND_URL", "http://localhost").rstrip("/")
 
@@ -135,14 +137,8 @@ class EmailService:
         )
         project_title = invitation.project.title
         role_name = invitation.role.title() if invitation.role else "Team Member"
-        skills_str = (
-            ", ".join(invitation.skills)
-            if invitation.skills
-            else "General Responsibilities"
-        )
-        personal_message = (
-            invitation.personal_message.strip() if invitation.personal_message else None
-        )
+        skills_str = ", ".join(invitation.skills) if invitation.skills else "General Responsibilities"
+        personal_message = invitation.personal_message.strip() if invitation.personal_message else None
 
         # Build Plain Text Fallback
         plain_text = (
@@ -153,9 +149,7 @@ class EmailService:
         )
         if personal_message:
             plain_text += f'Message: "{personal_message}"\n'
-        plain_text += (
-            f"\nAccept your invitation by visiting the link below:\n{invite_link}\n\n"
-        )
+        plain_text += f"\nAccept your invitation by visiting the link below:\n{invite_link}\n\n"
         plain_text += "Note: This invitation will expire in 7 days.\n"
 
         # Build Modern HTML Template
@@ -248,11 +242,7 @@ class EmailService:
         </html>
         """
 
-        sender_user_email = (
-            invitation.invited_by.email
-            if invitation.invited_by and invitation.invited_by.email
-            else ""
-        )
+        sender_user_email = invitation.invited_by.email if invitation.invited_by and invitation.invited_by.email else ""
 
         # Construct Brevo v3 Transactional Email Payload
         brevo_url = "https://api.brevo.com/v3/smtp/email"
@@ -284,7 +274,7 @@ class EmailService:
 
         try:
             resp = requests.post(brevo_url, headers=headers, json=payload, timeout=10)
-            
+
             if resp.status_code == 201:
                 data = resp.json()
                 message_id = data.get("messageId", "Brevo-201-Success")
@@ -300,9 +290,7 @@ class EmailService:
                     f"HTTP Status: {resp.status_code} | "
                     f"Full Response Body: {resp.text}"
                 )
-                raise EmailDeliveryError(
-                    f"Brevo HTTP API delivery failed (Status {resp.status_code}): {resp.text}"
-                )
+                raise EmailDeliveryError(f"Brevo HTTP API delivery failed (Status {resp.status_code}): {resp.text}")
         except EmailDeliveryError:
             raise
         except Exception as e:

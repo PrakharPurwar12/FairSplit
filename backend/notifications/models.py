@@ -21,14 +21,10 @@ class Notification(models.Model):
         ("system", "System Alert"),
     )
 
-    user = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="notifications"
-    )
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="notifications")
     title = models.CharField(max_length=255)
     message = models.TextField()
-    notification_type = models.CharField(
-        max_length=50, choices=NOTIFICATION_TYPES, default="system"
-    )
+    notification_type = models.CharField(max_length=50, choices=NOTIFICATION_TYPES, default="system")
     is_read = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 

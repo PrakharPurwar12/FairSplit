@@ -1,11 +1,6 @@
 from django.urls import path
 
-from .views import (
-    MemberAnalyticsView,
-    ProjectDashboardView,
-    RiskAnalyticsView,
-    TeamAnalyticsView,
-)
+from .views import MemberAnalyticsView, ProjectDashboardView, RiskAnalyticsView, TeamAnalyticsView
 
 urlpatterns = [
     path(

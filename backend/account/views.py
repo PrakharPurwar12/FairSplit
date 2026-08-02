@@ -99,9 +99,7 @@ class OAuthURLView(APIView):
             )
             return Response({"url": auth_url, "provider": "github"})
         else:
-            return Response(
-                {"error": "Unsupported provider"}, status=status.HTTP_400_BAD_REQUEST
-            )
+            return Response({"error": "Unsupported provider"}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class OAuthLoginView(APIView):
@@ -254,11 +252,7 @@ class OAuthLoginView(APIView):
                     if emails_res.status_code == 200:
                         emails_list = emails_res.json()
                         primary_email = next(
-                            (
-                                e
-                                for e in emails_list
-                                if e.get("primary") and e.get("verified")
-                            ),
+                            (e for e in emails_list if e.get("primary") and e.get("verified")),
                             None,
                         )
                         if primary_email:

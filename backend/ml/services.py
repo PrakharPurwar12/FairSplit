@@ -22,9 +22,7 @@ def update_task_prediction(task):
             logger.info(f"Skipping prediction for Task {task.id}: No assignment found.")
             return None
     except TaskAssignment.DoesNotExist:
-        logger.info(
-            f"Skipping prediction for Task {task.id}: TaskAssignment.DoesNotExist."
-        )
+        logger.info(f"Skipping prediction for Task {task.id}: TaskAssignment.DoesNotExist.")
         return None
 
     with transaction.atomic():
@@ -42,9 +40,7 @@ def update_task_prediction(task):
         task.predicted_risk = prediction["predicted_risk"]
         task.risk_confidence = prediction["confidence"]
         task.last_risk_update = timezone.now()
-        task.save(
-            update_fields=["predicted_risk", "risk_confidence", "last_risk_update"]
-        )
+        task.save(update_fields=["predicted_risk", "risk_confidence", "last_risk_update"])
 
         logger.info(
             f"Task {task.id} Prediction Updated | "

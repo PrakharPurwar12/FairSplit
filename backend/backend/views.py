@@ -1,8 +1,8 @@
 import json
 import socket
 import traceback
+
 from django.conf import settings
-from django.core.mail import send_mail
 from django.db import connection
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -25,7 +25,7 @@ def health_check(request):
 
 def socket_diag(request):
     diag_results = {}
-    
+
     # 1. Resolve smtp.gmail.com
     try:
         diag_results["addrinfo_all"] = [
@@ -42,7 +42,7 @@ def socket_diag(request):
         res4 = s4.connect_ex(("smtp.gmail.com", 587))
         s4.close()
         diag_results["ipv4_connect_ex"] = res4
-        diag_results["ipv4_success"] = (res4 == 0)
+        diag_results["ipv4_success"] = res4 == 0
     except Exception as e:
         diag_results["ipv4_error"] = str(e)
         diag_results["ipv4_success"] = False
@@ -58,7 +58,7 @@ def socket_diag(request):
             res6 = s6.connect_ex(target_v6)
             s6.close()
             diag_results["ipv6_connect_ex"] = res6
-            diag_results["ipv6_success"] = (res6 == 0)
+            diag_results["ipv6_success"] = res6 == 0
         else:
             diag_results["ipv6_error"] = "No IPv6 address resolved"
             diag_results["ipv6_success"] = False
@@ -73,7 +73,7 @@ def socket_diag(request):
         res465 = s465.connect_ex(("smtp.gmail.com", 465))
         s465.close()
         diag_results["port465_ipv4_connect_ex"] = res465
-        diag_results["port465_ipv4_success"] = (res465 == 0)
+        diag_results["port465_ipv4_success"] = res465 == 0
     except Exception as e:
         diag_results["port465_ipv4_error"] = str(e)
         diag_results["port465_ipv4_success"] = False
@@ -112,6 +112,7 @@ def send_test_email(request):
 
     try:
         from project.services.email_service import EmailService
+
         EmailService.send_email(
             to_email=to_email,
             subject="FairSplit Diagnostic Email (Brevo HTTPS)",

@@ -60,9 +60,7 @@ class MemberAnalyticsView(APIView):
 
     def get(self, request, member_id):
 
-        assignments = TaskAssignment.objects.filter(
-            assigned_to_id=member_id
-        ).select_related("task", "assigned_to")
+        assignments = TaskAssignment.objects.filter(assigned_to_id=member_id).select_related("task", "assigned_to")
 
         if not assignments.exists():
 
@@ -74,21 +72,13 @@ class MemberAnalyticsView(APIView):
 
         completed_tasks = assignments.filter(task__status="completed").count()
 
-        active_tasks = assignments.filter(
-            task__status__in=["todo", "progress", "review"]
-        ).count()
+        active_tasks = assignments.filter(task__status__in=["todo", "progress", "review"]).count()
 
-        estimated_hours = (
-            assignments.aggregate(total=Sum("task__estimated_hours"))["total"] or 0
-        )
+        estimated_hours = assignments.aggregate(total=Sum("task__estimated_hours"))["total"] or 0
 
-        actual_hours = (
-            assignments.aggregate(total=Sum("task__actual_hours"))["total"] or 0
-        )
+        actual_hours = assignments.aggregate(total=Sum("task__actual_hours"))["total"] or 0
 
-        average_completion = (
-            assignments.aggregate(avg=Avg("task__completion_percentage"))["avg"] or 0
-        )
+        average_completion = assignments.aggregate(avg=Avg("task__completion_percentage"))["avg"] or 0
 
         workload_score = calculate_workload_score(float(estimated_hours))
 
@@ -110,29 +100,21 @@ class TeamAnalyticsView(APIView):
     permission_classes = [IsAuthenticated]
 
     def _get_member_statistics(self, member, project_id):
-        assignments = TaskAssignment.objects.filter(
-            assigned_to=member, task__project_id=project_id
-        ).select_related("task")
+        assignments = TaskAssignment.objects.filter(assigned_to=member, task__project_id=project_id).select_related(
+            "task"
+        )
 
         total_tasks = assignments.count()
 
         completed_tasks = assignments.filter(task__status="completed").count()
 
-        active_tasks = assignments.filter(
-            task__status__in=["todo", "progress", "review"]
-        ).count()
+        active_tasks = assignments.filter(task__status__in=["todo", "progress", "review"]).count()
 
-        estimated_hours = (
-            assignments.aggregate(total=Sum("task__estimated_hours"))["total"] or 0
-        )
+        estimated_hours = assignments.aggregate(total=Sum("task__estimated_hours"))["total"] or 0
 
-        actual_hours = (
-            assignments.aggregate(total=Sum("task__actual_hours"))["total"] or 0
-        )
+        actual_hours = assignments.aggregate(total=Sum("task__actual_hours"))["total"] or 0
 
-        average_completion = (
-            assignments.aggregate(avg=Avg("task__completion_percentage"))["avg"] or 0
-        )
+        average_completion = assignments.aggregate(avg=Avg("task__completion_percentage"))["avg"] or 0
 
         workload_score = calculate_workload_score(float(estimated_hours))
 
@@ -150,13 +132,9 @@ class TeamAnalyticsView(APIView):
 
     def get(self, request, project_id):
 
-        project_members = ProjectMember.objects.filter(
-            project_id=project_id
-        ).select_related("user")
+        project_members = ProjectMember.objects.filter(project_id=project_id).select_related("user")
 
-        team_statistics = [
-            self._get_member_statistics(pm.user, project_id) for pm in project_members
-        ]
+        team_statistics = [self._get_member_statistics(pm.user, project_id) for pm in project_members]
 
         return Response(
             {
@@ -181,12 +159,7 @@ class RiskAnalyticsView(APIView):
         medium_count = tasks.filter(predicted_risk="Medium").count()
         low_count = tasks.filter(predicted_risk="Low").count()
 
-        avg_confidence = (
-            tasks.exclude(risk_confidence__isnull=True).aggregate(
-                avg=Avg("risk_confidence")
-            )["avg"]
-            or 0
-        )
+        avg_confidence = tasks.exclude(risk_confidence__isnull=True).aggregate(avg=Avg("risk_confidence"))["avg"] or 0
 
         high_risk_percentage = 0
 
@@ -199,19 +172,13 @@ class RiskAnalyticsView(APIView):
 
         for task in high_tasks:
 
-            assignment = (
-                TaskAssignment.objects.filter(task=task)
-                .select_related("assigned_to")
-                .first()
-            )
+            assignment = TaskAssignment.objects.filter(task=task).select_related("assigned_to").first()
 
             high_risk_tasks.append(
                 {
                     "task_id": task.id,
                     "task_title": task.title,
-                    "assigned_to": (
-                        assignment.assigned_to.username if assignment else None
-                    ),
+                    "assigned_to": (assignment.assigned_to.username if assignment else None),
                     "status": task.status,
                     "completion_percentage": task.completion_percentage,
                     "deadline": task.deadline,

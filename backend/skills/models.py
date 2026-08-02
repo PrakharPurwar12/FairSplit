@@ -24,9 +24,7 @@ class UserSkill(models.Model):
         (5, "Expert"),
     )
 
-    user = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="user_skills"
-    )
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="user_skills")
 
     skill = models.ForeignKey(Skill, on_delete=models.CASCADE)
 

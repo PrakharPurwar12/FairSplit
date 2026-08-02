@@ -18,8 +18,6 @@ class Migration(migrations.Migration):
         ),
         migrations.AddIndex(
             model_name="project",
-            index=models.Index(
-                fields=["manager", "status"], name="idx_proj_mgr_status"
-            ),
+            index=models.Index(fields=["manager", "status"], name="idx_proj_mgr_status"),
         ),
     ]

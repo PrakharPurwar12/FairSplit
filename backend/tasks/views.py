@@ -8,11 +8,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from .models import Task, TaskAssignment, TaskSkill
-from .serializers import (
-    TaskProgressUpdateSerializer,
-    TaskSerializer,
-    TaskSkillSerializer,
-)
+from .serializers import TaskProgressUpdateSerializer, TaskSerializer, TaskSkillSerializer
 
 
 class TaskListCreateView(generics.ListCreateAPIView):
@@ -22,13 +18,9 @@ class TaskListCreateView(generics.ListCreateAPIView):
     def get_queryset(self):
         user = self.request.user
         if user.is_staff or user.is_superuser:
-            return Task.objects.select_related(
-                "project", "created_by", "assignment__assigned_to"
-            ).all()
+            return Task.objects.select_related("project", "created_by", "assignment__assigned_to").all()
         return (
-            Task.objects.select_related(
-                "project", "created_by", "assignment__assigned_to"
-            )
+            Task.objects.select_related("project", "created_by", "assignment__assigned_to")
             .filter(
                 models.Q(created_by=user)
                 | models.Q(project__manager=user)
@@ -56,13 +48,9 @@ class TaskDetailView(generics.RetrieveUpdateDestroyAPIView):
     def get_queryset(self):
         user = self.request.user
         if user.is_staff or user.is_superuser:
-            return Task.objects.select_related(
-                "project", "created_by", "assignment__assigned_to"
-            ).all()
+            return Task.objects.select_related("project", "created_by", "assignment__assigned_to").all()
         return (
-            Task.objects.select_related(
-                "project", "created_by", "assignment__assigned_to"
-            )
+            Task.objects.select_related("project", "created_by", "assignment__assigned_to")
             .filter(
                 models.Q(created_by=user)
                 | models.Q(project__manager=user)
@@ -107,9 +95,7 @@ class TaskProgressUpdateView(APIView):
 
         if not (is_assigned or is_manager or is_creator or is_admin):
             return Response(
-                {
-                    "error": "You do not have permission to update progress for this task."
-                },
+                {"error": "You do not have permission to update progress for this task."},
                 status=status.HTTP_403_FORBIDDEN,
             )
 

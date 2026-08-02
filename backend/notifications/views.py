@@ -59,9 +59,7 @@ class NotificationMarkAllReadView(APIView):
     permission_classes = [IsAuthenticated]
 
     def patch(self, request):
-        updated_count = Notification.objects.filter(
-            user=request.user, is_read=False
-        ).update(is_read=True)
+        updated_count = Notification.objects.filter(user=request.user, is_read=False).update(is_read=True)
         return Response(
             {
                 "message": "All notifications marked as read.",

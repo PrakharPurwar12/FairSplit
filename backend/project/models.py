@@ -53,9 +53,7 @@ class ProjectMember(models.Model):
         ("designer", "Designer"),
     )
 
-    project = models.ForeignKey(
-        Project, on_delete=models.CASCADE, related_name="members"
-    )
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name="members")
 
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
 
@@ -82,9 +80,7 @@ class ProjectInvitation(models.Model):
         ("EXPIRED", "Expired"),
     )
 
-    project = models.ForeignKey(
-        Project, on_delete=models.CASCADE, related_name="invitations"
-    )
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name="invitations")
 
     email = models.EmailField()
 

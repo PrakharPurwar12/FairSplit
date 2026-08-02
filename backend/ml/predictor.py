@@ -23,9 +23,7 @@ def get_model_assets():
             _risk_encoder = joblib.load(MODEL_DIR / "risk_encoder.pkl")
         except Exception as e:
             logger.error(f"Failed to load ML risk prediction assets: {e}")
-            raise RuntimeError(
-                "ML Risk Prediction model assets are unavailable."
-            ) from e
+            raise RuntimeError("ML Risk Prediction model assets are unavailable.") from e
     return _model, _priority_encoder, _risk_encoder
 
 
@@ -56,9 +54,7 @@ def predict_risk(data):
     predicted_risk = risk_encoder.inverse_transform([prediction])[0]
     classes = risk_encoder.inverse_transform(list(range(len(probabilities))))
 
-    risk_probabilities = {
-        label: round(prob * 100, 2) for label, prob in zip(classes, probabilities)
-    }
+    risk_probabilities = {label: round(prob * 100, 2) for label, prob in zip(classes, probabilities)}
 
     return {
         "predicted_risk": predicted_risk,

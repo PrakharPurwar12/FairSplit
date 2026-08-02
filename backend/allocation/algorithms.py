@@ -30,9 +30,7 @@ def calculate_skill_score(member, task):
     for requirement in required_skills:
 
         try:
-            user_skill = UserSkill.objects.get(
-                user=member.user, skill=requirement.skill
-            )
+            user_skill = UserSkill.objects.get(user=member.user, skill=requirement.skill)
 
             score += user_skill.proficiency * requirement.importance
 
@@ -53,9 +51,7 @@ def get_current_workloads(project):
 
     workloads = defaultdict(float)
 
-    assignments = TaskAssignment.objects.filter(task__project=project).select_related(
-        "task"
-    )
+    assignments = TaskAssignment.objects.filter(task__project=project).select_related("task")
 
     for assignment in assignments:
 
@@ -117,9 +113,7 @@ def calculate_final_score(
     penalty,
 ):
 
-    return round(
-        (SKILL_WEIGHT * skill_score) + (WORKLOAD_WEIGHT * workload_score) - penalty, 2
-    )
+    return round((SKILL_WEIGHT * skill_score) + (WORKLOAD_WEIGHT * workload_score) - penalty, 2)
 
 
 # ======================================================
@@ -179,9 +173,7 @@ def generate_reason(
 
 def allocate_tasks(project_id):
 
-    tasks = Task.objects.filter(project_id=project_id).order_by(
-        "-priority", "-difficulty"
-    )
+    tasks = Task.objects.filter(project_id=project_id).order_by("-priority", "-difficulty")
 
     members = ProjectMember.objects.filter(project_id=project_id)
 
@@ -234,9 +226,7 @@ def allocate_tasks(project_id):
 
         confidence = calculate_confidence(best["final_score"], second_score)
 
-        reasons = generate_reason(
-            best["matched_skills"], best["workload_score"], best["penalty"]
-        )
+        reasons = generate_reason(best["matched_skills"], best["workload_score"], best["penalty"])
 
         previous = TaskAssignment.objects.filter(task=task).first()
 
@@ -302,9 +292,7 @@ def build_prediction_features(task):
 
     assignment = task.assignment
 
-    member = ProjectMember.objects.get(
-        project=task.project, user=assignment.assigned_to
-    )
+    member = ProjectMember.objects.get(project=task.project, user=assignment.assigned_to)
 
     # Current workloads
     workloads = get_current_workloads(task.project)
@@ -325,9 +313,7 @@ def build_prediction_features(task):
 
     # Days left
     deadline_date = (
-        datetime.strptime(task.deadline, "%Y-%m-%d").date()
-        if isinstance(task.deadline, str)
-        else task.deadline
+        datetime.strptime(task.deadline, "%Y-%m-%d").date() if isinstance(task.deadline, str) else task.deadline
     )
     days_left = max(0, (deadline_date - timezone.now().date()).days)
 
@@ -405,7 +391,5 @@ def recommend_reassignment(task):
             "username": best["member"].user.username,
         },
         "final_score": best["final_score"],
-        "reason": generate_reason(
-            best["matched_skills"], best["workload_score"], best["penalty"]
-        ),
+        "reason": generate_reason(best["matched_skills"], best["workload_score"], best["penalty"]),
     }

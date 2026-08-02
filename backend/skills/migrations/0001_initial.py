@@ -56,9 +56,7 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "skill",
-                    models.ForeignKey(
-                        on_delete=django.db.models.deletion.CASCADE, to="skills.skill"
-                    ),
+                    models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to="skills.skill"),
                 ),
                 (
                     "user",

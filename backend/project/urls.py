@@ -22,9 +22,7 @@ urlpatterns = [
         ProjectMemberDetailView.as_view(),
         name="project-member-delete",
     ),
-    path(
-        "<int:project_id>/invite/", ProjectInviteView.as_view(), name="project-invite"
-    ),
+    path("<int:project_id>/invite/", ProjectInviteView.as_view(), name="project-invite"),
     path(
         "<int:project_id>/invitations/",
         ProjectInvitationListView.as_view(),

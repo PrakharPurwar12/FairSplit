@@ -14,9 +14,7 @@ def create_notification(user, title, message, notification_type="system"):
         return None
     try:
         # Check if identical unread notification exists to prevent spamming
-        exists = Notification.objects.filter(
-            user=user, title=title, is_read=False
-        ).exists()
+        exists = Notification.objects.filter(user=user, title=title, is_read=False).exists()
         if exists:
             return None
 
@@ -29,9 +27,7 @@ def create_notification(user, title, message, notification_type="system"):
         return None
 
 
-def notify_project_members(
-    project, title, message, notification_type="system", exclude_user=None
-):
+def notify_project_members(project, title, message, notification_type="system", exclude_user=None):
     """
     Notifies manager and all project members of a project.
     """
@@ -50,6 +46,4 @@ def notify_project_members(
         users_to_notify.discard(exclude_user)
 
     for user in users_to_notify:
-        create_notification(
-            user=user, title=title, message=message, notification_type=notification_type
-        )
+        create_notification(user=user, title=title, message=message, notification_type=notification_type)

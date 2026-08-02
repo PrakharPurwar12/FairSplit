@@ -19,9 +19,7 @@ def project_dashboard(project_id):
 
     completed_tasks = Task.objects.filter(project=project, status="completed").count()
 
-    pending_tasks = (
-        Task.objects.filter(project=project).exclude(status="completed").count()
-    )
+    pending_tasks = Task.objects.filter(project=project).exclude(status="completed").count()
 
     completion_percentage = 0
 
@@ -52,13 +50,9 @@ def workload_analytics(project_id):
 
     for member in members:
 
-        assignments = TaskAssignment.objects.filter(
-            assigned_to=member.user, task__project_id=project_id
-        )
+        assignments = TaskAssignment.objects.filter(assigned_to=member.user, task__project_id=project_id)
 
-        total_hours = (
-            assignments.aggregate(total=Sum("task__estimated_hours"))["total"] or 0
-        )
+        total_hours = assignments.aggregate(total=Sum("task__estimated_hours"))["total"] or 0
 
         data.append(
             {
@@ -108,9 +102,7 @@ def assignment_history(project_id):
         result.append(
             {
                 "task": record.task.title,
-                "previous_member": (
-                    record.previous_member.username if record.previous_member else None
-                ),
+                "previous_member": (record.previous_member.username if record.previous_member else None),
                 "new_member": record.new_member.username,
                 "reason": record.reason,
                 "changed_at": record.changed_at,

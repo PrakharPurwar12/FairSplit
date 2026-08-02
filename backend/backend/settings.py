@@ -146,17 +146,11 @@ SECURE_SSL_REDIRECT = config("SECURE_SSL_REDIRECT", default=False, cast=bool)
 SESSION_COOKIE_SECURE = config("SESSION_COOKIE_SECURE", default=False, cast=bool)
 CSRF_COOKIE_SECURE = config("CSRF_COOKIE_SECURE", default=False, cast=bool)
 SECURE_HSTS_SECONDS = config("SECURE_HSTS_SECONDS", default=0, cast=int)
-SECURE_HSTS_INCLUDE_SUBDOMAINS = config(
-    "SECURE_HSTS_INCLUDE_SUBDOMAINS", default=False, cast=bool
-)
+SECURE_HSTS_INCLUDE_SUBDOMAINS = config("SECURE_HSTS_INCLUDE_SUBDOMAINS", default=False, cast=bool)
 SECURE_HSTS_PRELOAD = config("SECURE_HSTS_PRELOAD", default=False, cast=bool)
 X_FRAME_OPTIONS = config("X_FRAME_OPTIONS", default="DENY")
-SECURE_CONTENT_TYPE_NOSNIFF = config(
-    "SECURE_CONTENT_TYPE_NOSNIFF", default=True, cast=bool
-)
-SECURE_REFERRER_POLICY = config(
-    "SECURE_REFERRER_POLICY", default="same-origin"
-)
+SECURE_CONTENT_TYPE_NOSNIFF = config("SECURE_CONTENT_TYPE_NOSNIFF", default=True, cast=bool)
+SECURE_REFERRER_POLICY = config("SECURE_REFERRER_POLICY", default="same-origin")
 
 MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",
@@ -175,9 +169,7 @@ ROOT_URLCONF = "backend.urls"
 AUTH_USER_MODEL = "account.User"
 
 REST_FRAMEWORK = {
-    "DEFAULT_AUTHENTICATION_CLASSES": (
-        "rest_framework_simplejwt.authentication.JWTAuthentication",
-    ),
+    "DEFAULT_AUTHENTICATION_CLASSES": ("rest_framework_simplejwt.authentication.JWTAuthentication",),
     "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAuthenticated",),
     "EXCEPTION_HANDLER": "backend.exception_handler.custom_exception_handler",
 }
@@ -234,20 +226,14 @@ elif DB_ENGINE in ("django.db.backends.postgresql", "postgresql") or config("POS
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.postgresql",
-            "NAME": config(
-                "DATABASE_NAME", default=config("POSTGRES_DB", default="fairsplit")
-            ),
-            "USER": config(
-                "DATABASE_USER", default=config("POSTGRES_USER", default="fairsplit")
-            ),
+            "NAME": config("DATABASE_NAME", default=config("POSTGRES_DB", default="fairsplit")),
+            "USER": config("DATABASE_USER", default=config("POSTGRES_USER", default="fairsplit")),
             "PASSWORD": config(
                 "DATABASE_PASSWORD",
                 default=config("POSTGRES_PASSWORD", default="fairsplit_password"),
             ),
             "HOST": db_host,
-            "PORT": config(
-                "DATABASE_PORT", default=config("POSTGRES_PORT", default="5432")
-            ),
+            "PORT": config("DATABASE_PORT", default=config("POSTGRES_PORT", default="5432")),
         }
     }
 else:
@@ -368,11 +354,7 @@ GOOGLE_CLIENT_ID = config("GOOGLE_CLIENT_ID", default="")
 GOOGLE_CLIENT_SECRET = config("GOOGLE_CLIENT_SECRET", default="")
 GOOGLE_REDIRECT_URI = config(
     "GOOGLE_REDIRECT_URI",
-    default=(
-        f"{FRONTEND_URL.rstrip('/')}/auth/callback"
-        if FRONTEND_URL
-        else "http://localhost/auth/callback"
-    ),
+    default=(f"{FRONTEND_URL.rstrip('/')}/auth/callback" if FRONTEND_URL else "http://localhost/auth/callback"),
 )
 GITHUB_CLIENT_ID = config("GITHUB_CLIENT_ID", default="")
 GITHUB_CLIENT_SECRET = config("GITHUB_CLIENT_SECRET", default="")

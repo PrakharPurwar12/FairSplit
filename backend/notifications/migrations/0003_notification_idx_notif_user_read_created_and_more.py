@@ -21,8 +21,6 @@ class Migration(migrations.Migration):
         ),
         migrations.AddIndex(
             model_name="notification",
-            index=models.Index(
-                fields=["user", "-created_at"], name="idx_notif_user_created"
-            ),
+            index=models.Index(fields=["user", "-created_at"], name="idx_notif_user_created"),
         ),
     ]

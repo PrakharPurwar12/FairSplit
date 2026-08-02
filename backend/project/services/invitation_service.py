@@ -36,25 +36,15 @@ class InvitationService:
 
         # 1. Permission check: Only project manager can invite
         if project.manager != invited_by:
-            raise PermissionDenied(
-                "Only the project manager can send invitations for this project."
-            )
+            raise PermissionDenied("Only the project manager can send invitations for this project.")
 
         # 2. Check if user is already a member of this project
-        if ProjectMember.objects.filter(
-            project=project, user__email__iexact=email_clean
-        ).exists():
-            raise ValidationError(
-                "A user with this email address is already a member of this project."
-            )
+        if ProjectMember.objects.filter(project=project, user__email__iexact=email_clean).exists():
+            raise ValidationError("A user with this email address is already a member of this project.")
 
         # 3. Check for existing pending invitation
-        if ProjectInvitation.objects.filter(
-            project=project, email__iexact=email_clean, status="PENDING"
-        ).exists():
-            raise ValidationError(
-                "A pending invitation already exists for this email address in this project."
-            )
+        if ProjectInvitation.objects.filter(project=project, email__iexact=email_clean, status="PENDING").exists():
+            raise ValidationError("A pending invitation already exists for this email address in this project.")
 
         token = generate_secure_token()
         expires_at = timezone.now() + timedelta(days=7)
@@ -106,17 +96,12 @@ class InvitationService:
     @staticmethod
     def get_invitation_by_token(token):
         try:
-            invitation = ProjectInvitation.objects.select_related(
-                "project", "invited_by"
-            ).get(invitation_token=token)
+            invitation = ProjectInvitation.objects.select_related("project", "invited_by").get(invitation_token=token)
         except ProjectInvitation.DoesNotExist:
             raise ValidationError("Invalid or non-existent invitation token.")
 
         # Auto-expire check
-        if (
-            invitation.status in ["PENDING", "OPENED"]
-            and invitation.expires_at < timezone.now()
-        ):
+        if invitation.status in ["PENDING", "OPENED"] and invitation.expires_at < timezone.now():
             invitation.status = "EXPIRED"
             invitation.save(update_fields=["status", "updated_at"])
 
@@ -138,9 +123,7 @@ class InvitationService:
             raise ValidationError("This invitation has expired.")
 
         if invitation.status == "CANCELLED":
-            raise ValidationError(
-                "This invitation has been cancelled by the project manager."
-            )
+            raise ValidationError("This invitation has been cancelled by the project manager.")
 
         if invitation.status == "DECLINED":
             raise ValidationError("This invitation was declined.")
@@ -165,17 +148,13 @@ class InvitationService:
         invitation = cls.get_invitation_by_token(token)
 
         if invitation.status in ["EXPIRED", "CANCELLED", "DECLINED"]:
-            raise ValidationError(
-                f"Cannot accept invitation with status: {invitation.status}."
-            )
+            raise ValidationError(f"Cannot accept invitation with status: {invitation.status}.")
 
         if invitation.status == "ACCEPTED":
             return invitation
 
         if user.email.strip().lower() != invitation.email.strip().lower():
-            raise ValidationError(
-                f"This invitation was issued to {invitation.email}. Please sign in with that email."
-            )
+            raise ValidationError(f"This invitation was issued to {invitation.email}. Please sign in with that email.")
 
         with transaction.atomic():
             # Create ProjectMember
@@ -189,9 +168,7 @@ class InvitationService:
             invitation.status = "ACCEPTED"
             invitation.accepted_by = user
             invitation.accepted_at = timezone.now()
-            invitation.save(
-                update_fields=["status", "accepted_by", "accepted_at", "updated_at"]
-            )
+            invitation.save(update_fields=["status", "accepted_by", "accepted_at", "updated_at"])
 
             # Notify Manager
             user_display = user.get_full_name() or user.username
@@ -215,9 +192,7 @@ class InvitationService:
             raise PermissionDenied("Only the project manager can cancel invitations.")
 
         if invitation.status in ["ACCEPTED", "CANCELLED"]:
-            raise ValidationError(
-                f"Cannot cancel an invitation with status: {invitation.status}."
-            )
+            raise ValidationError(f"Cannot cancel an invitation with status: {invitation.status}.")
 
         invitation.status = "CANCELLED"
         invitation.save(update_fields=["status", "updated_at"])
@@ -233,7 +208,9 @@ class InvitationService:
 
     @staticmethod
     def resend_invitation(invitation_id, manager):
-        logger.info(f"[RESEND TRACE 1: START] invitation_id: {invitation_id} | manager: {manager} ({getattr(manager, 'id', None)})")
+        logger.info(
+            f"[RESEND TRACE 1: START] invitation_id: {invitation_id} | manager: {manager} ({getattr(manager, 'id', None)})"
+        )
 
         try:
             invitation = ProjectInvitation.objects.get(id=invitation_id)
@@ -252,18 +229,14 @@ class InvitationService:
             logger.error(
                 f"[RESEND TRACE FAIL: ALREADY ACCEPTED] invitation_id: {invitation_id} | status: {invitation.status}"
             )
-            raise ValidationError(
-                "Cannot resend an invitation that has already been accepted."
-            )
+            raise ValidationError("Cannot resend an invitation that has already been accepted.")
 
         # Rate Limit Rule 1: Max 3 resends
         if invitation.resend_count >= 3:
             logger.error(
                 f"[RESEND TRACE FAIL: MAX RESENDS EXCEEDED] invitation_id: {invitation_id} | resend_count: {invitation.resend_count}"
             )
-            raise ValidationError(
-                "Maximum resend limit (3 attempts) reached for this invitation."
-            )
+            raise ValidationError("Maximum resend limit (3 attempts) reached for this invitation.")
 
         # Rate Limit Rule 2: Minimum 5 minutes interval
         last_sent_time = invitation.last_resent_at or invitation.created_at
@@ -375,8 +348,6 @@ class InvitationService:
                 accepted = cls.accept_invitation(invitation.invitation_token, user)
                 accepted_list.append(accepted)
             except Exception as e:
-                logger.error(
-                    f"Error auto-accepting invitation {invitation.id} for user {user_email}: {e}"
-                )
+                logger.error(f"Error auto-accepting invitation {invitation.id} for user {user_email}: {e}")
 
         return accepted_list

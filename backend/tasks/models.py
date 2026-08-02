@@ -30,17 +30,13 @@ class Task(models.Model):
 
     actual_hours = models.DecimalField(max_digits=5, decimal_places=2, default=0)
 
-    difficulty = models.PositiveSmallIntegerField(
-        default=3, validators=[MinValueValidator(1), MaxValueValidator(5)]
-    )
+    difficulty = models.PositiveSmallIntegerField(default=3, validators=[MinValueValidator(1), MaxValueValidator(5)])
 
     priority = models.CharField(max_length=20, choices=PRIORITY, db_index=True)
 
     deadline = models.DateField(db_index=True)
 
-    status = models.CharField(
-        max_length=20, choices=STATUS, default="todo", db_index=True
-    )
+    status = models.CharField(max_length=20, choices=STATUS, default="todo", db_index=True)
 
     completion_percentage = models.PositiveSmallIntegerField(
         default=0, validators=[MinValueValidator(0), MaxValueValidator(100)]
@@ -76,9 +72,7 @@ class Task(models.Model):
     class Meta:
         indexes = [
             models.Index(fields=["project", "status"], name="idx_task_proj_status"),
-            models.Index(
-                fields=["project", "predicted_risk"], name="idx_task_proj_risk"
-            ),
+            models.Index(fields=["project", "predicted_risk"], name="idx_task_proj_risk"),
             models.Index(fields=["project", "deadline"], name="idx_task_proj_deadline"),
         ]
 
@@ -88,17 +82,11 @@ class Task(models.Model):
 
 class TaskSkill(models.Model):
 
-    task = models.ForeignKey(
-        Task, on_delete=models.CASCADE, related_name="required_skills"
-    )
+    task = models.ForeignKey(Task, on_delete=models.CASCADE, related_name="required_skills")
 
-    skill = models.ForeignKey(
-        Skill, on_delete=models.CASCADE, related_name="task_skills"
-    )
+    skill = models.ForeignKey(Skill, on_delete=models.CASCADE, related_name="task_skills")
 
-    importance = models.PositiveSmallIntegerField(
-        default=3, validators=[MinValueValidator(1), MaxValueValidator(5)]
-    )
+    importance = models.PositiveSmallIntegerField(default=3, validators=[MinValueValidator(1), MaxValueValidator(5)])
 
     class Meta:
         unique_together = ("task", "skill")
@@ -109,9 +97,7 @@ class TaskSkill(models.Model):
 
 class TaskAssignment(models.Model):
 
-    task = models.OneToOneField(
-        Task, on_delete=models.CASCADE, related_name="assignment"
-    )
+    task = models.OneToOneField(Task, on_delete=models.CASCADE, related_name="assignment")
 
     assigned_to = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -119,9 +105,7 @@ class TaskAssignment(models.Model):
         related_name="assigned_tasks",
     )
 
-    assigned_by = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="assigned_by"
-    )
+    assigned_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="assigned_by")
 
     assigned_at = models.DateTimeField(auto_now_add=True)
 

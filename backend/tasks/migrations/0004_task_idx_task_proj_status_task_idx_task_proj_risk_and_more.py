@@ -15,20 +15,14 @@ class Migration(migrations.Migration):
     operations = [
         migrations.AddIndex(
             model_name="task",
-            index=models.Index(
-                fields=["project", "status"], name="idx_task_proj_status"
-            ),
+            index=models.Index(fields=["project", "status"], name="idx_task_proj_status"),
         ),
         migrations.AddIndex(
             model_name="task",
-            index=models.Index(
-                fields=["project", "predicted_risk"], name="idx_task_proj_risk"
-            ),
+            index=models.Index(fields=["project", "predicted_risk"], name="idx_task_proj_risk"),
         ),
         migrations.AddIndex(
             model_name="task",
-            index=models.Index(
-                fields=["project", "deadline"], name="idx_task_proj_deadline"
-            ),
+            index=models.Index(fields=["project", "deadline"], name="idx_task_proj_deadline"),
         ),
     ]

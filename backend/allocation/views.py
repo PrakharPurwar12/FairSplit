@@ -28,9 +28,7 @@ class RecommendReassignmentView(APIView):
         task = get_object_or_404(Task, id=task_id)
 
         if not hasattr(task, "assignment") or task.assignment is None:
-            return Response(
-                {"error": "Task is not assigned."}, status=status.HTTP_400_BAD_REQUEST
-            )
+            return Response({"error": "Task is not assigned."}, status=status.HTTP_400_BAD_REQUEST)
 
         if task.predicted_risk != "High":
 

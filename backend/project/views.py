@@ -1,4 +1,5 @@
 import logging
+
 from notifications.services import create_notification
 from rest_framework import generics, status
 from rest_framework.exceptions import PermissionDenied, ValidationError
@@ -13,7 +14,6 @@ from .serializers import (
     ProjectMemberSerializer,
     ProjectSerializer,
 )
-from .services.email_service import EmailDeliveryError
 from .services.invitation_service import InvitationService
 
 logger = logging.getLogger(__name__)
@@ -28,10 +28,7 @@ class ProjectListCreateView(generics.ListCreateAPIView):
         user = self.request.user
         if user.is_staff or user.is_superuser:
             return Project.objects.all()
-        return (
-            Project.objects.filter(manager=user)
-            | Project.objects.filter(members__user=user)
-        ).distinct()
+        return (Project.objects.filter(manager=user) | Project.objects.filter(members__user=user)).distinct()
 
     def perform_create(self, serializer):
         project = serializer.save(manager=self.request.user)
@@ -52,10 +49,7 @@ class ProjectDetailView(generics.RetrieveUpdateDestroyAPIView):
         user = self.request.user
         if user.is_staff or user.is_superuser:
             return Project.objects.all()
-        return (
-            Project.objects.filter(manager=user)
-            | Project.objects.filter(members__user=user)
-        ).distinct()
+        return (Project.objects.filter(manager=user) | Project.objects.filter(members__user=user)).distinct()
 
 
 class ProjectMemberListCreateView(generics.ListCreateAPIView):
@@ -120,9 +114,7 @@ class ProjectInviteView(APIView):
         try:
             project = Project.objects.get(id=project_id)
         except Project.DoesNotExist:
-            logger.warning(
-                f"[INVITE 404 ERROR] Project ID {project_id} does not exist."
-            )
+            logger.warning(f"[INVITE 404 ERROR] Project ID {project_id} does not exist.")
             return Response(
                 {"error": f"Project with ID {project_id} not found."},
                 status=status.HTTP_404_NOT_FOUND,
@@ -157,21 +149,16 @@ class ProjectInviteView(APIView):
             )
         except PermissionDenied as pe:
             logger.error(
-                f"[INVITE 403 PERMISSION DENIED] Project ID: {project_id} | "
-                f"User: {request.user} | Detail: {pe}"
+                f"[INVITE 403 PERMISSION DENIED] Project ID: {project_id} | " f"User: {request.user} | Detail: {pe}"
             )
-            return Response(
-                {"error": str(pe)}, status=status.HTTP_403_FORBIDDEN
-            )
+            return Response({"error": str(pe)}, status=status.HTTP_403_FORBIDDEN)
         except ValidationError as ve:
             err_detail = ve.detail if hasattr(ve, "detail") else str(ve)
             logger.error(
                 f"[INVITE 400 VALIDATION ERROR] Project ID: {project_id} | "
                 f"User: {request.user} | Detail: {err_detail}"
             )
-            return Response(
-                {"error": err_detail}, status=status.HTTP_400_BAD_REQUEST
-            )
+            return Response({"error": err_detail}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as exc:
             logger.error(
                 f"[INVITE 500 UNEXPECTED EXCEPTION] Project ID: {project_id} | "
@@ -188,9 +175,7 @@ class ProjectInviteView(APIView):
         if not email_sent:
             err_msg = invitation.email_delivery_error or "Unknown SMTP error"
             res_data["email_delivery_error"] = err_msg
-            res_data["message"] = (
-                f"Invitation created successfully, but email delivery failed: {err_msg}"
-            )
+            res_data["message"] = f"Invitation created successfully, but email delivery failed: {err_msg}"
         else:
             res_data["message"] = "Invitation created and email sent successfully."
 
@@ -209,9 +194,7 @@ class ProjectInvitationListView(APIView):
         try:
             project = Project.objects.get(id=project_id)
         except Project.DoesNotExist:
-            return Response(
-                {"error": "Project not found."}, status=status.HTTP_404_NOT_FOUND
-            )
+            return Response({"error": "Project not found."}, status=status.HTTP_404_NOT_FOUND)
 
         status_filter = request.query_params.get("status")
         invitations = ProjectInvitation.objects.filter(project=project)
@@ -230,9 +213,7 @@ class InvitationPreviewView(APIView):
 
     def get(self, request, token):
         invitation = InvitationService.preview_invitation(token)
-        return Response(
-            ProjectInvitationSerializer(invitation).data, status=status.HTTP_200_OK
-        )
+        return Response(ProjectInvitationSerializer(invitation).data, status=status.HTTP_200_OK)
 
 
 class InvitationAcceptView(APIView):
@@ -240,9 +221,7 @@ class InvitationAcceptView(APIView):
 
     def post(self, request, token):
         invitation = InvitationService.accept_invitation(token, request.user)
-        return Response(
-            ProjectInvitationSerializer(invitation).data, status=status.HTTP_200_OK
-        )
+        return Response(ProjectInvitationSerializer(invitation).data, status=status.HTTP_200_OK)
 
 
 class InvitationCancelView(APIView):
@@ -250,9 +229,7 @@ class InvitationCancelView(APIView):
 
     def post(self, request, invitation_id):
         invitation = InvitationService.cancel_invitation(invitation_id, request.user)
-        return Response(
-            ProjectInvitationSerializer(invitation).data, status=status.HTTP_200_OK
-        )
+        return Response(ProjectInvitationSerializer(invitation).data, status=status.HTTP_200_OK)
 
 
 class InvitationResendView(APIView):
@@ -260,31 +237,24 @@ class InvitationResendView(APIView):
 
     def post(self, request, invitation_id):
         logger.info(
-            f"[RESEND REQUEST RECEIVED] Invitation ID: {invitation_id} | "
-            f"User: {request.user} ({request.user.id})"
+            f"[RESEND REQUEST RECEIVED] Invitation ID: {invitation_id} | " f"User: {request.user} ({request.user.id})"
         )
 
         try:
-            invitation, email_sent = InvitationService.resend_invitation(
-                invitation_id, request.user
-            )
+            invitation, email_sent = InvitationService.resend_invitation(invitation_id, request.user)
         except PermissionDenied as pe:
             logger.error(
                 f"[RESEND 403 PERMISSION DENIED] Invitation ID: {invitation_id} | "
                 f"User: {request.user} | Detail: {pe}"
             )
-            return Response(
-                {"error": str(pe)}, status=status.HTTP_403_FORBIDDEN
-            )
+            return Response({"error": str(pe)}, status=status.HTTP_403_FORBIDDEN)
         except ValidationError as ve:
             err_detail = ve.detail if hasattr(ve, "detail") else str(ve)
             logger.error(
                 f"[RESEND 400 VALIDATION ERROR] Invitation ID: {invitation_id} | "
                 f"User: {request.user} | Detail: {err_detail}"
             )
-            return Response(
-                {"error": err_detail}, status=status.HTTP_400_BAD_REQUEST
-            )
+            return Response({"error": err_detail}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as exc:
             logger.error(
                 f"[RESEND 500 UNEXPECTED EXCEPTION] Invitation ID: {invitation_id} | "
@@ -301,9 +271,7 @@ class InvitationResendView(APIView):
         if not email_sent:
             err_msg = invitation.email_delivery_error or "Unknown SMTP error"
             res_data["email_delivery_error"] = err_msg
-            res_data["message"] = (
-                f"Invitation updated, but email delivery failed: {err_msg}"
-            )
+            res_data["message"] = f"Invitation updated, but email delivery failed: {err_msg}"
         else:
             res_data["message"] = "Invitation email resent successfully."
 

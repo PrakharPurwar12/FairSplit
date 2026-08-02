@@ -1,0 +1,11 @@
+[flake8]
+max-line-length = 120
+extend-ignore = E203,E501,W503
+exclude =
+    .git,
+    __pycache__,
+    */migrations/*,
+    myenv/*,
+    scratch/*,
+    */scratch/*,
+    test_resend_live.py

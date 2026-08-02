@@ -27,6 +27,6 @@ repos:
           [
             "--max-line-length=120",
             "--extend-ignore=E203,E501,W503",
-            "--exclude=*/migrations/*,myenv/*",
+            "--exclude=*/migrations/*,myenv/*,scratch/*,*/scratch/*",
           ]
         files: ^backend/

@@ -56,7 +56,7 @@ jobs:
 
       - name: Check code style with flake8
         run: |
-          flake8 backend/ --max-line-length=120 --extend-ignore=E203,E501,W503 --exclude=*/migrations/*,myenv/*
+          flake8 backend/ --max-line-length=120 --extend-ignore=E203,E501,W503 --exclude=*/migrations/*,myenv/*,scratch/*,*/scratch/*
 
   # ----------------------------------------------------------------------------
   # Job 2: Frontend Code Quality (React / ESLint)

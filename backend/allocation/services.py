@@ -9,14 +9,10 @@ class WorkloadManager:
         self.project = project
         self.workloads = defaultdict(float)
 
-        assignments = TaskAssignment.objects.filter(
-            task__project=project
-        ).select_related("task")
+        assignments = TaskAssignment.objects.filter(task__project=project).select_related("task")
 
         for assignment in assignments:
-            self.workloads[assignment.assigned_to_id] += float(
-                assignment.task.estimated_hours
-            )
+            self.workloads[assignment.assigned_to_id] += float(assignment.task.estimated_hours)
 
     def get(self, user_id):
         return self.workloads[user_id]
