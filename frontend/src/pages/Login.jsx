@@ -42,10 +42,20 @@ const Login = () => {
       navigate(from, { replace: true });
     } catch (err) {
       let errorMsg = 'Invalid username or password.';
-      if (err.response?.data) {
-        errorMsg = err.response.data.detail || err.response.data.error || errorMsg;
+      if (err.response?.status === 429) {
+        errorMsg = err.response.data?.detail || 'Too many login attempts. Please wait a minute before trying again.';
+      } else if (err.response?.data) {
+        if (typeof err.response.data === 'string') {
+          errorMsg = err.response.data;
+        } else if (err.response.data.detail) {
+          errorMsg = err.response.data.detail;
+        } else if (err.response.data.error) {
+          errorMsg = err.response.data.error;
+        } else {
+          errorMsg = Object.values(err.response.data).flat().join(' ');
+        }
       } else if (err.request) {
-        errorMsg = 'Network error. Please try again later.';
+        errorMsg = 'Network error. Please check your internet connection.';
       }
       setError(errorMsg);
     } finally {

@@ -19,7 +19,15 @@ const AuthService = {
     return response.data;
   },
 
-  logout() {
+  async logout() {
+    const refreshToken = localStorage.getItem('refresh_token');
+    if (refreshToken) {
+      try {
+        await api.post('/account/logout/', { refresh: refreshToken });
+      } catch (err) {
+        console.warn('Backend logout call failed or token already invalid:', err);
+      }
+    }
     localStorage.removeItem('access_token');
     localStorage.removeItem('refresh_token');
   },

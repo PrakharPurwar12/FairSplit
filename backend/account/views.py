@@ -7,12 +7,56 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
+from rest_framework.throttling import AnonRateThrottle, UserRateThrottle
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.views import TokenObtainPairView
 
 from .serializers import ProfileSerializer, RegisterSerializer
 
 User = get_user_model()
+
+
+class LoginRateThrottle(AnonRateThrottle):
+    rate = "5/min"
+
+
+class RegisterRateThrottle(AnonRateThrottle):
+    rate = "3/min"
+
+
+class LogoutRateThrottle(UserRateThrottle):
+    rate = "20/min"
+
+
+class ThrottledTokenObtainPairView(TokenObtainPairView):
+    throttle_classes = [LoginRateThrottle]
+
+
+class LogoutView(APIView):
+    # AllowAny allows blacklisting refresh tokens even when the short-lived access token has already expired.
+    permission_classes = [permissions.AllowAny]
+    throttle_classes = [LogoutRateThrottle]
+
+    def post(self, request):
+        refresh_token = request.data.get("refresh") or request.data.get("refresh_token")
+        if not refresh_token:
+            return Response(
+                {"message": "No refresh token provided."},
+                status=status.HTTP_200_OK,
+            )
+        try:
+            token = RefreshToken(refresh_token)
+            token.blacklist()
+            return Response(
+                {"message": "Successfully logged out."},
+                status=status.HTTP_205_RESET_CONTENT,
+            )
+        except Exception:
+            return Response(
+                {"message": "Session invalidated or already expired."},
+                status=status.HTTP_200_OK,
+            )
 
 
 def get_env_val(key, default=""):
@@ -33,6 +77,7 @@ def get_env_val(key, default=""):
 class RegisterView(generics.CreateAPIView):
     serializer_class = RegisterSerializer
     permission_classes = [permissions.AllowAny]
+    throttle_classes = [RegisterRateThrottle]
 
     def perform_create(self, serializer):
         user = serializer.save()

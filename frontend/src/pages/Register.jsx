@@ -71,10 +71,25 @@ const Register = () => {
       navigate('/login');
     } catch (err) {
       let errorMsg = 'Registration failed.';
-      if (err.response?.data) {
-        errorMsg = err.response.data.detail || err.response.data.error || Object.values(err.response.data).flat().join(', ') || errorMsg;
+      if (err.response?.status === 429) {
+        errorMsg = err.response.data?.detail || 'Too many registration attempts. Please wait a minute before trying again.';
+      } else if (err.response?.data) {
+        if (typeof err.response.data === 'string') {
+          errorMsg = err.response.data;
+        } else if (err.response.data.detail) {
+          errorMsg = err.response.data.detail;
+        } else if (err.response.data.error) {
+          errorMsg = err.response.data.error;
+        } else {
+          const errors = Object.entries(err.response.data).map(([field, msgs]) => {
+            const fieldName = field.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase());
+            const msgStr = Array.isArray(msgs) ? msgs.join(' ') : msgs;
+            return `${fieldName}: ${msgStr}`;
+          });
+          errorMsg = errors.join(' | ');
+        }
       } else if (err.request) {
-        errorMsg = 'Network error. Please try again later.';
+        errorMsg = 'Network error. Please check your internet connection.';
       }
       setError(errorMsg);
     } finally {
