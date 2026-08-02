@@ -26,5 +26,5 @@ RUN SECRET_KEY=build-time-secret-key python manage.py collectstatic --noinput
 # Expose Django WSGI port
 EXPOSE 8000
 
-# Run Gunicorn WSGI server with dynamic PORT handling
-CMD ["sh", "-c", "python manage.py migrate && gunicorn backend.wsgi:application --bind 0.0.0.0:${PORT:-8000} --workers 3 --threads 2 --timeout 60"]
+# Run Gunicorn WSGI server using gunicorn.conf.py
+CMD ["sh", "-c", "python manage.py migrate && gunicorn -c gunicorn.conf.py backend.wsgi:application"]

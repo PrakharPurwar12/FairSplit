@@ -31,6 +31,10 @@ __pycache__/
 local_settings.py
 db.sqlite3
 db.sqlite3-journal
+staticfiles/
+backend/staticfiles/
+media/
+backend/media/
 
 # Other
 .DS_Store

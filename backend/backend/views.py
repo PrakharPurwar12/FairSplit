@@ -1,10 +1,14 @@
-import socket
+from django.conf import settings
 from django.db import connection
 from django.http import JsonResponse
 
 
 def health_check(request):
-    status_data = {"status": "healthy", "database": "connected"}
+    status_data = {
+        "status": "healthy",
+        "database": "connected",
+        "debug": settings.DEBUG,
+    }
     try:
         connection.ensure_connection()
     except Exception as e:

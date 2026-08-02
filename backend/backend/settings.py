@@ -31,19 +31,21 @@ else:
     SECRET_KEY = config("SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = config("DEBUG", default=True, cast=bool)
+DEBUG = config("DEBUG", default=False, cast=bool)
 
 ALLOWED_HOSTS = config(
     "ALLOWED_HOSTS",
     default="*",
     cast=lambda v: [s.strip() for s in v.split(",") if s.strip()],
 )
-RENDER_EXTERNAL_HOSTNAME = config("RENDER_EXTERNAL_HOSTNAME", default="")
-if RENDER_EXTERNAL_HOSTNAME and RENDER_EXTERNAL_HOSTNAME not in ALLOWED_HOSTS:
-    ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
+for host_env_var in ["RENDER_EXTERNAL_HOSTNAME", "RAILWAY_PUBLIC_DOMAIN", "RAILWAY_STATIC_URL", "PUBLIC_URL"]:
+    env_host = config(host_env_var, default="").strip()
+    if env_host and env_host not in ALLOWED_HOSTS:
+        ALLOWED_HOSTS.append(env_host)
+
 CSRF_TRUSTED_ORIGINS = config(
     "CSRF_TRUSTED_ORIGINS",
-    default="http://localhost,http://127.0.0.1",
+    default="http://localhost,http://127.0.0.1,http://localhost:5173,http://localhost:3000,https://*.railway.app,https://*.onrender.com,https://*.ondigitalocean.app",
     cast=lambda v: [s.strip() for s in v.split(",") if s.strip()],
 )
 
@@ -136,6 +138,7 @@ CORS_ALLOW_METHODS = [
 ]
 
 # Security Hardening Settings (Environment Controlled)
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 SECURE_SSL_REDIRECT = config("SECURE_SSL_REDIRECT", default=False, cast=bool)
 SESSION_COOKIE_SECURE = config("SESSION_COOKIE_SECURE", default=False, cast=bool)
 CSRF_COOKIE_SECURE = config("CSRF_COOKIE_SECURE", default=False, cast=bool)
@@ -147,6 +150,9 @@ SECURE_HSTS_PRELOAD = config("SECURE_HSTS_PRELOAD", default=False, cast=bool)
 X_FRAME_OPTIONS = config("X_FRAME_OPTIONS", default="DENY")
 SECURE_CONTENT_TYPE_NOSNIFF = config(
     "SECURE_CONTENT_TYPE_NOSNIFF", default=True, cast=bool
+)
+SECURE_REFERRER_POLICY = config(
+    "SECURE_REFERRER_POLICY", default="same-origin"
 )
 
 MIDDLEWARE = [
@@ -201,7 +207,7 @@ WSGI_APPLICATION = "backend.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
-DB_ENGINE = config("DB_ENGINE", default="django.db.backends.sqlite3")
+DB_ENGINE = config("DB_ENGINE", default="")
 DATABASE_URL = config("DATABASE_URL", default="")
 
 if DATABASE_URL:
@@ -212,7 +218,16 @@ if DATABASE_URL:
             conn_health_checks=True,
         )
     }
-elif DB_ENGINE in ("django.db.backends.postgresql", "postgresql"):
+elif DB_ENGINE in ("django.db.backends.postgresql", "postgresql") or config("POSTGRES_HOST", default=""):
+    db_host = config("DATABASE_HOST", default="").strip()
+    postgres_host = config("POSTGRES_HOST", default="").strip()
+
+    # If running inside Docker / Docker Compose where POSTGRES_HOST is postgres, prefer postgres_host over localhost
+    if (not db_host or db_host == "localhost") and postgres_host and postgres_host != "localhost":
+        db_host = postgres_host
+    elif not db_host:
+        db_host = postgres_host or "postgres"
+
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.postgresql",
@@ -226,9 +241,7 @@ elif DB_ENGINE in ("django.db.backends.postgresql", "postgresql"):
                 "DATABASE_PASSWORD",
                 default=config("POSTGRES_PASSWORD", default="fairsplit_password"),
             ),
-            "HOST": config(
-                "DATABASE_HOST", default=config("POSTGRES_HOST", default="postgres")
-            ),
+            "HOST": db_host,
             "PORT": config(
                 "DATABASE_PORT", default=config("POSTGRES_PORT", default="5432")
             ),
@@ -276,10 +289,53 @@ USE_TZ = True
 
 STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
-STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+STATICFILES_STORAGE = config(
+    "STATICFILES_STORAGE",
+    default="whitenoise.storage.CompressedManifestStaticFilesStorage",
+)
 
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
+
+# Ensure media directory exists
+MEDIA_ROOT.mkdir(parents=True, exist_ok=True)
+
+# Structured Production Logging Configuration
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "verbose": {
+            "format": "[%(asctime)s] %(levelname)s [%(name)s:%(lineno)s] %(message)s",
+            "datefmt": "%Y-%m-%d %H:%M:%S",
+        },
+        "simple": {
+            "format": "%(levelname)s %(message)s",
+        },
+    },
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "verbose",
+        },
+    },
+    "root": {
+        "handlers": ["console"],
+        "level": config("LOG_LEVEL", default="INFO"),
+    },
+    "loggers": {
+        "django": {
+            "handlers": ["console"],
+            "level": config("LOG_LEVEL", default="INFO"),
+            "propagate": False,
+        },
+        "django.request": {
+            "handlers": ["console"],
+            "level": "WARNING",
+            "propagate": False,
+        },
+    },
+}
 
 # Email Configuration (IPv4 Forced Django SMTP Backend)
 raw_email_backend = config("EMAIL_BACKEND", default="backend.email_backend.IPv4EmailBackend")
