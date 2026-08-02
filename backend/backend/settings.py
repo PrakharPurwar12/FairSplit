@@ -43,6 +43,9 @@ for host_env_var in ["RENDER_EXTERNAL_HOSTNAME", "RAILWAY_PUBLIC_DOMAIN", "RAILW
     if env_host and env_host not in ALLOWED_HOSTS:
         ALLOWED_HOSTS.append(env_host)
 
+if "healthcheck.railway.app" not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS.append("healthcheck.railway.app")
+
 CSRF_TRUSTED_ORIGINS = config(
     "CSRF_TRUSTED_ORIGINS",
     default="http://localhost,http://127.0.0.1,http://localhost:5173,http://localhost:3000,https://*.railway.app,https://*.onrender.com,https://*.ondigitalocean.app",
