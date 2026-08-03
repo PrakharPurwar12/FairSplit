@@ -173,14 +173,6 @@ class OAuthLoginView(APIView):
                 client_id = get_env_val("GOOGLE_CLIENT_ID")
                 client_secret = get_env_val("GOOGLE_CLIENT_SECRET")
 
-                print({
-                    "client_id": client_id,
-                    "client_secret_present": bool(client_secret),
-                    "client_secret_length": len(client_secret),
-                    "client_secret_first5": client_secret[:5] if client_secret else "",
-                    "redirect_uri": redirect_uri,
-                })
-
                 # Exchange code for access token
                 token_res = requests.post(
                     "https://oauth2.googleapis.com/token",
