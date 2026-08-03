@@ -930,29 +930,35 @@ const Teams = () => {
             </button>
           </div>
         </div>
-        {selectedProjectId === 'all' ? (
-          <div className="text-xs text-gray-500 bg-gray-50 dark:bg-white/[0.02] border border-gray-200/50 dark:border-white/5 rounded-xl px-4 py-2.5 text-center">
-            Select a project to manage its team.
-          </div>
-        ) : !isProjectManager ? (
-          <div className="text-xs text-gray-500 bg-gray-50 dark:bg-white/[0.02] border border-gray-200/50 dark:border-white/5 rounded-xl px-4 py-2.5 text-right max-w-xs">
-            You are a project member. Only the project manager can manage team members.
-          </div>
-        ) : (
+        <div className="relative group shrink-0">
           <button
+            disabled={selectedProjectId === 'all' || !isProjectManager}
             onClick={() => {
-              if (projects.length > 0) setAddProjectId(projects[0].id.toString());
+              if (selectedProject) {
+                setAddProjectId(String(selectedProject.id));
+              }
               setAddUserId('');
               setComboboxSearch('');
               setSelectedSkills(ROLE_SKILL_MAPPING.fullstack);
               setIsAddModalOpen(true);
             }}
-            className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-[13px] font-semibold transition-all shadow-sm shadow-blue-600/10 hover:shadow-md shrink-0"
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-[13px] font-semibold transition-all ${
+              selectedProjectId === 'all' || !isProjectManager
+                ? 'bg-gray-100 dark:bg-white/5 text-gray-400 dark:text-gray-500 cursor-not-allowed opacity-60 border border-gray-200/50 dark:border-white/5'
+                : 'bg-blue-600 hover:bg-blue-700 text-white shadow-sm shadow-blue-600/10 hover:shadow-md'
+            }`}
+            title={
+              selectedProjectId === 'all'
+                ? 'Select a project first.'
+                : !isProjectManager
+                ? 'Only the project manager can manage team members.'
+                : 'Add or Invite Team Member'
+            }
           >
             <UserPlus className="w-4 h-4" />
             Add / Invite Member
           </button>
-        )}
+        </div>
       </div>
 
       {activeDirectoryTab === 'invitations' ? (
@@ -1303,6 +1309,39 @@ const Teams = () => {
               </select>
             </div>
           </div>
+
+          {selectedProjectId === 'all' && (
+            <div className="mb-6 p-4 rounded-2xl bg-blue-50/50 dark:bg-blue-950/10 border border-blue-100 dark:border-blue-900/30 flex items-start gap-3">
+              <AlertCircle className="w-5 h-5 text-blue-500 shrink-0 mt-0.5" />
+              <div>
+                <h4 className="text-sm font-bold text-blue-800 dark:text-blue-300">Select a project to enable team management</h4>
+                <p className="text-xs text-blue-600/80 dark:text-blue-400/80 mt-0.5">
+                  You can browse members across all projects, but invitations and role management require a specific project.
+                </p>
+              </div>
+            </div>
+          )}
+
+          {selectedProjectId !== 'all' && !isProjectManager && (
+            <div className="mb-6 p-4 rounded-2xl bg-amber-50/50 dark:bg-amber-950/10 border border-amber-100 dark:border-amber-900/30 flex items-start gap-3">
+              <ShieldAlert className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
+              <div className="flex-1 min-w-0">
+                <h4 className="text-sm font-bold text-amber-800 dark:text-amber-300">View-only Access</h4>
+                <p className="text-xs text-amber-600/80 dark:text-amber-400/80 mt-0.5">
+                  You are a member of this project. Team management is restricted to the project manager.
+                </p>
+                {selectedProject?.manager_name ? (
+                  <p className="text-[11px] text-amber-700/70 dark:text-amber-500/70 mt-2 font-semibold">
+                    Project Manager: <span className="underline">{selectedProject.manager_name}</span>
+                  </p>
+                ) : (
+                  <p className="text-[11px] text-amber-700/70 dark:text-amber-500/70 mt-2 font-semibold">
+                    Only the project manager can invite, edit or remove team members.
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Main Content Grid */}
           {isLoading ? (
