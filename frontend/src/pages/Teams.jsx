@@ -38,14 +38,12 @@ import Toast from '../components/ui/Toast';
 
 // Predefined Role-to-Skills Mapping
 const ROLE_SKILL_MAPPING = {
-  developer: ['Python', 'Django', 'JavaScript', 'REST API', 'Git', 'SQL', 'Docker'],
+  fullstack: ['React', 'Node.js', 'Python', 'Django', 'REST API', 'PostgreSQL', 'Git'],
   frontend: ['React', 'JavaScript', 'TypeScript', 'HTML', 'CSS', 'Tailwind CSS', 'Next.js'],
   backend: ['Python', 'Django', 'REST API', 'PostgreSQL', 'Docker', 'Git', 'Redis'],
-  fullstack: ['React', 'Node.js', 'Python', 'Django', 'REST API', 'PostgreSQL', 'Git'],
   ml: ['Python', 'Pandas', 'NumPy', 'Scikit-learn', 'TensorFlow', 'XGBoost', 'PyTorch'],
   tester: ['Selenium', 'Cypress', 'Postman', 'JUnit', 'QA Automation', 'API Testing'],
   designer: ['Figma', 'Wireframing', 'Prototyping', 'UI Design', 'UX Research'],
-  manager: ['Agile', 'Scrum', 'Jira', 'Team Leadership', 'Risk Management', 'Planning']
 };
 
 // Reusable Normalized Skill Helpers
@@ -106,8 +104,8 @@ const Teams = () => {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [addProjectId, setAddProjectId] = useState('');
   const [addUserId, setAddUserId] = useState('');
-  const [addRole, setAddRole] = useState('developer');
-  const [selectedSkills, setSelectedSkills] = useState(ROLE_SKILL_MAPPING.developer);
+  const [addRole, setAddRole] = useState('fullstack');
+  const [selectedSkills, setSelectedSkills] = useState(ROLE_SKILL_MAPPING.fullstack);
   const [customSkillInput, setCustomSkillInput] = useState('');
   const [roleChangePrompt, setRoleChangePrompt] = useState(null); // { newRole, oldSkills }
 
@@ -120,7 +118,7 @@ const Teams = () => {
   // Edit Role & Skills Modal State
   const [isEditRoleModalOpen, setIsEditRoleModalOpen] = useState(false);
   const [editingMember, setEditingMember] = useState(null);
-  const [editRole, setEditRole] = useState('developer');
+  const [editRole, setEditRole] = useState('fullstack');
   const [editSkills, setEditSkills] = useState([]);
   const [editCustomSkillInput, setEditCustomSkillInput] = useState('');
 
@@ -139,8 +137,8 @@ const Teams = () => {
   // Invite New Member Form State
   const [inviteFullName, setInviteFullName] = useState('');
   const [inviteEmail, setInviteEmail] = useState('');
-  const [inviteRole, setInviteRole] = useState('developer');
-  const [inviteSkills, setInviteSkills] = useState(ROLE_SKILL_MAPPING.developer);
+  const [inviteRole, setInviteRole] = useState('fullstack');
+  const [inviteSkills, setInviteSkills] = useState(ROLE_SKILL_MAPPING.fullstack);
   const [inviteCustomSkill, setInviteCustomSkill] = useState('');
   const [inviteMessage, setInviteMessage] = useState('');
 
@@ -1729,14 +1727,12 @@ const Teams = () => {
                   onChange={(e) => handleAddRoleChange(e.target.value)}
                   className="w-full px-3 py-2 bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-white/10 rounded-xl text-sm focus:border-blue-500 outline-none transition-colors capitalize"
                 >
-                  <option value="developer">Developer</option>
+                  <option value="fullstack">Full Stack Developer</option>
                   <option value="frontend">Frontend Developer</option>
                   <option value="backend">Backend Developer</option>
-                  <option value="fullstack">Fullstack Engineer</option>
-                  <option value="designer">UI/UX Designer</option>
-                  <option value="qa">QA / Tester</option>
-                  <option value="ml">ML Engineer</option>
-                  <option value="manager">Project Manager</option>
+                  <option value="ml">Machine Learning Engineer</option>
+                  <option value="tester">Tester</option>
+                  <option value="designer">Designer</option>
                 </select>
               </div>
 
@@ -1903,14 +1899,12 @@ const Teams = () => {
                   }}
                   className="w-full px-3 py-2 bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-white/10 rounded-xl text-sm focus:border-blue-500 outline-none transition-colors capitalize"
                 >
-                  <option value="developer">Developer</option>
+                  <option value="fullstack">Full Stack Developer</option>
                   <option value="frontend">Frontend Developer</option>
                   <option value="backend">Backend Developer</option>
-                  <option value="fullstack">Fullstack Engineer</option>
-                  <option value="designer">UI/UX Designer</option>
-                  <option value="qa">QA / Tester</option>
-                  <option value="ml">ML Engineer</option>
-                  <option value="manager">Project Manager</option>
+                  <option value="ml">Machine Learning Engineer</option>
+                  <option value="tester">Tester</option>
+                  <option value="designer">Designer</option>
                 </select>
               </div>
 
@@ -2072,14 +2066,12 @@ const Teams = () => {
                 }}
                 className="w-full px-3 py-2 bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-white/10 rounded-xl text-sm focus:border-blue-500 outline-none transition-colors capitalize"
               >
-                <option value="developer">Developer</option>
+                <option value="fullstack">Full Stack Developer</option>
                 <option value="frontend">Frontend Developer</option>
                 <option value="backend">Backend Developer</option>
-                <option value="fullstack">Fullstack Engineer</option>
-                <option value="designer">UI/UX Designer</option>
-                <option value="qa">QA / Tester</option>
-                <option value="ml">ML Engineer</option>
-                <option value="manager">Project Manager</option>
+                <option value="ml">Machine Learning Engineer</option>
+                <option value="tester">Tester</option>
+                <option value="designer">Designer</option>
               </select>
             </div>
 
