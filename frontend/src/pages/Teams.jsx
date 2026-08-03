@@ -324,8 +324,8 @@ const Teams = () => {
           ProjectService.getProjectMembers(p.id).then(mList => 
             mList.map(m => {
               const u = userMap[m.user] || {};
-              const memberRoleKey = (m.role || 'developer').toLowerCase();
-              const defaultRoleSkills = ROLE_SKILL_MAPPING[memberRoleKey] || ROLE_SKILL_MAPPING.developer;
+              const memberRoleKey = (m.role || 'fullstack').toLowerCase();
+              const defaultRoleSkills = ROLE_SKILL_MAPPING[memberRoleKey] || ROLE_SKILL_MAPPING.fullstack;
               return { 
                 ...m, 
                 projectName: p.title,
@@ -347,8 +347,8 @@ const Teams = () => {
         const mList = await ProjectService.getProjectMembers(selectedProjectId);
         aggregatedMembers = mList.map(m => {
           const u = userMap[m.user] || {};
-          const memberRoleKey = (m.role || 'developer').toLowerCase();
-          const defaultRoleSkills = ROLE_SKILL_MAPPING[memberRoleKey] || ROLE_SKILL_MAPPING.developer;
+          const memberRoleKey = (m.role || 'fullstack').toLowerCase();
+          const defaultRoleSkills = ROLE_SKILL_MAPPING[memberRoleKey] || ROLE_SKILL_MAPPING.fullstack;
           return { 
             ...m, 
             projectName: proj ? proj.title : 'Project',
@@ -436,9 +436,9 @@ const Teams = () => {
   const openEditRoleModal = (member) => {
     setActiveMenuId(null);
     setEditingMember(member);
-    const roleKey = (member.role || 'developer').toLowerCase();
-    setEditRole(member.role || 'developer');
-    setEditSkills(Array.isArray(member.skills) && member.skills.length > 0 ? member.skills : (ROLE_SKILL_MAPPING[roleKey] || ROLE_SKILL_MAPPING.developer));
+    const roleKey = (member.role || 'fullstack').toLowerCase();
+    setEditRole(member.role || 'fullstack');
+    setEditSkills(Array.isArray(member.skills) && member.skills.length > 0 ? member.skills : (ROLE_SKILL_MAPPING[roleKey] || ROLE_SKILL_MAPPING.fullstack));
     setFormError(null);
     setIsEditRoleModalOpen(true);
   };
@@ -473,7 +473,7 @@ const Teams = () => {
 
   // Handle Role Selection change in Add Modal with Confirmation Prompt for existing selections
   const handleAddRoleChange = (newRole) => {
-    const defaultNewSkills = ROLE_SKILL_MAPPING[newRole.toLowerCase()] || ROLE_SKILL_MAPPING.developer;
+    const defaultNewSkills = ROLE_SKILL_MAPPING[newRole.toLowerCase()] || ROLE_SKILL_MAPPING.fullstack;
     
     if (selectedSkills.length > 0) {
       // Prompt user whether to keep current selections or replace with new role suggestions
@@ -501,7 +501,7 @@ const Teams = () => {
 
   const handleAddCustomSkill = (e) => {
     if (e) e.preventDefault();
-    const currentRoleSuggestedSkills = ROLE_SKILL_MAPPING[addRole.toLowerCase()] || ROLE_SKILL_MAPPING.developer;
+    const currentRoleSuggestedSkills = ROLE_SKILL_MAPPING[addRole.toLowerCase()] || ROLE_SKILL_MAPPING.fullstack;
     setSelectedSkills(prev => addSkillNormalized(prev, currentRoleSuggestedSkills, customSkillInput));
     setCustomSkillInput('');
   };
@@ -517,7 +517,7 @@ const Teams = () => {
 
   const handleInviteAddCustomSkill = (e) => {
     if (e) e.preventDefault();
-    const currentInviteRoleSuggestedSkills = ROLE_SKILL_MAPPING[inviteRole.toLowerCase()] || ROLE_SKILL_MAPPING.developer;
+    const currentInviteRoleSuggestedSkills = ROLE_SKILL_MAPPING[inviteRole.toLowerCase()] || ROLE_SKILL_MAPPING.fullstack;
     setInviteSkills(prev => addSkillNormalized(prev, currentInviteRoleSuggestedSkills, inviteCustomSkill));
     setInviteCustomSkill('');
   };
@@ -533,7 +533,7 @@ const Teams = () => {
 
   const handleEditAddCustomSkill = (e) => {
     if (e) e.preventDefault();
-    const currentEditRoleSuggestedSkills = ROLE_SKILL_MAPPING[editRole.toLowerCase()] || ROLE_SKILL_MAPPING.developer;
+    const currentEditRoleSuggestedSkills = ROLE_SKILL_MAPPING[editRole.toLowerCase()] || ROLE_SKILL_MAPPING.fullstack;
     setEditSkills(prev => addSkillNormalized(prev, currentEditRoleSuggestedSkills, editCustomSkillInput));
     setEditCustomSkillInput('');
   };
@@ -847,7 +847,7 @@ const Teams = () => {
   const isAddSubmitDisabled = isSubmitting || !addProjectId || !addUserId || !addRole || isDuplicateMember;
 
   const currentRoleSuggestedSkills = useMemo(() => {
-    return ROLE_SKILL_MAPPING[addRole.toLowerCase()] || ROLE_SKILL_MAPPING.developer;
+    return ROLE_SKILL_MAPPING[addRole.toLowerCase()] || ROLE_SKILL_MAPPING.fullstack;
   }, [addRole]);
 
   return (
@@ -903,7 +903,7 @@ const Teams = () => {
             if (projects.length > 0) setAddProjectId(projects[0].id.toString());
             setAddUserId('');
             setComboboxSearch('');
-            setSelectedSkills(ROLE_SKILL_MAPPING.developer);
+            setSelectedSkills(ROLE_SKILL_MAPPING.fullstack);
             setIsAddModalOpen(true);
           }}
           className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-[13px] font-semibold transition-all shadow-sm shadow-blue-600/10 hover:shadow-md shrink-0"
@@ -1895,7 +1895,7 @@ const Teams = () => {
                   onChange={(e) => {
                     const newRole = e.target.value;
                     setInviteRole(newRole);
-                    setInviteSkills(ROLE_SKILL_MAPPING[newRole.toLowerCase()] || ROLE_SKILL_MAPPING.developer);
+                    setInviteSkills(ROLE_SKILL_MAPPING[newRole.toLowerCase()] || ROLE_SKILL_MAPPING.fullstack);
                   }}
                   className="w-full px-3 py-2 bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-white/10 rounded-xl text-sm focus:border-blue-500 outline-none transition-colors capitalize"
                 >
@@ -1919,7 +1919,7 @@ const Teams = () => {
                 </div>
 
                 <div className="flex flex-wrap gap-1.5">
-                  {(ROLE_SKILL_MAPPING[inviteRole.toLowerCase()] || ROLE_SKILL_MAPPING.developer).map(sk => {
+                  {(ROLE_SKILL_MAPPING[inviteRole.toLowerCase()] || ROLE_SKILL_MAPPING.fullstack).map(sk => {
                     const isChecked = inviteSkills.some(s => s.toLowerCase() === sk.toLowerCase());
                     return (
                       <button
@@ -1939,7 +1939,7 @@ const Teams = () => {
                   })}
 
                   {/* Display Custom Skills */}
-                  {inviteSkills.filter(s => !(ROLE_SKILL_MAPPING[inviteRole.toLowerCase()] || ROLE_SKILL_MAPPING.developer).some(sugg => sugg.toLowerCase() === s.toLowerCase())).map((skillName) => (
+                  {inviteSkills.filter(s => !(ROLE_SKILL_MAPPING[inviteRole.toLowerCase()] || ROLE_SKILL_MAPPING.fullstack).some(sugg => sugg.toLowerCase() === s.toLowerCase())).map((skillName) => (
                     <div
                       key={skillName}
                       className="px-2.5 py-1 rounded-xl text-xs font-semibold bg-purple-600 text-white shadow-sm shadow-purple-600/20 flex items-center gap-1.5"
@@ -2061,7 +2061,7 @@ const Teams = () => {
                 onChange={(e) => {
                   const newR = e.target.value;
                   setEditRole(newR);
-                  const defs = ROLE_SKILL_MAPPING[newR.toLowerCase()] || ROLE_SKILL_MAPPING.developer;
+                  const defs = ROLE_SKILL_MAPPING[newR.toLowerCase()] || ROLE_SKILL_MAPPING.fullstack;
                   setEditSkills(defs);
                 }}
                 className="w-full px-3 py-2 bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-white/10 rounded-xl text-sm focus:border-blue-500 outline-none transition-colors capitalize"
@@ -2083,7 +2083,7 @@ const Teams = () => {
               </div>
 
               <div className="flex flex-wrap gap-1.5">
-                {(ROLE_SKILL_MAPPING[editRole.toLowerCase()] || ROLE_SKILL_MAPPING.developer).map((sk) => {
+                {(ROLE_SKILL_MAPPING[editRole.toLowerCase()] || ROLE_SKILL_MAPPING.fullstack).map((sk) => {
                   const isChecked = editSkills.some(s => s.toLowerCase() === sk.toLowerCase());
                   return (
                     <button
@@ -2103,7 +2103,7 @@ const Teams = () => {
                 })}
 
                 {/* Display Custom Skills */}
-                {editSkills.filter(s => !(ROLE_SKILL_MAPPING[editRole.toLowerCase()] || ROLE_SKILL_MAPPING.developer).some(sugg => sugg.toLowerCase() === s.toLowerCase())).map((skillName) => (
+                {editSkills.filter(s => !(ROLE_SKILL_MAPPING[editRole.toLowerCase()] || ROLE_SKILL_MAPPING.fullstack).some(sugg => sugg.toLowerCase() === s.toLowerCase())).map((skillName) => (
                   <div
                     key={skillName}
                     className="px-2.5 py-1 rounded-xl text-xs font-semibold bg-purple-600 text-white shadow-sm shadow-purple-600/20 flex items-center gap-1.5"
