@@ -1,5 +1,6 @@
 import logging
 
+from django.db import models
 from notifications.services import create_notification
 from rest_framework import generics, status
 from rest_framework.exceptions import PermissionDenied, ValidationError
@@ -51,6 +52,17 @@ class ProjectDetailView(generics.RetrieveUpdateDestroyAPIView):
             return Project.objects.all()
         return (Project.objects.filter(manager=user) | Project.objects.filter(members__user=user)).distinct()
 
+    def perform_update(self, serializer):
+        project = self.get_object()
+        if project.manager != self.request.user and not self.request.user.is_staff:
+            raise PermissionDenied("Only the project manager can update this project.")
+        serializer.save()
+
+    def perform_destroy(self, instance):
+        if instance.manager != self.request.user and not self.request.user.is_staff:
+            raise PermissionDenied("Only the project manager can delete this project.")
+        instance.delete()
+
 
 class ProjectMemberListCreateView(generics.ListCreateAPIView):
 
@@ -59,10 +71,25 @@ class ProjectMemberListCreateView(generics.ListCreateAPIView):
 
     def get_queryset(self):
         project_id = self.kwargs["project_id"]
-
+        user = self.request.user
+        if user.is_staff or user.is_superuser:
+            return ProjectMember.objects.filter(project_id=project_id)
+        if (
+            not Project.objects.filter(id=project_id)
+            .filter(models.Q(manager=user) | models.Q(members__user=user))
+            .exists()
+        ):
+            raise PermissionDenied("You do not have access to this project's members.")
         return ProjectMember.objects.filter(project_id=project_id)
 
     def perform_create(self, serializer):
+        user = serializer.context["request"].user
+        project_id = self.kwargs["project_id"]
+        if (
+            not (user.is_staff or user.is_superuser)
+            and not Project.objects.filter(id=project_id, manager=user).exists()
+        ):
+            raise PermissionDenied("Only the project manager can add members.")
         member = serializer.save(project_id=self.kwargs["project_id"])
         project = member.project
         if member.user:
@@ -87,7 +114,10 @@ class ProjectMemberDetailView(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        return ProjectMember.objects.all()
+        user = self.request.user
+        if user.is_staff or user.is_superuser:
+            return ProjectMember.objects.all()
+        return ProjectMember.objects.filter(project__manager=user)
 
     def perform_destroy(self, instance):
         project = instance.project
@@ -195,6 +225,9 @@ class ProjectInvitationListView(APIView):
             project = Project.objects.get(id=project_id)
         except Project.DoesNotExist:
             return Response({"error": "Project not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        if project.manager != request.user and not request.user.is_staff:
+            raise PermissionDenied("Only the project manager can view invitations.")
 
         status_filter = request.query_params.get("status")
         invitations = ProjectInvitation.objects.filter(project=project)

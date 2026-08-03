@@ -3,6 +3,7 @@ from django.shortcuts import get_object_or_404
 from ml.services import update_task_prediction
 from notifications.services import create_notification, notify_project_members
 from rest_framework import generics, status
+from rest_framework.exceptions import PermissionDenied
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -31,6 +32,10 @@ class TaskListCreateView(generics.ListCreateAPIView):
         )
 
     def perform_create(self, serializer):
+        project = serializer.validated_data["project"]
+        user = self.request.user
+        if not (user.is_staff or user.is_superuser or project.manager == user):
+            raise PermissionDenied("Only the project manager can create tasks.")
         task = serializer.save(created_by=self.request.user)
         notify_project_members(
             project=task.project,
@@ -60,19 +65,46 @@ class TaskDetailView(generics.RetrieveUpdateDestroyAPIView):
             .distinct()
         )
 
+    def perform_update(self, serializer):
+        task = self.get_object()
+        user = self.request.user
+        if not (user.is_staff or user.is_superuser or task.project.manager == user or task.created_by == user):
+            raise PermissionDenied("Only the project manager or task creator can update this task.")
+        serializer.save()
+
+    def perform_destroy(self, instance):
+        user = self.request.user
+        if not (user.is_staff or user.is_superuser or instance.project.manager == user or instance.created_by == user):
+            raise PermissionDenied("Only the project manager or task creator can delete this task.")
+        instance.delete()
+
 
 class TaskSkillListCreateView(generics.ListCreateAPIView):
     serializer_class = TaskSkillSerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        return TaskSkill.objects.filter(task_id=self.kwargs["task_id"])
+        task_id = self.kwargs["task_id"]
+        user = self.request.user
+        if user.is_staff or user.is_superuser:
+            return TaskSkill.objects.filter(task_id=task_id)
+        return (
+            TaskSkill.objects.filter(task_id=task_id)
+            .filter(models.Q(task__project__manager=user) | models.Q(task__project__members__user=user))
+            .distinct()
+        )
 
     def perform_create(self, serializer):
+        task = get_object_or_404(Task, id=self.kwargs["task_id"])
+        user = self.request.user
+        if not (user.is_staff or user.is_superuser or task.project.manager == user or task.created_by == user):
+            raise PermissionDenied("Only the project manager or task creator can add task skills.")
         serializer.save(task_id=self.kwargs["task_id"])
 
 
 class TaskProgressUpdateView(APIView):
+
+    permission_classes = [IsAuthenticated]
 
     def patch(self, request, task_id):
 

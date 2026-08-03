@@ -1,10 +1,17 @@
 from allocation.algorithms import calculate_workload_score
+from django.db import models
 from django.db.models import Avg, Sum
-from project.models import ProjectMember
+from project.models import Project, ProjectMember
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from tasks.models import Task, TaskAssignment
+
+
+def _can_access_project(user, project_id):
+    if user.is_staff or user.is_superuser:
+        return True
+    return Project.objects.filter(id=project_id).filter(models.Q(manager=user) | models.Q(members__user=user)).exists()
 
 
 class ProjectDashboardView(APIView):
@@ -12,6 +19,9 @@ class ProjectDashboardView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, project_id):
+
+        if not _can_access_project(request.user, project_id):
+            return Response({"error": "You do not have access to this project."}, status=403)
 
         tasks = Task.objects.filter(project_id=project_id)
 
@@ -60,7 +70,15 @@ class MemberAnalyticsView(APIView):
 
     def get(self, request, member_id):
 
-        assignments = TaskAssignment.objects.filter(assigned_to_id=member_id).select_related("task", "assigned_to")
+        assignments = TaskAssignment.objects.filter(assigned_to_id=member_id)
+        if not (request.user.is_staff or request.user.is_superuser):
+            assignments = assignments.filter(
+                models.Q(task__project__manager=request.user) | models.Q(task__project__members__user=request.user)
+            ).distinct()
+            if not assignments.exists():
+                return Response({"error": "You do not have access to this member analytics."}, status=403)
+
+        assignments = assignments.select_related("task", "assigned_to")
 
         if not assignments.exists():
 
@@ -132,6 +150,9 @@ class TeamAnalyticsView(APIView):
 
     def get(self, request, project_id):
 
+        if not _can_access_project(request.user, project_id):
+            return Response({"error": "You do not have access to this project."}, status=403)
+
         project_members = ProjectMember.objects.filter(project_id=project_id).select_related("user")
 
         team_statistics = [self._get_member_statistics(pm.user, project_id) for pm in project_members]
@@ -150,6 +171,9 @@ class RiskAnalyticsView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, project_id):
+
+        if not _can_access_project(request.user, project_id):
+            return Response({"error": "You do not have access to this project."}, status=403)
 
         tasks = Task.objects.filter(project_id=project_id)
 
