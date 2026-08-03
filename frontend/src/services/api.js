@@ -4,6 +4,11 @@ const getBaseUrl = () => {
   if (import.meta.env.VITE_API_BASE_URL) {
     return import.meta.env.VITE_API_BASE_URL;
   }
+  if (import.meta.env.DEV) {
+    return '/api';
+  }
+  
+  console.warn("VITE_API_BASE_URL is not defined in production build. Falling back to '/api'. This requires a reverse proxy (e.g., Nginx) to route requests to the backend.");
   return '/api';
 };
 

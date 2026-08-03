@@ -40,12 +40,6 @@ const Login = () => {
     e.preventDefault();
     
     setError('');
-
-    if (!isValid) {
-      setError('Please enter your username and password.');
-      return;
-    }
-
     setIsLoading(true);
 
     try {

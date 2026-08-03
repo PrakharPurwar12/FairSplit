@@ -60,12 +60,6 @@ const Register = () => {
     e.preventDefault();
     
     setError('');
-
-    if (!isValid) {
-      setError('Please fill out all fields correctly. Passwords must match, be 8+ chars, and contain a number and a symbol.');
-      return;
-    }
-
     setIsLoading(true);
 
     try {
