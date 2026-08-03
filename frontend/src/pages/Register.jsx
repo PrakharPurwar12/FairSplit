@@ -44,10 +44,21 @@ const Register = () => {
     }
   }, [isAuthenticated, navigate, redirectParam]);
 
-  // Backend will handle robust validation.
+  // Basic frontend validation & password strength
+  const hasMinLength = password.length >= 8;
+  const hasNumber = /\d/.test(password);
+  const hasSpecial = /[!@#$%^&*(),.?":{}|<>]/.test(password);
+  const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  const isFirstNameValid = firstName.length >= 2;
+  const isLastNameValid = lastName.length >= 2;
+  const isUsernameValid = username.length >= 3;
+  const isPasswordMatch = password === confirmPassword && password.length > 0;
+
+  const isValid = isEmailValid && hasMinLength && hasNumber && hasSpecial && isFirstNameValid && isLastNameValid && isUsernameValid && isPasswordMatch;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!isValid) return;
     
     setError('');
     setIsLoading(true);
@@ -196,18 +207,18 @@ const Register = () => {
               animate={{ opacity: 1, height: 'auto' }}
               className="flex gap-3 px-1 mt-1 flex-wrap"
             >
-              <StrengthIndicator met={password.length >= 8} text="8+ chars" />
-              <StrengthIndicator met={/\d/.test(password)} text="1 number" />
-              <StrengthIndicator met={/[!@#$%^&*(),.?":{}|<>]/.test(password)} text="1 symbol" />
+              <StrengthIndicator met={hasMinLength} text="8+ chars" />
+              <StrengthIndicator met={hasNumber} text="1 number" />
+              <StrengthIndicator met={hasSpecial} text="1 symbol" />
             </motion.div>
           )}
         </div>
 
         <motion.button
           type="submit"
-          disabled={isLoading}
-          whileHover={{ scale: isLoading ? 1 : 1.01, y: isLoading ? 0 : -1 }}
-          whileTap={{ scale: isLoading ? 1 : 0.98 }}
+          disabled={isLoading || !isValid}
+          whileHover={{ scale: (isLoading || !isValid) ? 1 : 1.01, y: (isLoading || !isValid) ? 0 : -1 }}
+          whileTap={{ scale: (isLoading || !isValid) ? 1 : 0.98 }}
           className="w-full h-[52px] mt-2 bg-primary hover:bg-primary-hover text-white font-semibold rounded-xl transition-all shadow-[0_4px_14px_0_rgba(79,140,255,0.3)] hover:shadow-[0_6px_20px_rgba(79,140,255,0.25)] disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none flex justify-center items-center"
         >
           {isLoading ? (

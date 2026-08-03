@@ -110,10 +110,15 @@ class UserListView(generics.ListAPIView):
 
 
 def get_oauth_redirect_uri():
-    uri = get_env_val("GOOGLE_REDIRECT_URI")
-    if not uri:
-        raise ValueError("GOOGLE_REDIRECT_URI is not set in the environment.")
-    return uri
+    explicit_uri = get_env_val("GOOGLE_REDIRECT_URI")
+    if explicit_uri and explicit_uri != "http://localhost/auth/callback":
+        return explicit_uri
+
+    frontend_url = get_env_val("FRONTEND_URL")
+    if frontend_url:
+        return f"{frontend_url.rstrip('/')}/auth/callback"
+
+    return explicit_uri or "http://localhost/auth/callback"
 
 
 class OAuthURLView(APIView):
