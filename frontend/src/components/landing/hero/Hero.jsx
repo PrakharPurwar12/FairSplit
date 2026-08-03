@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { ChevronRight, Sparkles } from 'lucide-react';
+import { useAuth } from '../../../context/AuthContext';
 
 const BACKGROUND_SLIDES = [
   {
@@ -38,6 +39,8 @@ const BACKGROUND_SLIDES = [
 
 const Hero = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const { isAuthenticated, user } = useAuth();
+  const getStartedPath = isAuthenticated ? (user?.experience ? '/dashboard' : '/onboarding') : '/register';
 
   const nextSlide = useCallback(() => {
     setCurrentIndex((prev) => (prev + 1) % BACKGROUND_SLIDES.length);
@@ -133,7 +136,7 @@ const Hero = () => {
           className="flex flex-wrap justify-center items-center gap-3 sm:gap-4"
         >
           <Link
-            to="/register"
+            to={getStartedPath}
             className="group flex items-center gap-2 bg-gray-900 dark:bg-white text-white dark:text-gray-900 px-7 sm:px-8 py-3.5 rounded-full text-xs sm:text-sm font-bold transition-all hover:bg-black dark:hover:bg-gray-100 shadow-xl shadow-gray-900/10 dark:shadow-white/10 hover:scale-105 active:scale-95"
           >
             Get Started Free

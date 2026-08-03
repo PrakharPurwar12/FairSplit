@@ -1,8 +1,12 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { useAuth } from '../../../context/AuthContext';
 
 const CTA = () => {
+  const { isAuthenticated, user } = useAuth();
+  const getStartedPath = isAuthenticated ? (user?.experience ? '/dashboard' : '/onboarding') : '/register';
+
   return (
     <section className="py-32 relative z-10">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -30,7 +34,7 @@ const CTA = () => {
             
             <div className="flex flex-col sm:flex-row items-center justify-center gap-5">
               <Link
-                to="/register"
+                to={getStartedPath}
                 className="w-full sm:w-auto px-8 py-4 bg-gray-900 dark:bg-primary text-white text-sm font-bold rounded-full hover:bg-black dark:hover:bg-primary-hover transition-all shadow-md hover:shadow-lg dark:shadow-none hover:scale-105 duration-300"
               >
                 Get Started
