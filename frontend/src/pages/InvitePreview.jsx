@@ -39,7 +39,8 @@ const InvitePreview = () => {
 
   const handleAccept = async () => {
     if (!isAuthenticated) {
-      // Store token in localStorage to return after login
+      // Store token in localStorage to return here after OAuth login.
+      // For regular login/register flows the ?redirect= query param is used.
       localStorage.setItem('pending_invite_token', token);
       navigate(`/login?redirect=/invite/${token}`);
       return;
@@ -50,6 +51,9 @@ const InvitePreview = () => {
 
     try {
       const res = await InvitationService.acceptInvitation(token);
+      // Clear any pending invite state from localStorage so future
+      // logins are not redirected to this (now consumed) invitation.
+      localStorage.removeItem('pending_invite_token');
       setSuccess(true);
       setTimeout(() => {
         navigate(`/projects/${res.project}`, { replace: true });

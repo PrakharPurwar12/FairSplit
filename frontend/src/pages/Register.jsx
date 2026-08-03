@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import AuthLayout from '../components/auth/AuthLayout';
 import AuthInput from '../components/auth/AuthInput';
 import PasswordInput from '../components/auth/PasswordInput';
@@ -30,13 +30,20 @@ const Register = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
+  const location = useLocation();
+  const [searchParams] = useSearchParams();
   const { isAuthenticated } = useAuth();
+
+  // Carry the ?redirect= param forward so that after login the user
+  // is returned to the invitation page, not the dashboard.
+  const redirectParam = searchParams.get('redirect');
 
   useEffect(() => {
     if (isAuthenticated) {
-      navigate('/dashboard', { replace: true });
+      const destination = redirectParam || '/dashboard';
+      navigate(destination, { replace: true });
     }
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated, navigate, redirectParam]);
 
   // Basic frontend validation & password strength
   const hasMinLength = password.length >= 8;
@@ -67,8 +74,11 @@ const Register = () => {
         role
       });
       
-      // Auto redirect to login on success
-      navigate('/login');
+      // Registration succeeded — take the user to login.
+      // If there is a pending invite redirect, preserve it so that after
+      // the user logs in they land back on the invitation page.
+      const loginPath = redirectParam ? `/login?redirect=${encodeURIComponent(redirectParam)}` : '/login';
+      navigate(loginPath);
     } catch (err) {
       let errorMsg = 'Registration failed.';
       if (err.response?.status === 429) {

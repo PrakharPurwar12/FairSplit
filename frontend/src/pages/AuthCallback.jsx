@@ -29,9 +29,19 @@ const AuthCallback = () => {
       try {
         await oauthLogin(storedProvider, code);
         localStorage.removeItem('oauth_provider');
+
+        // If the user arrived from an invitation page, return them there
+        // so they can explicitly click Accept Invitation.
+        const pendingInviteToken = localStorage.getItem('pending_invite_token');
+        const destination = pendingInviteToken
+          ? `/invite/${pendingInviteToken}`
+          : '/dashboard';
+        // Do NOT remove pending_invite_token here; InvitePreview clears it
+        // after a successful accept so the user cannot double-accept.
+
         setStatus('success');
         setTimeout(() => {
-          navigate('/dashboard', { replace: true });
+          navigate(destination, { replace: true });
         }, 800);
       } catch (err) {
         console.error('OAuth Callback Authentication Error:', err);

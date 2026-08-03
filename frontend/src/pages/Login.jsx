@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { Link, useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import AuthLayout from '../components/auth/AuthLayout';
 import AuthInput from '../components/auth/AuthInput';
 import PasswordInput from '../components/auth/PasswordInput';
@@ -15,14 +15,21 @@ const Login = () => {
   const [error, setError] = useState('');
   const navigate = useNavigate();
   const location = useLocation();
+  const [searchParams] = useSearchParams();
   const { login, isAuthenticated } = useAuth();
+
+  // Resolve the post-login destination:
+  // 1. ?redirect= query param (set by InvitePreview for unauthenticated guests)
+  // 2. location.state.from  (set by ProtectedRoute for authenticated-only pages)
+  // 3. Fallback to /dashboard
+  const redirectParam = searchParams.get('redirect');
+  const postLoginDestination = redirectParam || location.state?.from?.pathname || '/dashboard';
 
   useEffect(() => {
     if (isAuthenticated) {
-      const from = location.state?.from?.pathname || '/dashboard';
-      navigate(from, { replace: true });
+      navigate(postLoginDestination, { replace: true });
     }
-  }, [isAuthenticated, navigate, location]);
+  }, [isAuthenticated, navigate, postLoginDestination]);
 
   // Basic frontend validation
   const isUsernameValid = username.trim().length > 0;
@@ -38,8 +45,7 @@ const Login = () => {
 
     try {
       await login(username, password);
-      const from = location.state?.from?.pathname || '/dashboard';
-      navigate(from, { replace: true });
+      navigate(postLoginDestination, { replace: true });
     } catch (err) {
       let errorMsg = 'Invalid username or password.';
       if (err.response?.status === 429) {
