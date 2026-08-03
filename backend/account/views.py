@@ -126,7 +126,7 @@ class OAuthURLView(APIView):
 
     def get(self, request):
         provider = request.query_params.get("provider", "google").lower()
-        redirect_uri = get_oauth_redirect_uri()
+        redirect_uri = request.query_params.get("redirect_uri") or get_oauth_redirect_uri()
 
         if provider == "google":
             client_id = get_env_val("GOOGLE_CLIENT_ID")

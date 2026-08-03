@@ -1,8 +1,15 @@
 import axios from 'axios';
 
+const getBaseUrl = () => {
+  if (import.meta.env.VITE_API_BASE_URL) {
+    return import.meta.env.VITE_API_BASE_URL;
+  }
+  return '/api';
+};
+
 // Create Axios instance with base URL from environment
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || 'https://fairsplit-backend-e67j.onrender.com/api',
+  baseURL: getBaseUrl(),
   headers: {
     'Content-Type': 'application/json',
   },
@@ -38,7 +45,7 @@ api.interceptors.response.use(
 
         // Attempt to refresh token (using native axios to avoid interceptor loop)
         const response = await axios.post(
-          `${import.meta.env.VITE_API_BASE_URL || 'https://fairsplit-backend-e67j.onrender.com/api'}/account/refresh/`,
+          `${getBaseUrl()}/account/refresh/`,
           { refresh: refreshToken }
         );
 

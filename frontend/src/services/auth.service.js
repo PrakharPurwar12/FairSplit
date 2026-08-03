@@ -43,7 +43,8 @@ const AuthService = {
   },
 
   async getOAuthUrl(provider) {
-    const response = await api.get(`/account/oauth/url/?provider=${provider}`);
+    const redirectUri = encodeURIComponent(window.location.origin + '/auth/callback');
+    const response = await api.get(`/account/oauth/url/?provider=${provider}&redirect_uri=${redirectUri}`);
     return response.data;
   },
 
@@ -51,6 +52,7 @@ const AuthService = {
     const response = await api.post('/account/oauth/login/', {
       provider,
       code,
+      redirect_uri: window.location.origin + '/auth/callback'
     });
     if (response.data.access) {
       localStorage.setItem('access_token', response.data.access);

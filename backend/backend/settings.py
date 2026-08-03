@@ -113,11 +113,11 @@ SOCIALACCOUNT_PROVIDERS = {
 CORS_ALLOW_ALL_ORIGINS = config("CORS_ALLOW_ALL_ORIGINS", default=False, cast=bool)
 CORS_ALLOWED_ORIGINS = config(
     "CORS_ALLOWED_ORIGINS",
-    default="https://fairsplit-5w3v.vercel.app,https://fair-split-5w3v.vercel.app,https://fairsplit.vercel.app,http://localhost:5173,http://localhost:3000,http://localhost:8000,http://localhost,http://127.0.0.1",
+    default="http://localhost:5173,http://localhost:3000,http://localhost:8000,http://localhost,http://127.0.0.1",
     cast=lambda v: [s.strip() for s in v.split(",") if s.strip()],
 )
 
-FRONTEND_URL = config("FRONTEND_URL", default="https://fairsplit-5w3v.vercel.app")
+FRONTEND_URL = config("FRONTEND_URL", default="http://localhost:5173")
 if FRONTEND_URL and FRONTEND_URL not in CORS_ALLOWED_ORIGINS:
     CORS_ALLOWED_ORIGINS.append(FRONTEND_URL)
 

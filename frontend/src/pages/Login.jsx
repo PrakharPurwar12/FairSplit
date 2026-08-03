@@ -38,9 +38,14 @@ const Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!isValid) return;
     
     setError('');
+
+    if (!isValid) {
+      setError('Please enter your username and password.');
+      return;
+    }
+
     setIsLoading(true);
 
     try {
@@ -129,9 +134,9 @@ const Login = () => {
 
         <motion.button
           type="submit"
-          disabled={isLoading || !isValid}
-          whileHover={{ scale: (isLoading || !isValid) ? 1 : 1.01, y: (isLoading || !isValid) ? 0 : -1 }}
-          whileTap={{ scale: (isLoading || !isValid) ? 1 : 0.98 }}
+          disabled={isLoading}
+          whileHover={{ scale: isLoading ? 1 : 1.01, y: isLoading ? 0 : -1 }}
+          whileTap={{ scale: isLoading ? 1 : 0.98 }}
           className="w-full h-[52px] mt-1 bg-primary hover:bg-primary-hover text-white font-semibold rounded-xl transition-all shadow-[0_4px_14px_0_rgba(79,140,255,0.3)] hover:shadow-[0_6px_20px_rgba(79,140,255,0.25)] disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none flex justify-center items-center"
         >
           {isLoading ? (
