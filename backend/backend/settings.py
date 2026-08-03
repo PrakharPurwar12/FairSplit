@@ -31,7 +31,9 @@ else:
     SECRET_KEY = config("SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = config("DEBUG", default=False, cast=bool)
+# Deployment tooling may use a descriptive value such as "release" for this
+# setting.  Only explicit development truthy values should enable Django debug.
+DEBUG = config("DEBUG", default="False").strip().lower() in {"1", "true", "yes", "on"}
 
 ALLOWED_HOSTS = config(
     "ALLOWED_HOSTS",
