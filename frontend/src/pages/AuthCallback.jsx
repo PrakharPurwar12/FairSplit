@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { Loader2, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import InvitationService from '../services/invitation.service';
 
 const AuthCallback = () => {
   const [searchParams] = useSearchParams();
@@ -27,17 +28,26 @@ const AuthCallback = () => {
       processedRef.current = true;
 
       try {
-        await oauthLogin(storedProvider, code);
+        const loginData = await oauthLogin(storedProvider, code);
         localStorage.removeItem('oauth_provider');
 
-        // If the user arrived from an invitation page, return them there
-        // so they can explicitly click Accept Invitation.
         const pendingInviteToken = localStorage.getItem('pending_invite_token');
-        const destination = pendingInviteToken
-          ? `/invite/${pendingInviteToken}`
-          : '/dashboard';
-        // Do NOT remove pending_invite_token here; InvitePreview clears it
-        // after a successful accept so the user cannot double-accept.
+        const isNewUser = loginData.is_new_user || !loginData.user?.is_onboarded;
+
+        let destination = '/dashboard';
+
+        if (isNewUser) {
+          destination = '/onboarding';
+        } else if (pendingInviteToken) {
+          try {
+            const res = await InvitationService.acceptInvitation(pendingInviteToken);
+            localStorage.removeItem('pending_invite_token');
+            destination = `/projects/${res.project}`;
+          } catch (invErr) {
+            console.error('Failed to auto-accept invitation in AuthCallback:', invErr);
+            destination = `/invite/${pendingInviteToken}`;
+          }
+        }
 
         setStatus('success');
         setTimeout(() => {

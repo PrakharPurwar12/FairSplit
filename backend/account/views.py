@@ -326,6 +326,7 @@ class OAuthLoginView(APIView):
 
             # Check if user with existing email exists
             user = User.objects.filter(email=email).first()
+            is_new_user = False
 
             if user:
                 # Link OAuth account to existing user
@@ -335,6 +336,7 @@ class OAuthLoginView(APIView):
                     user.last_name = last_name
                 user.save()
             else:
+                is_new_user = True
                 # Ensure unique username
                 base_username = username or email.split("@")[0]
                 unique_username = base_username
@@ -350,6 +352,7 @@ class OAuthLoginView(APIView):
                     first_name=first_name,
                     last_name=last_name,
                     role="member",
+                    is_onboarded=False,
                 )
 
             # Link social account via django-allauth SocialAccount model
@@ -375,6 +378,7 @@ class OAuthLoginView(APIView):
                     "access": str(refresh.access_token),
                     "refresh": str(refresh),
                     "user": ProfileSerializer(user).data,
+                    "is_new_user": is_new_user,
                 },
                 status=status.HTTP_200_OK,
             )

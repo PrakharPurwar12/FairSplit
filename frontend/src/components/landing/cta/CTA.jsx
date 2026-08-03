@@ -5,7 +5,7 @@ import { useAuth } from '../../../context/AuthContext';
 
 const CTA = () => {
   const { isAuthenticated, user } = useAuth();
-  const getStartedPath = isAuthenticated ? (user?.experience ? '/dashboard' : '/onboarding') : '/register';
+  const getStartedPath = isAuthenticated ? (user?.is_onboarded ? '/dashboard' : '/onboarding') : '/register';
 
   return (
     <section className="py-32 relative z-10">

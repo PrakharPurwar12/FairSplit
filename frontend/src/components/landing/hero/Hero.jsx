@@ -40,7 +40,7 @@ const BACKGROUND_SLIDES = [
 const Hero = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const { isAuthenticated, user } = useAuth();
-  const getStartedPath = isAuthenticated ? (user?.experience ? '/dashboard' : '/onboarding') : '/register';
+  const getStartedPath = isAuthenticated ? (user?.is_onboarded ? '/dashboard' : '/onboarding') : '/register';
 
   const nextSlide = useCallback(() => {
     setCurrentIndex((prev) => (prev + 1) % BACKGROUND_SLIDES.length);

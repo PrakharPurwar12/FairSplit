@@ -1,7 +1,7 @@
 import React from 'react';
 import AuthInput from '../auth/AuthInput';
 
-const ProfessionalStep = ({ data, updateData }) => {
+const ProfessionalStep = ({ data, updateData, hideRoleSelection }) => {
   
   const handleChange = (e) => {
     updateData({ [e.target.id]: e.target.value });
@@ -11,17 +11,62 @@ const ProfessionalStep = ({ data, updateData }) => {
     <div className="flex flex-col h-full">
       <div className="mb-6">
         <h2 className="text-xl font-bold text-text mb-1">Professional Information</h2>
-        <p className="text-sm text-text-secondary">Tell us about your current role and experience.</p>
+        <p className="text-sm text-text-secondary">Tell us about yourself, your current role, and experience.</p>
       </div>
 
       <div className="flex flex-col gap-4 max-w-md">
+        <div className="flex gap-4">
+          <AuthInput
+            label="First Name"
+            id="first_name"
+            value={data.first_name || ''}
+            onChange={handleChange}
+            placeholder="e.g. John"
+            required
+          />
+          <AuthInput
+            label="Last Name"
+            id="last_name"
+            value={data.last_name || ''}
+            onChange={handleChange}
+            placeholder="e.g. Doe"
+            required
+          />
+        </div>
+
         <AuthInput
-          label="Current Role"
-          id="role"
-          value={data.role || ''}
+          label="Username"
+          id="username"
+          value={data.username || ''}
           onChange={handleChange}
-          placeholder="e.g. Senior Frontend Engineer"
+          placeholder="e.g. johndoe"
+          required
         />
+
+        {!hideRoleSelection && (
+          <div className="flex flex-col relative w-full">
+            <div className="relative group">
+              <select
+                id="role"
+                value={data.role || 'member'}
+                onChange={handleChange}
+                className="peer w-full h-[52px] px-4 pt-5 pb-1 bg-white dark:bg-surface-2 border border-border focus:border-primary focus:ring-primary/20 rounded-xl focus:ring-4 outline-none transition-all text-text text-base shadow-sm dark:shadow-none appearance-none"
+              >
+                <option value="manager">Project Leader</option>
+                <option value="member">Team Member</option>
+              </select>
+              <label
+                htmlFor="role"
+                className="absolute left-4 top-1.5 text-xs font-semibold text-text-muted pointer-events-none"
+              >
+                Join As
+              </label>
+              <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-text-muted">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className="relative group flex flex-col w-full">
           <select
@@ -33,11 +78,11 @@ const ProfessionalStep = ({ data, updateData }) => {
             }`}
           >
             <option value="" disabled className="text-text-muted">Select level</option>
-            <option value="Junior" className="text-text">Junior (0-2 years)</option>
-            <option value="Mid-Level" className="text-text">Mid-Level (3-5 years)</option>
-            <option value="Senior" className="text-text">Senior (5-8 years)</option>
-            <option value="Lead" className="text-text">Lead (8+ years)</option>
-            <option value="Executive" className="text-text">Executive / Director</option>
+            <option value="1" className="text-text">Junior (0-2 years)</option>
+            <option value="3" className="text-text">Mid-Level (3-5 years)</option>
+            <option value="6" className="text-text">Senior (5-8 years)</option>
+            <option value="10" className="text-text">Lead (8+ years)</option>
+            <option value="15" className="text-text">Executive / Director (12+ years)</option>
           </select>
           <label
             htmlFor="experience"
@@ -53,14 +98,6 @@ const ProfessionalStep = ({ data, updateData }) => {
             </svg>
           </div>
         </div>
-
-        <AuthInput
-          label="Department / Team"
-          id="department"
-          value={data.department || ''}
-          onChange={handleChange}
-          placeholder="e.g. Product Development"
-        />
 
         <AuthInput
           label="Profile Picture URL (Optional)"

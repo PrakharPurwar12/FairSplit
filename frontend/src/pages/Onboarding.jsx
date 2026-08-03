@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import ThemeToggle from '../components/common/ThemeToggle';
 import ProgressStepper from '../components/onboarding/ProgressStepper';
@@ -10,18 +10,23 @@ import CompletionStep from '../components/onboarding/CompletionStep';
 import NavigationButtons from '../components/onboarding/NavigationButtons';
 import { useAuth } from '../context/AuthContext';
 import AuthService from '../services/auth.service';
+import InvitationService from '../services/invitation.service';
 
 const Onboarding = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
-  const { setUser } = useAuth();
+  const [acceptedProjectId, setAcceptedProjectId] = useState(null);
+  const { user: currentUser, setUser } = useAuth();
   const totalSteps = 5;
 
-  // Shared state for backend integration later
+  // Shared state for backend integration
   const [formData, setFormData] = useState({
     professional: {
-      role: '',
+      first_name: '',
+      last_name: '',
+      username: '',
+      role: 'member',
       experience: '',
       department: '',
       profilePicture: ''
@@ -36,6 +41,28 @@ const Onboarding = () => {
       domains: []
     }
   });
+
+  useEffect(() => {
+    if (currentUser) {
+      setFormData(prev => ({
+        ...prev,
+        professional: {
+          ...prev.professional,
+          first_name: currentUser.first_name || '',
+          last_name: currentUser.last_name || '',
+          username: currentUser.username || '',
+          role: currentUser.role || 'member',
+          experience: currentUser.experience || '',
+          profilePicture: currentUser.profile_picture || ''
+        },
+        availability: {
+          ...prev.availability,
+          hoursPerWeek: currentUser.availability_hours || 40,
+          preferredTime: prev.availability.preferredTime
+        }
+      }));
+    }
+  }, [currentUser]);
 
   const updateFormData = (stepKey, data) => {
     setFormData(prev => ({
@@ -56,13 +83,32 @@ const Onboarding = () => {
       setIsLoading(true);
       setError(null);
       try {
-        const updatedUser = await AuthService.updateProfile({
-          experience: formData.professional.experience,
+        const payload = {
+          first_name: formData.professional.first_name,
+          last_name: formData.professional.last_name,
+          username: formData.professional.username,
+          role: formData.professional.role,
+          experience: parseInt(formData.professional.experience, 10) || 0,
           profile_picture: formData.professional.profilePicture,
-          availability_hours: formData.availability.hoursPerWeek
-        });
+          availability_hours: formData.availability.hoursPerWeek,
+          is_onboarded: true
+        };
 
+        const updatedUser = await AuthService.updateProfile(payload);
         setUser(updatedUser);
+
+        // Auto-accept invitation if exists
+        const pendingInviteToken = localStorage.getItem('pending_invite_token');
+        if (pendingInviteToken) {
+          try {
+            const res = await InvitationService.acceptInvitation(pendingInviteToken);
+            localStorage.removeItem('pending_invite_token');
+            setAcceptedProjectId(res.project);
+          } catch (invErr) {
+            console.error('Failed to auto-accept invitation after onboarding:', invErr);
+          }
+        }
+
         setCurrentStep(prev => prev + 1);
       } catch (err) {
         let errorMsg = 'Failed to update profile.';
@@ -93,6 +139,7 @@ const Onboarding = () => {
           <ProfessionalStep 
             data={formData.professional} 
             updateData={(data) => updateFormData('professional', data)} 
+            hideRoleSelection={Boolean(localStorage.getItem('pending_invite_token'))}
           />
         );
       case 2:
@@ -117,14 +164,22 @@ const Onboarding = () => {
           />
         );
       case 5:
-        return <CompletionStep onEditProfile={() => setCurrentStep(1)} />;
+        return <CompletionStep onEditProfile={() => setCurrentStep(1)} acceptedProjectId={acceptedProjectId} />;
       default:
         return null;
     }
   };
 
   const isStepValid = () => {
-    // Add basic validation if needed before allowing Next
+    if (currentStep === 1) {
+      const { first_name, last_name, username, experience } = formData.professional;
+      return (
+        first_name.trim().length >= 2 &&
+        last_name.trim().length >= 2 &&
+        username.trim().length >= 3 &&
+        experience !== ''
+      );
+    }
     return true; 
   };
 

@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { Sparkles } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
-const CompletionStep = ({ onEditProfile }) => {
+const CompletionStep = ({ onEditProfile, acceptedProjectId }) => {
   const navigate = useNavigate();
 
   return (
@@ -50,10 +50,10 @@ const CompletionStep = ({ onEditProfile }) => {
         className="flex flex-col sm:flex-row items-center gap-4 w-full max-w-sm"
       >
         <button
-          onClick={() => navigate('/dashboard')}
-          className="w-full h-[52px] bg-primary hover:bg-primary-hover text-white font-bold rounded-xl transition-all shadow-[0_4px_14px_0_rgba(79,140,255,0.3)] hover:shadow-[0_6px_20px_rgba(79,140,255,0.25)]"
+          onClick={() => acceptedProjectId ? navigate(`/projects/${acceptedProjectId}`) : navigate('/dashboard')}
+          className="w-full h-[52px] bg-primary hover:bg-primary-hover text-white font-bold rounded-xl transition-all shadow-[0_4px_14px_0_rgba(79,140,255,0.3)] hover:shadow-[0_6px_20px_rgba(79,140,255,0.25)] flex items-center justify-center"
         >
-          Go to Dashboard
+          {acceptedProjectId ? 'Go to Project Workspace' : 'Go to Dashboard'}
         </button>
         
         <button

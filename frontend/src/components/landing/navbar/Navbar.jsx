@@ -10,7 +10,7 @@ const Navbar = () => {
 
   // Destination for "Get Started": authenticated users go to dashboard/onboarding; guests go to register
   const getStartedPath = isAuthenticated
-    ? (user?.experience ? '/dashboard' : '/onboarding')
+    ? (user?.is_onboarded ? '/dashboard' : '/onboarding')
     : '/register';
 
   return (
