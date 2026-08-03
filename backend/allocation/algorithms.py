@@ -4,7 +4,7 @@ from datetime import datetime
 from django.utils import timezone
 from project.models import ProjectMember
 from skills.models import UserSkill
-from tasks.models import AssignmentHistory, Task, TaskAssignment, TaskSkill
+from tasks.models import Task, TaskAssignment, TaskSkill
 
 # ======================================================
 # Configuration
@@ -228,36 +228,9 @@ def allocate_tasks(project_id):
 
         reasons = generate_reason(best["matched_skills"], best["workload_score"], best["penalty"])
 
-        previous = TaskAssignment.objects.filter(task=task).first()
+        from tasks.services.assignment_service import AssignmentService
 
-        TaskAssignment.objects.update_or_create(
-            task=task,
-            defaults={
-                "assigned_to": best["member"].user,
-                "assigned_by": task.created_by,
-            },
-        )
-
-        AssignmentHistory.objects.create(
-            task=task,
-            previous_member=(previous.assigned_to if previous else None),
-            new_member=best["member"].user,
-            changed_by=task.created_by,
-            reason="Automatic Fair Allocation",
-        )
-
-        from ml.services import update_task_prediction
-
-        update_task_prediction(task)
-
-        from notifications.services import create_notification
-
-        create_notification(
-            user=best["member"].user,
-            title="Task Assigned",
-            message=f"Task '{task.title}' was assigned to you via AI Allocation.",
-            notification_type="task_assigned",
-        )
+        AssignmentService.assign_task(task=task, member=best["member"], assigned_by=task.created_by, source="ai")
 
         workloads[best["member"].user.id] += float(task.estimated_hours)
 

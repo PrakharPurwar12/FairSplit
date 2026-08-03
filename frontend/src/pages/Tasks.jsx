@@ -38,6 +38,7 @@ const Tasks = () => {
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isProgressOpen, setIsProgressOpen] = useState(false);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+  const [isAssignOpen, setIsAssignOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState(null);
 
   // Form inputs
@@ -53,6 +54,10 @@ const Tasks = () => {
   // Progress inputs
   const [completionPercentage, setCompletionPercentage] = useState(0);
   const [actualHours, setActualHours] = useState('');
+  
+  // Assign inputs
+  const [projectMembers, setProjectMembers] = useState([]);
+  const [assigneeId, setAssigneeId] = useState('');
 
   const [formError, setFormError] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -254,6 +259,53 @@ const Tasks = () => {
     }
   };
 
+  // ASSIGN TASK
+  const openAssignModal = async (task) => {
+    const project = projects.find(p => p.id === task.project);
+    const isManager = (project?.manager === currentUser.id || project?.manager_name === currentUser.username);
+    const isAdmin = Boolean(currentUser.is_staff || currentUser.is_superuser || currentUser.role === 'admin');
+    
+    if (!isManager && !isAdmin) {
+      showToast('Only the project manager can assign tasks.', 'error');
+      return;
+    }
+
+    setSelectedTask(task);
+    setAssigneeId('');
+    setProjectMembers([]);
+    setFormError(null);
+    setIsAssignOpen(true);
+
+    try {
+      const members = await ProjectService.getProjectMembers(task.project);
+      setProjectMembers(members);
+    } catch (_err) {
+      setFormError('Failed to load project members.');
+    }
+  };
+
+  const handleAssignSubmit = async (e) => {
+    e.preventDefault();
+    if (!assigneeId) {
+      setFormError('Please select a team member.');
+      return;
+    }
+    setIsSubmitting(true);
+    setFormError(null);
+
+    try {
+      await TaskService.assignTask(selectedTask.id, assigneeId);
+      showToast('Task assigned successfully!');
+      setIsAssignOpen(false);
+      resetForm();
+      fetchInitialData();
+    } catch (err) {
+      setFormError(err.response?.data?.error || err.response?.data?.detail || 'Failed to assign task.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   // DELETE TASK
   const handleDelete = async (taskId) => {
     const confirmDelete = window.confirm('Are you sure you want to delete this task?');
@@ -285,6 +337,8 @@ const Tasks = () => {
     setStatus('todo');
     setCompletionPercentage(0);
     setActualHours('');
+    setAssigneeId('');
+    setProjectMembers([]);
     setFormError(null);
     setSelectedTask(null);
   };
@@ -495,15 +549,20 @@ const Tasks = () => {
                   </span>
                   <span className="text-gray-300 dark:text-gray-600">•</span>
                   {task.assigned_to_name ? (
-                    <span className="text-gray-600 dark:text-gray-300 font-semibold">
+                    <span 
+                      onClick={() => openAssignModal(task)}
+                      className="text-gray-600 dark:text-gray-300 font-semibold cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                      title="Click to reassign manually"
+                    >
                       Assigned: @{task.assigned_to_name}
                     </span>
                   ) : (
                     <span 
-                      className="px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-950/20 dark:text-amber-400 dark:border-amber-900/30 text-[10px] font-semibold"
-                      title="Run AI Allocation first to assign a team member"
+                      onClick={() => openAssignModal(task)}
+                      className="px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-950/20 dark:text-amber-400 dark:border-amber-900/30 text-[10px] font-semibold cursor-pointer hover:bg-amber-100 transition-colors"
+                      title="Click to assign manually"
                     >
-                      Run AI Allocation first
+                      Assign Manually
                     </span>
                   )}
                 </div>
@@ -915,6 +974,54 @@ const Tasks = () => {
               className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50 disabled:cursor-not-allowed rounded-xl text-sm font-semibold transition-colors"
             >
               {isSubmitting ? 'Saving...' : 'Update Progress'}
+            </button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* ASSIGN MODAL */}
+      <Modal isOpen={isAssignOpen} onClose={() => { setIsAssignOpen(false); resetForm(); }} title="Assign Task">
+        <form onSubmit={handleAssignSubmit} className="space-y-4">
+          {formError && (
+            <div className="p-3 bg-red-50 dark:bg-red-950/20 text-red-600 dark:text-red-400 text-xs rounded-xl border border-red-200 dark:border-red-900/50 leading-snug">
+              {formError}
+            </div>
+          )}
+
+          <div>
+            <label className="block text-xs font-semibold text-gray-500 mb-1.5 uppercase">Select Team Member *</label>
+            <select
+              required
+              value={assigneeId}
+              onChange={(e) => setAssigneeId(e.target.value)}
+              className="w-full px-3 py-2 bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-white/10 rounded-xl text-sm focus:border-blue-500 outline-none transition-colors"
+            >
+              <option value="">Select a member...</option>
+              {projectMembers.map(member => (
+                <option key={member.id} value={member.user}>
+                  {member.username} ({member.role || 'Member'})
+                </option>
+              ))}
+            </select>
+            {projectMembers.length === 0 && !formError && (
+              <p className="text-xs text-gray-400 mt-2">Loading project members...</p>
+            )}
+          </div>
+
+          <div className="flex gap-3 justify-end pt-2">
+            <button
+              type="button"
+              onClick={() => { setIsAssignOpen(false); resetForm(); }}
+              className="px-4 py-2 border border-gray-200 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-white/5 rounded-xl text-sm font-semibold transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={isSubmitting || projectMembers.length === 0}
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50 disabled:cursor-not-allowed rounded-xl text-sm font-semibold transition-colors"
+            >
+              {isSubmitting ? 'Assigning...' : 'Assign Task'}
             </button>
           </div>
         </form>

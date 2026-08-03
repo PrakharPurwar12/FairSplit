@@ -2,6 +2,7 @@ from django.db import models
 from django.shortcuts import get_object_or_404
 from ml.services import update_task_prediction
 from notifications.services import create_notification, notify_project_members
+from project.models import ProjectMember
 from rest_framework import generics, status
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.permissions import IsAuthenticated
@@ -9,7 +10,8 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from .models import Task, TaskAssignment, TaskSkill
-from .serializers import TaskProgressUpdateSerializer, TaskSerializer, TaskSkillSerializer
+from .serializers import TaskAssignmentSerializer, TaskProgressUpdateSerializer, TaskSerializer, TaskSkillSerializer
+from .services.assignment_service import AssignmentService
 
 
 class TaskListCreateView(generics.ListCreateAPIView):
@@ -183,3 +185,33 @@ class TaskProgressUpdateView(APIView):
                 "risk_confidence": task.risk_confidence,
             }
         )
+
+
+class TaskAssignmentCreateView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, task_id):
+        task = get_object_or_404(Task, id=task_id)
+
+        if not (request.user.is_staff or request.user.is_superuser or task.project.manager == request.user):
+            return Response(
+                {"error": "Only the project manager can assign tasks."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        user_id = request.data.get("user_id")
+        if not user_id:
+            return Response({"error": "user_id is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        member = ProjectMember.objects.filter(project=task.project, user_id=user_id).first()
+        if not member:
+            return Response({"error": "User is not a member of this project."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            assignment = AssignmentService.assign_task(
+                task=task, member=member, assigned_by=request.user, source="manual"
+            )
+            serializer = TaskAssignmentSerializer(assignment)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)

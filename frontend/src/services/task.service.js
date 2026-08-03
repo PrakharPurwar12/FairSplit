@@ -30,6 +30,11 @@ const TaskService = {
     const response = await api.patch(`/tasks/${id}/progress/`, progressData);
     return response.data;
   },
+
+  async assignTask(id, userId) {
+    const response = await api.post(`/tasks/${id}/assign/`, { user_id: userId });
+    return response.data;
+  },
 };
 
 export default TaskService;
