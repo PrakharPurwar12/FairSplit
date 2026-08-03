@@ -18,11 +18,11 @@ User = get_user_model()
 
 
 class LoginRateThrottle(AnonRateThrottle):
-    rate = "5/min"
+    rate = "10/min"
 
 
 class RegisterRateThrottle(AnonRateThrottle):
-    rate = "3/min"
+    rate = "5/min"
 
 
 class LogoutRateThrottle(UserRateThrottle):
