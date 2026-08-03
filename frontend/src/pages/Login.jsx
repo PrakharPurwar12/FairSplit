@@ -31,11 +31,6 @@ const Login = () => {
     }
   }, [isAuthenticated, navigate, postLoginDestination]);
 
-  // Basic frontend validation
-  const isUsernameValid = username.trim().length > 0;
-  const isPasswordValid = password.length > 0;
-  const isValid = isUsernameValid && isPasswordValid;
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     

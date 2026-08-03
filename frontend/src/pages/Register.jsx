@@ -44,17 +44,7 @@ const Register = () => {
     }
   }, [isAuthenticated, navigate, redirectParam]);
 
-  // Basic frontend validation & password strength
-  const hasMinLength = password.length >= 8;
-  const hasNumber = /\d/.test(password);
-  const hasSpecial = /[!@#$%^&*(),.?":{}|<>]/.test(password);
-  const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-  const isFirstNameValid = firstName.length >= 2;
-  const isLastNameValid = lastName.length >= 2;
-  const isUsernameValid = username.length >= 3;
-  const isPasswordMatch = password === confirmPassword && password.length > 0;
-
-  const isValid = isEmailValid && hasMinLength && hasNumber && hasSpecial && isFirstNameValid && isLastNameValid && isUsernameValid && isPasswordMatch;
+  // Backend will handle robust validation.
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -206,9 +196,9 @@ const Register = () => {
               animate={{ opacity: 1, height: 'auto' }}
               className="flex gap-3 px-1 mt-1 flex-wrap"
             >
-              <StrengthIndicator met={hasMinLength} text="8+ chars" />
-              <StrengthIndicator met={hasNumber} text="1 number" />
-              <StrengthIndicator met={hasSpecial} text="1 symbol" />
+              <StrengthIndicator met={password.length >= 8} text="8+ chars" />
+              <StrengthIndicator met={/\d/.test(password)} text="1 number" />
+              <StrengthIndicator met={/[!@#$%^&*(),.?":{}|<>]/.test(password)} text="1 symbol" />
             </motion.div>
           )}
         </div>
