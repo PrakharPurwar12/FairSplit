@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import ThemeToggle from '../components/common/ThemeToggle';
 import ProgressStepper from '../components/onboarding/ProgressStepper';
@@ -13,12 +14,19 @@ import AuthService from '../services/auth.service';
 import InvitationService from '../services/invitation.service';
 
 const Onboarding = () => {
+  const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [acceptedProjectId, setAcceptedProjectId] = useState(null);
   const { user: currentUser, setUser } = useAuth();
   const totalSteps = 5;
+
+  useEffect(() => {
+    if (currentUser && currentUser.is_onboarded) {
+      navigate('/dashboard', { replace: true });
+    }
+  }, [currentUser, navigate]);
 
   // Shared state for backend integration
   const [formData, setFormData] = useState({
