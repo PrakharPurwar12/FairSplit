@@ -83,7 +83,6 @@ const Settings = () => {
         first_name: firstName,
         last_name: lastName,
         email: email,
-        role: role,
         availability_hours: parseInt(availabilityHours, 10),
         experience: parseInt(experience, 10)
       });
@@ -203,18 +202,18 @@ const Settings = () => {
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div>
-                <label className="block text-xs font-semibold text-gray-500 mb-1.5 uppercase">Role</label>
-                <select
-                  value={role}
-                  onChange={(e) => setRole(e.target.value)}
-                  className="w-full px-3.5 py-2.5 bg-white dark:bg-[#111111] border border-gray-200 dark:border-white/10 rounded-xl text-sm focus:border-blue-500 outline-none transition-all capitalize"
-                >
-                  <option value="developer">Developer</option>
-                  <option value="manager">Manager</option>
-                  <option value="designer">Designer</option>
-                  <option value="qa">QA Tester</option>
-                  <option value="fullstack">Fullstack</option>
-                </select>
+                <label className="block text-xs font-semibold text-gray-500 mb-1.5 uppercase flex items-center gap-1">
+                  System Role
+                  <span className="inline-block cursor-help text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors" title="Your account role controls permissions across FairSplit and cannot be changed after registration.">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                  </span>
+                </label>
+                <input
+                  type="text"
+                  value={role === 'manager' ? 'Project Leader' : (role === 'member' ? 'Team Member' : role)}
+                  disabled
+                  className="w-full px-3.5 py-2.5 bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl text-sm text-gray-500 dark:text-gray-400 cursor-not-allowed font-semibold capitalize"
+                />
               </div>
 
               <div>

@@ -42,6 +42,11 @@ const AuthService = {
     return response.data;
   },
 
+  async completeOnboarding(onboardingData) {
+    const response = await api.post('/account/onboard/', onboardingData);
+    return response.data;
+  },
+
   async getOAuthUrl(provider) {
     const response = await api.get(`/account/oauth/url/?provider=${provider}`);
     return response.data;

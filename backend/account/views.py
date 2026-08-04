@@ -96,6 +96,91 @@ class ProfileView(generics.RetrieveUpdateAPIView):
         return self.request.user
 
 
+class OnboardView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        user = request.user
+        if user.is_onboarded:
+            return Response(
+                {"error": "User is already onboarded."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        data = request.data
+        first_name = data.get("first_name", "").strip()
+        last_name = data.get("last_name", "").strip()
+        username = data.get("username", "").strip()
+
+        if len(first_name) < 2 or len(last_name) < 2:
+            return Response(
+                {"error": "First name and last name must be at least 2 characters."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if len(username) < 3:
+            return Response(
+                {"error": "Username must be at least 3 characters."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if User.objects.filter(username__iexact=username).exclude(id=user.id).exists():
+            return Response(
+                {"error": "Username already exists."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Experience & Availability
+        try:
+            user.experience = int(data.get("experience", user.experience) or 0)
+        except (ValueError, TypeError):
+            pass
+
+        try:
+            user.availability_hours = int(data.get("availability_hours", user.availability_hours) or 40)
+        except (ValueError, TypeError):
+            pass
+
+        user.profile_picture = data.get("profile_picture", user.profile_picture)
+        user.first_name = first_name
+        user.last_name = last_name
+        user.username = username
+
+        # Handle invitation accept & role assignment
+        pending_invite_token = data.get("pending_invite_token")
+        project_id = None
+
+        if pending_invite_token:
+            from project.services.invitation_service import InvitationService
+            try:
+                # Resolve and accept invitation via existing service flow
+                # (validates status, expiration, and user email match)
+                invitation = InvitationService.accept_invitation(pending_invite_token, user)
+                project_id = invitation.project.id
+                # Force user role to member
+                user.role = "member"
+            except Exception as e:
+                return Response(
+                    {"error": f"Invalid invitation: {str(e)}"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+        else:
+            role = data.get("role")
+            if role in ["manager", "member"]:
+                user.role = role
+
+        user.is_onboarded = True
+        user.save()
+
+        response_data = {
+            "user": ProfileSerializer(user).data,
+        }
+        if project_id:
+            response_data["project_id"] = project_id
+
+        return Response(response_data, status=status.HTTP_200_OK)
+
+
 class UserListView(generics.ListAPIView):
     serializer_class = ProfileSerializer
     permission_classes = [permissions.IsAuthenticated]

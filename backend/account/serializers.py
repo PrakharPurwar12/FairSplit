@@ -55,3 +55,4 @@ class ProfileSerializer(serializers.ModelSerializer):
             "profile_picture",
             "is_onboarded",
         )
+        read_only_fields = ("role",)

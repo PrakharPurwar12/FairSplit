@@ -9,6 +9,7 @@ from .views import (
     RegisterView,
     ThrottledTokenObtainPairView,
     UserListView,
+    OnboardView,
 )
 
 urlpatterns = [
@@ -17,6 +18,7 @@ urlpatterns = [
     path("logout/", LogoutView.as_view(), name="logout"),
     path("refresh/", TokenRefreshView.as_view(), name="refresh"),
     path("profile/", ProfileView.as_view(), name="profile"),
+    path("onboard/", OnboardView.as_view(), name="onboard"),
     path("users/", UserListView.as_view(), name="user-list"),
     path("oauth/url/", OAuthURLView.as_view(), name="oauth-url"),
     path("oauth/login/", OAuthLoginView.as_view(), name="oauth-login"),

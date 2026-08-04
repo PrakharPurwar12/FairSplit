@@ -83,6 +83,7 @@ const Onboarding = () => {
       setIsLoading(true);
       setError(null);
       try {
+        const pendingInviteToken = localStorage.getItem('pending_invite_token');
         const payload = {
           first_name: formData.professional.first_name,
           last_name: formData.professional.last_name,
@@ -91,22 +92,18 @@ const Onboarding = () => {
           experience: parseInt(formData.professional.experience, 10) || 0,
           profile_picture: formData.professional.profilePicture,
           availability_hours: formData.availability.hoursPerWeek,
-          is_onboarded: true
         };
 
-        const updatedUser = await AuthService.updateProfile(payload);
-        setUser(updatedUser);
-
-        // Auto-accept invitation if exists
-        const pendingInviteToken = localStorage.getItem('pending_invite_token');
         if (pendingInviteToken) {
-          try {
-            const res = await InvitationService.acceptInvitation(pendingInviteToken);
-            localStorage.removeItem('pending_invite_token');
-            setAcceptedProjectId(res.project);
-          } catch (invErr) {
-            console.error('Failed to auto-accept invitation after onboarding:', invErr);
-          }
+          payload.pending_invite_token = pendingInviteToken;
+        }
+
+        const resData = await AuthService.completeOnboarding(payload);
+        setUser(resData.user);
+
+        if (resData.project_id) {
+          localStorage.removeItem('pending_invite_token');
+          setAcceptedProjectId(resData.project_id);
         }
 
         setCurrentStep(prev => prev + 1);
