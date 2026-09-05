@@ -16,11 +16,21 @@ from pathlib import Path
 import dj_database_url
 from decouple import Config, RepositoryEnv, config
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
+
+# ============================================================
+# BASE CONFIGURATION
+# ============================================================
+
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+
+# ============================================================
+# ENVIRONMENT VARIABLES
+# ============================================================
 
 # Explicitly load .env from BASE_DIR or root project directory if present
 env_path = BASE_DIR / ".env"
+
 if not env_path.exists() and (BASE_DIR.parent / ".env").exists():
     env_path = BASE_DIR.parent / ".env"
 
@@ -30,32 +40,72 @@ if env_path.exists():
 else:
     SECRET_KEY = config("SECRET_KEY")
 
-# SECURITY WARNING: don't run with debug turned on in production!
-# Deployment tooling may use a descriptive value such as "release" for this
-# setting.  Only explicit development truthy values should enable Django debug.
-DEBUG = config("DEBUG", default="False").strip().lower() in {"1", "true", "yes", "on"}
+
+# ============================================================
+# DEBUG
+# ============================================================
+
+# Only explicit development truthy values enable Django debug.
+DEBUG = config(
+    "DEBUG",
+    default="False"
+).strip().lower() in {"1", "true", "yes", "on"}
+
+
+# ============================================================
+# ALLOWED HOSTS
+# ============================================================
 
 ALLOWED_HOSTS = config(
     "ALLOWED_HOSTS",
     default="*",
     cast=lambda v: [s.strip() for s in v.split(",") if s.strip()],
 )
-for host_env_var in ["RENDER_EXTERNAL_HOSTNAME", "RAILWAY_PUBLIC_DOMAIN", "RAILWAY_STATIC_URL", "PUBLIC_URL"]:
+
+# Automatically allow common deployment hostnames.
+for host_env_var in [
+    "RENDER_EXTERNAL_HOSTNAME",
+    "RAILWAY_PUBLIC_DOMAIN",
+    "RAILWAY_STATIC_URL",
+    "PUBLIC_URL",
+]:
     env_host = config(host_env_var, default="").strip()
+
     if env_host and env_host not in ALLOWED_HOSTS:
         ALLOWED_HOSTS.append(env_host)
 
 if "healthcheck.railway.app" not in ALLOWED_HOSTS:
     ALLOWED_HOSTS.append("healthcheck.railway.app")
 
+
+# ============================================================
+# CSRF TRUSTED ORIGINS
+# ============================================================
+
 CSRF_TRUSTED_ORIGINS = config(
     "CSRF_TRUSTED_ORIGINS",
-    default="http://localhost,http://127.0.0.1,http://localhost:5173,http://localhost:3000,https://*.railway.app,https://*.onrender.com,https://*.ondigitalocean.app",
-    cast=lambda v: [s.strip() for s in v.split(",") if s.strip()],
+    default=(
+        "http://localhost,"
+        "http://127.0.0.1,"
+        "http://localhost:5173,"
+        "http://localhost:3000,"
+        "https://*.railway.app,"
+        "https://*.onrender.com,"
+        "https://*.ondigitalocean.app,"
+        "https://fair-split-5w3v.vercel.app,"
+        "https://fairsplit-app-beta.vercel.app"
+    ),
+    cast=lambda v: [
+        s.strip().rstrip("/")
+        for s in v.split(",")
+        if s.strip()
+    ],
 )
 
 
-# Application definition
+# ============================================================
+# APPLICATION DEFINITION
+# ============================================================
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -65,13 +115,17 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "django.contrib.sites",
+
     "rest_framework",
     "rest_framework_simplejwt.token_blacklist",
+
     "corsheaders",
+
     "allauth",
     "allauth.socialaccount",
     "allauth.socialaccount.providers.google",
     "allauth.socialaccount.providers.github",
+
     "account",
     "skills",
     "project",
@@ -82,12 +136,43 @@ INSTALLED_APPS = [
     "tasks",
 ]
 
+
+# ============================================================
+# DJANGO SITES
+# ============================================================
+
 SITE_ID = 1
 
-GOOGLE_CLIENT_ID = config("GOOGLE_CLIENT_ID", default="")
-GOOGLE_CLIENT_SECRET = config("GOOGLE_CLIENT_SECRET", default="")
-GITHUB_CLIENT_ID = config("GITHUB_CLIENT_ID", default="")
-GITHUB_CLIENT_SECRET = config("GITHUB_CLIENT_SECRET", default="")
+
+# ============================================================
+# GOOGLE & GITHUB OAUTH CONFIGURATION
+# ============================================================
+
+GOOGLE_CLIENT_ID = config(
+    "GOOGLE_CLIENT_ID",
+    default=""
+)
+
+GOOGLE_CLIENT_SECRET = config(
+    "GOOGLE_CLIENT_SECRET",
+    default=""
+)
+
+GOOGLE_REDIRECT_URI = config(
+    "GOOGLE_REDIRECT_URI",
+    default=""
+)
+
+GITHUB_CLIENT_ID = config(
+    "GITHUB_CLIENT_ID",
+    default=""
+)
+
+GITHUB_CLIENT_SECRET = config(
+    "GITHUB_CLIENT_SECRET",
+    default=""
+)
+
 
 SOCIALACCOUNT_PROVIDERS = {
     "google": {
@@ -96,32 +181,79 @@ SOCIALACCOUNT_PROVIDERS = {
             "secret": GOOGLE_CLIENT_SECRET,
             "key": "",
         },
-        "SCOPE": ["profile", "email"],
-        "AUTH_PARAMS": {"access_type": "online"},
+        "SCOPE": [
+            "profile",
+            "email",
+        ],
+        "AUTH_PARAMS": {
+            "access_type": "online",
+        },
     },
+
     "github": {
         "APP": {
             "client_id": GITHUB_CLIENT_ID,
             "secret": GITHUB_CLIENT_SECRET,
             "key": "",
         },
-        "SCOPE": ["user:email"],
+        "SCOPE": [
+            "user:email",
+        ],
     },
 }
 
 
-CORS_ALLOW_ALL_ORIGINS = config("CORS_ALLOW_ALL_ORIGINS", default=False, cast=bool)
-CORS_ALLOWED_ORIGINS = config(
-    "CORS_ALLOWED_ORIGINS",
-    default="http://localhost:5173,http://localhost:3000,http://localhost:8000,http://localhost,http://127.0.0.1",
-    cast=lambda v: [s.strip() for s in v.split(",") if s.strip()],
+# ============================================================
+# CORS CONFIGURATION
+# ============================================================
+
+# IMPORTANT:
+# Keep this False in production.
+CORS_ALLOW_ALL_ORIGINS = config(
+    "CORS_ALLOW_ALL_ORIGINS",
+    default=False,
+    cast=bool,
 )
 
-FRONTEND_URL = config("FRONTEND_URL", default="http://localhost:5173")
+
+CORS_ALLOWED_ORIGINS = config(
+    "CORS_ALLOWED_ORIGINS",
+    default=(
+        "http://localhost:5173,"
+        "http://localhost:3000,"
+        "http://localhost:8000,"
+        "http://localhost,"
+        "http://127.0.0.1,"
+        "https://fair-split-5w3v.vercel.app,"
+        "https://fairsplit-app-beta.vercel.app"
+    ),
+    cast=lambda v: [
+        s.strip().rstrip("/")
+        for s in v.split(",")
+        if s.strip()
+    ],
+)
+
+
+# Primary frontend URL
+FRONTEND_URL = config(
+    "FRONTEND_URL",
+    default="https://fair-split-5w3v.vercel.app",
+).strip().rstrip("/")
+
+
+# Make sure FRONTEND_URL is also allowed by CORS.
 if FRONTEND_URL and FRONTEND_URL not in CORS_ALLOWED_ORIGINS:
     CORS_ALLOWED_ORIGINS.append(FRONTEND_URL)
 
+
 CORS_ALLOW_CREDENTIALS = True
+
+
+# ============================================================
+# CORS HEADERS
+# ============================================================
+
 CORS_ALLOW_HEADERS = [
     "accept",
     "accept-encoding",
@@ -133,6 +265,12 @@ CORS_ALLOW_HEADERS = [
     "x-csrftoken",
     "x-requested-with",
 ]
+
+
+# ============================================================
+# CORS METHODS
+# ============================================================
+
 CORS_ALLOW_METHODS = [
     "DELETE",
     "GET",
@@ -142,17 +280,72 @@ CORS_ALLOW_METHODS = [
     "PUT",
 ]
 
-# Security Hardening Settings (Environment Controlled)
-SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
-SECURE_SSL_REDIRECT = config("SECURE_SSL_REDIRECT", default=False, cast=bool)
-SESSION_COOKIE_SECURE = config("SESSION_COOKIE_SECURE", default=False, cast=bool)
-CSRF_COOKIE_SECURE = config("CSRF_COOKIE_SECURE", default=False, cast=bool)
-SECURE_HSTS_SECONDS = config("SECURE_HSTS_SECONDS", default=0, cast=int)
-SECURE_HSTS_INCLUDE_SUBDOMAINS = config("SECURE_HSTS_INCLUDE_SUBDOMAINS", default=False, cast=bool)
-SECURE_HSTS_PRELOAD = config("SECURE_HSTS_PRELOAD", default=False, cast=bool)
-X_FRAME_OPTIONS = config("X_FRAME_OPTIONS", default="DENY")
-SECURE_CONTENT_TYPE_NOSNIFF = config("SECURE_CONTENT_TYPE_NOSNIFF", default=True, cast=bool)
-SECURE_REFERRER_POLICY = config("SECURE_REFERRER_POLICY", default="same-origin")
+
+# ============================================================
+# SECURITY HARDENING
+# ============================================================
+
+SECURE_PROXY_SSL_HEADER = (
+    "HTTP_X_FORWARDED_PROTO",
+    "https",
+)
+
+SECURE_SSL_REDIRECT = config(
+    "SECURE_SSL_REDIRECT",
+    default=False,
+    cast=bool,
+)
+
+SESSION_COOKIE_SECURE = config(
+    "SESSION_COOKIE_SECURE",
+    default=False,
+    cast=bool,
+)
+
+CSRF_COOKIE_SECURE = config(
+    "CSRF_COOKIE_SECURE",
+    default=False,
+    cast=bool,
+)
+
+SECURE_HSTS_SECONDS = config(
+    "SECURE_HSTS_SECONDS",
+    default=0,
+    cast=int,
+)
+
+SECURE_HSTS_INCLUDE_SUBDOMAINS = config(
+    "SECURE_HSTS_INCLUDE_SUBDOMAINS",
+    default=False,
+    cast=bool,
+)
+
+SECURE_HSTS_PRELOAD = config(
+    "SECURE_HSTS_PRELOAD",
+    default=False,
+    cast=bool,
+)
+
+X_FRAME_OPTIONS = config(
+    "X_FRAME_OPTIONS",
+    default="DENY",
+)
+
+SECURE_CONTENT_TYPE_NOSNIFF = config(
+    "SECURE_CONTENT_TYPE_NOSNIFF",
+    default=True,
+    cast=bool,
+)
+
+SECURE_REFERRER_POLICY = config(
+    "SECURE_REFERRER_POLICY",
+    default="same-origin",
+)
+
+
+# ============================================================
+# MIDDLEWARE
+# ============================================================
 
 MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",
@@ -166,15 +359,43 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
+
+# ============================================================
+# URL CONFIGURATION
+# ============================================================
+
 ROOT_URLCONF = "backend.urls"
+
+
+# ============================================================
+# CUSTOM USER MODEL
+# ============================================================
 
 AUTH_USER_MODEL = "account.User"
 
+
+# ============================================================
+# DJANGO REST FRAMEWORK
+# ============================================================
+
 REST_FRAMEWORK = {
-    "DEFAULT_AUTHENTICATION_CLASSES": ("rest_framework_simplejwt.authentication.JWTAuthentication",),
-    "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAuthenticated",),
-    "EXCEPTION_HANDLER": "backend.exception_handler.custom_exception_handler",
+    "DEFAULT_AUTHENTICATION_CLASSES": (
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
+    ),
+
+    "DEFAULT_PERMISSION_CLASSES": (
+        "rest_framework.permissions.IsAuthenticated",
+    ),
+
+    "EXCEPTION_HANDLER": (
+        "backend.exception_handler.custom_exception_handler"
+    ),
 }
+
+
+# ============================================================
+# SIMPLE JWT
+# ============================================================
 
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(hours=24),
@@ -182,6 +403,11 @@ SIMPLE_JWT = {
     "ROTATE_REFRESH_TOKENS": True,
     "BLACKLIST_AFTER_ROTATION": True,
 }
+
+
+# ============================================================
+# TEMPLATES
+# ============================================================
 
 TEMPLATES = [
     {
@@ -198,16 +424,31 @@ TEMPLATES = [
     },
 ]
 
+
+# ============================================================
+# WSGI
+# ============================================================
+
 WSGI_APPLICATION = "backend.wsgi.application"
 
 
-# Database
-# https://docs.djangoproject.com/en/6.0/ref/settings/#databases
+# ============================================================
+# DATABASE
+# ============================================================
 
-DB_ENGINE = config("DB_ENGINE", default="")
-DATABASE_URL = config("DATABASE_URL", default="")
+DB_ENGINE = config(
+    "DB_ENGINE",
+    default=""
+)
+
+DATABASE_URL = config(
+    "DATABASE_URL",
+    default=""
+)
+
 
 if DATABASE_URL:
+
     DATABASES = {
         "default": dj_database_url.config(
             default=DATABASE_URL,
@@ -215,30 +456,84 @@ if DATABASE_URL:
             conn_health_checks=True,
         )
     }
-elif DB_ENGINE in ("django.db.backends.postgresql", "postgresql") or config("POSTGRES_HOST", default=""):
-    db_host = config("DATABASE_HOST", default="").strip()
-    postgres_host = config("POSTGRES_HOST", default="").strip()
 
-    # If running inside Docker / Docker Compose where POSTGRES_HOST is postgres, prefer postgres_host over localhost
-    if (not db_host or db_host == "localhost") and postgres_host and postgres_host != "localhost":
+
+elif (
+    DB_ENGINE in (
+        "django.db.backends.postgresql",
+        "postgresql",
+    )
+    or config("POSTGRES_HOST", default="")
+):
+
+    db_host = config(
+        "DATABASE_HOST",
+        default=""
+    ).strip()
+
+    postgres_host = config(
+        "POSTGRES_HOST",
+        default=""
+    ).strip()
+
+
+    # If running inside Docker / Docker Compose,
+    # prefer POSTGRES_HOST over localhost.
+    if (
+        not db_host
+        or db_host == "localhost"
+    ) and postgres_host and postgres_host != "localhost":
+
         db_host = postgres_host
+
     elif not db_host:
+
         db_host = postgres_host or "postgres"
+
 
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.postgresql",
-            "NAME": config("DATABASE_NAME", default=config("POSTGRES_DB", default="fairsplit")),
-            "USER": config("DATABASE_USER", default=config("POSTGRES_USER", default="fairsplit")),
+
+            "NAME": config(
+                "DATABASE_NAME",
+                default=config(
+                    "POSTGRES_DB",
+                    default="fairsplit",
+                ),
+            ),
+
+            "USER": config(
+                "DATABASE_USER",
+                default=config(
+                    "POSTGRES_USER",
+                    default="fairsplit",
+                ),
+            ),
+
             "PASSWORD": config(
                 "DATABASE_PASSWORD",
-                default=config("POSTGRES_PASSWORD", default="fairsplit_password"),
+                default=config(
+                    "POSTGRES_PASSWORD",
+                    default="fairsplit_password",
+                ),
             ),
+
             "HOST": db_host,
-            "PORT": config("DATABASE_PORT", default=config("POSTGRES_PORT", default="5432")),
+
+            "PORT": config(
+                "DATABASE_PORT",
+                default=config(
+                    "POSTGRES_PORT",
+                    default="5432",
+                ),
+            ),
         }
     }
+
+
 else:
+
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.sqlite3",
@@ -247,27 +542,44 @@ else:
     }
 
 
-# Password validation
-# https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators
+# ============================================================
+# PASSWORD VALIDATION
+# ============================================================
 
 AUTH_PASSWORD_VALIDATORS = [
     {
-        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
+        "NAME": (
+            "django.contrib.auth.password_validation."
+            "UserAttributeSimilarityValidator"
+        ),
     },
+
     {
-        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
+        "NAME": (
+            "django.contrib.auth.password_validation."
+            "MinimumLengthValidator"
+        ),
     },
+
     {
-        "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
+        "NAME": (
+            "django.contrib.auth.password_validation."
+            "CommonPasswordValidator"
+        ),
     },
+
     {
-        "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
+        "NAME": (
+            "django.contrib.auth.password_validation."
+            "NumericPasswordValidator"
+        ),
     },
 ]
 
 
-# Internationalization
-# https://docs.djangoproject.com/en/6.0/topics/i18n/
+# ============================================================
+# INTERNATIONALIZATION
+# ============================================================
 
 LANGUAGE_CODE = "en-us"
 
@@ -278,48 +590,84 @@ USE_I18N = True
 USE_TZ = True
 
 
+# ============================================================
+# STATIC FILES
+# ============================================================
+
 STATIC_URL = "/static/"
+
 STATIC_ROOT = BASE_DIR / "staticfiles"
+
 STATICFILES_STORAGE = config(
     "STATICFILES_STORAGE",
     default="whitenoise.storage.CompressedManifestStaticFilesStorage",
 )
 
+
+# ============================================================
+# MEDIA FILES
+# ============================================================
+
 MEDIA_URL = "/media/"
+
 MEDIA_ROOT = BASE_DIR / "media"
 
-# Ensure media directory exists
-MEDIA_ROOT.mkdir(parents=True, exist_ok=True)
 
-# Structured Production Logging Configuration
+# Ensure media directory exists
+MEDIA_ROOT.mkdir(
+    parents=True,
+    exist_ok=True
+)
+
+
+# ============================================================
+# LOGGING
+# ============================================================
+
 LOGGING = {
     "version": 1,
+
     "disable_existing_loggers": False,
+
     "formatters": {
         "verbose": {
-            "format": "[%(asctime)s] %(levelname)s [%(name)s:%(lineno)s] %(message)s",
+            "format": (
+                "[%(asctime)s] %(levelname)s "
+                "[%(name)s:%(lineno)s] %(message)s"
+            ),
             "datefmt": "%Y-%m-%d %H:%M:%S",
         },
+
         "simple": {
             "format": "%(levelname)s %(message)s",
         },
     },
+
     "handlers": {
         "console": {
             "class": "logging.StreamHandler",
             "formatter": "verbose",
         },
     },
+
     "root": {
         "handlers": ["console"],
-        "level": config("LOG_LEVEL", default="INFO"),
+        "level": config(
+            "LOG_LEVEL",
+            default="INFO",
+        ),
     },
+
     "loggers": {
         "django": {
             "handlers": ["console"],
-            "level": config("LOG_LEVEL", default="INFO"),
+            "level": config(
+                "LOG_LEVEL",
+                default="INFO",
+            ),
             "propagate": False,
         },
+
         "django.request": {
             "handlers": ["console"],
             "level": "WARNING",
@@ -328,32 +676,116 @@ LOGGING = {
     },
 }
 
-# Email Configuration (IPv4 Forced Django SMTP Backend)
-raw_email_backend = config("EMAIL_BACKEND", default="backend.email_backend.IPv4EmailBackend")
+
+# ============================================================
+# EMAIL CONFIGURATION
+# ============================================================
+
+raw_email_backend = config(
+    "EMAIL_BACKEND",
+    default="backend.email_backend.IPv4EmailBackend",
+)
+
+
 if raw_email_backend in [
     "django.core.mail.backends.smtp.EmailBackend",
     "backend.email_backend.IPv4EmailBackend",
 ]:
-    EMAIL_BACKEND = "backend.email_backend.IPv4EmailBackend"
+
+    EMAIL_BACKEND = (
+        "backend.email_backend.IPv4EmailBackend"
+    )
+
 else:
+
     EMAIL_BACKEND = raw_email_backend
-EMAIL_HOST = config("EMAIL_HOST", default="smtp.gmail.com")
-EMAIL_PORT = config("EMAIL_PORT", cast=int, default=587)
-EMAIL_USE_TLS = config("EMAIL_USE_TLS", cast=bool, default=True)
-EMAIL_USE_SSL = config("EMAIL_USE_SSL", cast=bool, default=False)
-EMAIL_TIMEOUT = config("EMAIL_TIMEOUT", cast=int, default=10)
-EMAIL_HOST_USER = config("EMAIL_HOST_USER", default="")
-EMAIL_HOST_PASSWORD = config("EMAIL_HOST_PASSWORD", default="")
-
-# Brevo Transactional Email HTTP API Configuration
-BREVO_API_KEY = config("BREVO_API_KEY", default="")
-BREVO_SENDER_EMAIL = config("BREVO_SENDER_EMAIL", default="purwarprakhar00@gmail.com")
-BREVO_SENDER_NAME = config("BREVO_SENDER_NAME", default="FairSplit Team")
 
 
-# OAuth Configuration (Google & GitHub)
-GOOGLE_CLIENT_ID = config("GOOGLE_CLIENT_ID", default="")
-GOOGLE_CLIENT_SECRET = config("GOOGLE_CLIENT_SECRET", default="")
-GOOGLE_REDIRECT_URI = config("GOOGLE_REDIRECT_URI", default="")
-GITHUB_CLIENT_ID = config("GITHUB_CLIENT_ID", default="")
-GITHUB_CLIENT_SECRET = config("GITHUB_CLIENT_SECRET", default="")
+EMAIL_HOST = config(
+    "EMAIL_HOST",
+    default="smtp.gmail.com",
+)
+
+EMAIL_PORT = config(
+    "EMAIL_PORT",
+    cast=int,
+    default=587,
+)
+
+EMAIL_USE_TLS = config(
+    "EMAIL_USE_TLS",
+    cast=bool,
+    default=True,
+)
+
+EMAIL_USE_SSL = config(
+    "EMAIL_USE_SSL",
+    cast=bool,
+    default=False,
+)
+
+EMAIL_TIMEOUT = config(
+    "EMAIL_TIMEOUT",
+    cast=int,
+    default=10,
+)
+
+EMAIL_HOST_USER = config(
+    "EMAIL_HOST_USER",
+    default="",
+)
+
+EMAIL_HOST_PASSWORD = config(
+    "EMAIL_HOST_PASSWORD",
+    default="",
+)
+
+
+# ============================================================
+# BREVO TRANSACTIONAL EMAIL
+# ============================================================
+
+BREVO_API_KEY = config(
+    "BREVO_API_KEY",
+    default=""
+)
+
+BREVO_SENDER_EMAIL = config(
+    "BREVO_SENDER_EMAIL",
+    default="purwarprakhar00@gmail.com",
+)
+
+BREVO_SENDER_NAME = config(
+    "BREVO_SENDER_NAME",
+    default="FairSplit Team",
+)
+
+
+# ============================================================
+# OAUTH CONFIGURATION
+# ============================================================
+
+GOOGLE_CLIENT_ID = config(
+    "GOOGLE_CLIENT_ID",
+    default=""
+)
+
+GOOGLE_CLIENT_SECRET = config(
+    "GOOGLE_CLIENT_SECRET",
+    default=""
+)
+
+GOOGLE_REDIRECT_URI = config(
+    "GOOGLE_REDIRECT_URI",
+    default=""
+)
+
+GITHUB_CLIENT_ID = config(
+    "GITHUB_CLIENT_ID",
+    default=""
+)
+
+GITHUB_CLIENT_SECRET = config(
+    "GITHUB_CLIENT_SECRET",
+    default=""
+)
