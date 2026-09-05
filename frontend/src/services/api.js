@@ -15,9 +15,6 @@ const getBaseUrl = () => {
 // Create Axios instance with base URL from environment
 const api = axios.create({
   baseURL: getBaseUrl(),
-  headers: {
-    'Content-Type': 'application/json',
-  },
 });
 
 // Request interceptor to attach access token
