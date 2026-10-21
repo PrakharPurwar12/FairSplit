@@ -145,37 +145,51 @@
 FairSplit/
 ├── .github/
 │   └── workflows/
-│       ├── ci.yml               # Continuous Integration & Build Workflow
-│       ├── lint.yml             # Code Linting & Style Workflow
-│       └── security.yml         # Vulnerability Audit Workflow
+│       ├── ci.yml                          # Continuous Integration & Build Workflow
+│       ├── lint.yml                        # Code Linting & Style Workflow
+│       └── security.yml                    # Vulnerability Audit Workflow
 ├── backend/
-│   ├── account/                 # User Accounts, Auth, & OAuth Handlers
-│   ├── allocation/              # AI Task Allocation Engine
-│   ├── analytics/               # Project & Workload Analytics Views
-│   ├── backend/                 # Django Core Settings & URL Routing
-│   ├── ml/                      # Machine Learning Models & Inference Engine
-│   ├── notifications/           # Notification Feed Service
-│   ├── project/                 # Projects & Member Management
-│   ├── skills/                  # Skill Catalogue & User Proficiencies
-│   ├── tasks/                   # Task CRUD & Lifecycle Management
-│   ├── Dockerfile               # Backend Production Docker Container
-│   ├── manage.py                # Django CLI Management Script
-│   └── requirements.txt         # Backend Python Dependencies
+│   ├── account/                            # User Accounts, Auth, & OAuth Handlers
+│   ├── allocation/                         # AI Task Allocation Engine
+│   ├── analytics/                          # Project & Workload Analytics Views
+│   ├── backend/                            # Django Core Settings & URL Routing
+│   ├── ml/                                 # Machine Learning Models & Inference Engine
+│   ├── notifications/                      # Notification Feed Service
+│   ├── project/                            # Projects & Member Management
+│   ├── skills/                             # Skill Catalogue & User Proficiencies
+│   ├── tasks/                              # Task CRUD & Lifecycle Management
+│   ├── Dockerfile                          # Backend Production Docker Container
+│   ├── manage.py                           # Django CLI Management Script
+│   └── requirements.txt                    # Backend Python Dependencies
 ├── frontend/
 │   ├── src/
-│   │   ├── components/          # Reusable UI & Dashboard Components
-│   │   ├── context/             # React Auth Context Provider
-│   │   ├── pages/               # 17 SPA Views (Dashboard, Tasks, Prediction, etc.)
-│   │   ├── services/            # Axios API Service Layer
-│   │   └── utils/               # Formatting & Greeting Helpers
-│   ├── Dockerfile               # Multi-Stage Frontend Container Build
-│   ├── nginx.conf               # Nginx SPA Rewrite & Proxy Configuration
-│   ├── package.json             # Frontend Dependencies & Scripts
-│   ├── vercel.json              # Vercel SPA Rewrite Specification
-│   └── vite.config.js           # Vite Build Tool Configuration
-├── docker-compose.yml           # Local Multi-Container Orchestration Spec
-├── render.yaml                  # Render Infrastructure-as-Code Spec
-└── README.md                    # Project Documentation
+│   │   ├── components/                     # Reusable UI & Dashboard Components
+│   │   ├── context/                        # React Auth Context Provider
+│   │   ├── pages/                          # 17 SPA Views (Dashboard, Tasks, Prediction, etc.)
+│   │   ├── services/                       # Axios API Service Layer
+│   │   └── utils/                          # Formatting & Greeting Helpers
+│   ├── Dockerfile                          # Multi-Stage Frontend Container Build
+│   ├── nginx.conf                          # Nginx SPA Rewrite & Proxy Configuration
+│   ├── package.json                        # Frontend Dependencies & Scripts
+│   ├── vercel.json                         # Vercel SPA Rewrite Specification
+│   └── vite.config.js                      # Vite Build Tool Configuration
+├── terraform/                              # Infrastructure-as-Code layer for AWS provisioning (framework skeleton)
+├── puppet/                                 # Server configuration management layer (framework skeleton)
+├── ansible/                                # Application deployment and operational automation layer (framework skeleton)
+├── nagios/                                 # Monitoring and health-check configuration layer (framework skeleton)
+├── remediation/                            # Controlled automated recovery and event-handler layer (framework skeleton)
+├── scripts/                                # Infrastructure bootstrap and validation scripts
+├── docs/                                   # Architecture, deployment, testing, and evidence documentation
+├── docker-compose.yml                      # Local Multi-Container Orchestration Spec
+├── e2e_playwright_exhaustive.py            # Comprehensive FairSplit end-to-end test workflow
+├── Makefile                                # Code formatting and linting automation
+├── pyproject.toml                          # Python code quality tool configuration
+├── railway.json                            # Railway platform deployment specification
+├── render.yaml                             # Render Infrastructure-as-Code Spec
+└── README.md                               # Project Documentation
+```
+
+> **Note**: The `terraform/`, `puppet/`, `ansible/`, `nagios/`, and `remediation/` directories represent the project framework and configuration layer for the INT333 DevOps Advanced Configuration Management architecture and will be implemented progressively.
 ```
 
 ---
