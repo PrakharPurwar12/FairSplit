@@ -94,48 +94,64 @@
 
 ---
 
-## 🏗️ System Architecture
+## 🏗️ Target DevOps System Architecture
 
 ```text
-+-----------------------------------------------------------------------------------+
-|                                     USER                                          |
-|                         (Browser / Client Application)                            |
-+-----------------------------------------------------------------------------------+
-                                         |
-                                         v
-+-----------------------------------------------------------------------------------+
-|                                   VERCEL                                          |
-|                      (Frontend Static SPA / React 19)                             |
-|                    URL: https://fair-split-5w3v.vercel.app                        |
-+-----------------------------------------------------------------------------------+
-                                         |
-                                  HTTPS / REST API
-                                         |
-                                         v
-+-----------------------------------------------------------------------------------+
-|                                   RENDER                                          |
-|                    (Backend Docker Container / Gunicorn)                          |
-|             Base API: https://fairsplit-backend-e67j.onrender.com/api             |
-+-----------------------------------------------------------------------------------+
-                                         |
-                                         v
-+-----------------------------------------------------------------------------------+
-|                                  DJANGO 6.0                                       |
-|                    (Django REST Framework + Auth Interceptors)                    |
-+-----------------------------------------------------------------------------------+
-                 |                                                 |
-                 v                                                 v
-+---------------------------------+               +---------------------------------+
-|        NEON POSTGRESQL          |               |            ML ENGINE            |
-|   (Serverless Postgres Database)|               | (Random Forest Risk Classifier) |
-+---------------------------------+               +---------------------------------+
-                                         ^
-                                         |
-+-----------------------------------------------------------------------------------+
-|                             GITHUB ACTIONS CI/CD                                  |
-|         (Continuous Integration, Code Quality Linting, Security Audits)           |
-+-----------------------------------------------------------------------------------+
+Developer / Maintainer
+        |
+      GitHub
+        |
+   AWS CloudShell
+        |
+    Terraform
+        |
+   AWS Infrastructure
+        |
+   +-----------------------+
+   |                       |
+Ops Node                App Node
+   |                       |
+Puppet Server          Puppet Agent
+Ansible Control       Docker Compose
+Nagios Core            Nginx
+Event Handler          Django/Gunicorn
+Monitoring Tools      PostgreSQL
+   |                       |
+   +---- Monitoring -------+
+              |
+       Failure Detected
+              |
+        Event Handler
+              |
+     Ansible Remediation
+              |
+        Service Recovery
+              |
+        Nagios Re-check
+              |
+             OK
 ```
+
+### Component Responsibilities
+
+- **Terraform** → AWS infrastructure provisioning / Infrastructure as Code
+- **Puppet** → Server and host-level configuration management
+- **Ansible** → FairSplit application deployment, operational tasks, backup/restore, and selected recovery actions
+- **Nagios** → Infrastructure and application monitoring
+- **NRPE** → Remote monitoring checks on the App Node
+- **Event Handler** → Controlled bridge between Nagios and Ansible remediation
+- **Docker Compose** → Runs the FairSplit application stack on the App Node
+- **Nginx** → Frontend serving and reverse proxy
+- **Django/Gunicorn** → Backend application
+- **PostgreSQL** → Application database
+
+### Workflow Overview
+
+Infrastructure is provisioned using Terraform. Puppet then establishes and maintains the required server configuration on the Ops Node and App Node. Ansible manages application-level deployment and operational tasks on the App Node. Nagios continuously monitors infrastructure and application health. For predefined failures, Nagios can trigger a controlled event handler that invokes an appropriate Ansible remediation procedure, after which Nagios performs a re-check.
+
+> **Implementation Status**: The Terraform, Puppet, Ansible, Nagios, and remediation directories currently represent the project framework/skeleton and are being implemented progressively. These components are not yet fully implemented or production-ready.
+
+> **Architectural Limitation**: The current design uses a single App Node, so automated remediation provides controlled recovery for predefined failures but does not provide high availability.
 
 ---
 
