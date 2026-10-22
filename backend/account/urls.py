@@ -5,11 +5,11 @@ from .views import (
     LogoutView,
     OAuthLoginView,
     OAuthURLView,
+    OnboardView,
     ProfileView,
     RegisterView,
     ThrottledTokenObtainPairView,
     UserListView,
-    OnboardView,
 )
 
 urlpatterns = [

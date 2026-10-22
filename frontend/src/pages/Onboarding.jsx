@@ -11,7 +11,6 @@ import CompletionStep from '../components/onboarding/CompletionStep';
 import NavigationButtons from '../components/onboarding/NavigationButtons';
 import { useAuth } from '../context/AuthContext';
 import AuthService from '../services/auth.service';
-import InvitationService from '../services/invitation.service';
 
 const Onboarding = () => {
   const navigate = useNavigate();
@@ -29,48 +28,48 @@ const Onboarding = () => {
   }, [currentUser, navigate]);
 
   // Shared state for backend integration
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState(() => ({
     professional: {
-      first_name: '',
-      last_name: '',
-      username: '',
-      role: 'member',
-      experience: '',
+      first_name: currentUser?.first_name || '',
+      last_name: currentUser?.last_name || '',
+      username: currentUser?.username || '',
+      role: currentUser?.role || 'member',
+      experience: currentUser?.experience || '',
       department: '',
-      profilePicture: ''
+      profilePicture: currentUser?.profile_picture || ''
     },
     skills: [], // Array of objects: { name: 'React', proficiency: 'Advanced' }
     availability: {
-      hoursPerWeek: 40,
+      hoursPerWeek: currentUser?.availability_hours || 40,
       preferredTime: []
     },
     preferences: {
       preferredRole: '',
       domains: []
     }
-  });
+  }));
 
-  useEffect(() => {
-    if (currentUser) {
-      setFormData(prev => ({
-        ...prev,
-        professional: {
-          ...prev.professional,
-          first_name: currentUser.first_name || '',
-          last_name: currentUser.last_name || '',
-          username: currentUser.username || '',
-          role: currentUser.role || 'member',
-          experience: currentUser.experience || '',
-          profilePicture: currentUser.profile_picture || ''
-        },
-        availability: {
-          ...prev.availability,
-          hoursPerWeek: currentUser.availability_hours || 40,
-          preferredTime: prev.availability.preferredTime
-        }
-      }));
-    }
-  }, [currentUser]);
+  const [prevUser, setPrevUser] = useState(currentUser);
+  if (currentUser && currentUser !== prevUser) {
+    setPrevUser(currentUser);
+    setFormData(prev => ({
+      ...prev,
+      professional: {
+        ...prev.professional,
+        first_name: currentUser.first_name || '',
+        last_name: currentUser.last_name || '',
+        username: currentUser.username || '',
+        role: currentUser.role || 'member',
+        experience: currentUser.experience || '',
+        profilePicture: currentUser.profile_picture || ''
+      },
+      availability: {
+        ...prev.availability,
+        hoursPerWeek: currentUser.availability_hours || 40,
+        preferredTime: prev.availability.preferredTime
+      }
+    }));
+  }
 
   const updateFormData = (stepKey, data) => {
     setFormData(prev => ({

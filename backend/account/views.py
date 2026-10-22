@@ -152,6 +152,7 @@ class OnboardView(APIView):
 
         if pending_invite_token:
             from project.services.invitation_service import InvitationService
+
             try:
                 # Resolve and accept invitation via existing service flow
                 # (validates status, expiration, and user email match)

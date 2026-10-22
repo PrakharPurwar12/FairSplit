@@ -17,7 +17,6 @@ from pathlib import Path
 import dj_database_url
 from decouple import Config, RepositoryEnv, config
 
-
 # ============================================================
 # BASE CONFIGURATION
 # ============================================================
@@ -44,11 +43,7 @@ else:
 # SECRET KEY
 # ============================================================
 
-SECRET_KEY = (
-    env_config("SECRET_KEY")
-    if env_path.exists()
-    else config("SECRET_KEY")
-)
+SECRET_KEY = env_config("SECRET_KEY") if env_path.exists() else config("SECRET_KEY")
 
 
 # ============================================================
@@ -73,11 +68,7 @@ DEBUG = config(
 ALLOWED_HOSTS = config(
     "ALLOWED_HOSTS",
     default="*",
-    cast=lambda value: [
-        host.strip()
-        for host in value.split(",")
-        if host.strip()
-    ],
+    cast=lambda value: [host.strip() for host in value.split(",") if host.strip()],
 )
 
 
@@ -114,11 +105,7 @@ CSRF_TRUSTED_ORIGINS = config(
         "https://fair-split-5w3v.vercel.app,"
         "https://fairsplit-app-beta.vercel.app"
     ),
-    cast=lambda value: [
-        origin.strip().rstrip("/")
-        for origin in value.split(",")
-        if origin.strip()
-    ],
+    cast=lambda value: [origin.strip().rstrip("/") for origin in value.split(",") if origin.strip()],
 )
 
 
@@ -127,7 +114,6 @@ CSRF_TRUSTED_ORIGINS = config(
 # ============================================================
 
 INSTALLED_APPS = [
-
     # Django
     "django.contrib.admin",
     "django.contrib.auth",
@@ -136,20 +122,16 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "django.contrib.sites",
-
     # REST Framework
     "rest_framework",
     "rest_framework_simplejwt.token_blacklist",
-
     # CORS
     "corsheaders",
-
     # OAuth / Allauth
     "allauth",
     "allauth.socialaccount",
     "allauth.socialaccount.providers.google",
     "allauth.socialaccount.providers.github",
-
     # FairSplit apps
     "account",
     "skills",
@@ -183,10 +165,14 @@ GOOGLE_CLIENT_SECRET = config(
     default="",
 ).strip()
 
-GOOGLE_REDIRECT_URI = config(
-    "GOOGLE_REDIRECT_URI",
-    default="https://fair-split-5w3v.vercel.app/auth/callback",
-).strip().rstrip("/")
+GOOGLE_REDIRECT_URI = (
+    config(
+        "GOOGLE_REDIRECT_URI",
+        default="https://fair-split-5w3v.vercel.app/auth/callback",
+    )
+    .strip()
+    .rstrip("/")
+)
 
 
 # ============================================================
@@ -209,33 +195,26 @@ GITHUB_CLIENT_SECRET = config(
 # ============================================================
 
 SOCIALACCOUNT_PROVIDERS = {
-
     "google": {
-
         "APP": {
             "client_id": GOOGLE_CLIENT_ID,
             "secret": GOOGLE_CLIENT_SECRET,
             "key": "",
         },
-
         "SCOPE": [
             "profile",
             "email",
         ],
-
         "AUTH_PARAMS": {
             "access_type": "offline",
         },
     },
-
     "github": {
-
         "APP": {
             "client_id": GITHUB_CLIENT_ID,
             "secret": GITHUB_CLIENT_SECRET,
             "key": "",
         },
-
         "SCOPE": [
             "user:email",
         ],
@@ -265,11 +244,7 @@ CORS_ALLOWED_ORIGINS = config(
         "https://fair-split-5w3v.vercel.app,"
         "https://fairsplit-app-beta.vercel.app"
     ),
-    cast=lambda value: [
-        origin.strip().rstrip("/")
-        for origin in value.split(",")
-        if origin.strip()
-    ],
+    cast=lambda value: [origin.strip().rstrip("/") for origin in value.split(",") if origin.strip()],
 )
 
 
@@ -277,10 +252,14 @@ CORS_ALLOWED_ORIGINS = config(
 # FRONTEND URL
 # ============================================================
 
-FRONTEND_URL = config(
-    "FRONTEND_URL",
-    default="https://fair-split-5w3v.vercel.app",
-).strip().rstrip("/")
+FRONTEND_URL = (
+    config(
+        "FRONTEND_URL",
+        default="https://fair-split-5w3v.vercel.app",
+    )
+    .strip()
+    .rstrip("/")
+)
 
 
 if FRONTEND_URL and FRONTEND_URL not in CORS_ALLOWED_ORIGINS:
@@ -397,23 +376,14 @@ SECURE_REFERRER_POLICY = config(
 # ============================================================
 
 MIDDLEWARE = [
-
     "corsheaders.middleware.CorsMiddleware",
-
     "django.middleware.security.SecurityMiddleware",
-
     "whitenoise.middleware.WhiteNoiseMiddleware",
-
     "django.contrib.sessions.middleware.SessionMiddleware",
-
     "django.middleware.common.CommonMiddleware",
-
     "django.middleware.csrf.CsrfViewMiddleware",
-
     "django.contrib.auth.middleware.AuthenticationMiddleware",
-
     "django.contrib.messages.middleware.MessageMiddleware",
-
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
@@ -437,18 +407,9 @@ AUTH_USER_MODEL = "account.User"
 # ============================================================
 
 REST_FRAMEWORK = {
-
-    "DEFAULT_AUTHENTICATION_CLASSES": (
-        "rest_framework_simplejwt.authentication.JWTAuthentication",
-    ),
-
-    "DEFAULT_PERMISSION_CLASSES": (
-        "rest_framework.permissions.IsAuthenticated",
-    ),
-
-    "EXCEPTION_HANDLER": (
-        "backend.exception_handler.custom_exception_handler"
-    ),
+    "DEFAULT_AUTHENTICATION_CLASSES": ("rest_framework_simplejwt.authentication.JWTAuthentication",),
+    "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAuthenticated",),
+    "EXCEPTION_HANDLER": ("backend.exception_handler.custom_exception_handler"),
 }
 
 
@@ -457,17 +418,9 @@ REST_FRAMEWORK = {
 # ============================================================
 
 SIMPLE_JWT = {
-
-    "ACCESS_TOKEN_LIFETIME": timedelta(
-        hours=24
-    ),
-
-    "REFRESH_TOKEN_LIFETIME": timedelta(
-        days=7
-    ),
-
+    "ACCESS_TOKEN_LIFETIME": timedelta(hours=24),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
     "ROTATE_REFRESH_TOKENS": True,
-
     "BLACKLIST_AFTER_ROTATION": True,
 }
 
@@ -477,21 +430,14 @@ SIMPLE_JWT = {
 # ============================================================
 
 TEMPLATES = [
-
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-
         "DIRS": [],
-
         "APP_DIRS": True,
-
         "OPTIONS": {
             "context_processors": [
-
                 "django.template.context_processors.request",
-
                 "django.contrib.auth.context_processors.auth",
-
                 "django.contrib.messages.context_processors.messages",
             ],
         },
@@ -525,7 +471,6 @@ DATABASE_URL = config(
 if DATABASE_URL:
 
     DATABASES = {
-
         "default": dj_database_url.config(
             default=DATABASE_URL,
             conn_max_age=600,
@@ -534,15 +479,12 @@ if DATABASE_URL:
     }
 
 
-elif (
-    DB_ENGINE in (
-        "django.db.backends.postgresql",
-        "postgresql",
-    )
-    or config(
-        "POSTGRES_HOST",
-        default="",
-    )
+elif DB_ENGINE in (
+    "django.db.backends.postgresql",
+    "postgresql",
+) or config(
+    "POSTGRES_HOST",
+    default="",
 ):
 
     db_host = config(
@@ -550,32 +492,22 @@ elif (
         default="",
     ).strip()
 
-
     postgres_host = config(
         "POSTGRES_HOST",
         default="",
     ).strip()
 
-
-    if (
-        not db_host
-        or db_host == "localhost"
-    ) and postgres_host and postgres_host != "localhost":
+    if (not db_host or db_host == "localhost") and postgres_host and postgres_host != "localhost":
 
         db_host = postgres_host
-
 
     elif not db_host:
 
         db_host = postgres_host or "postgres"
 
-
     DATABASES = {
-
         "default": {
-
             "ENGINE": "django.db.backends.postgresql",
-
             "NAME": config(
                 "DATABASE_NAME",
                 default=config(
@@ -583,7 +515,6 @@ elif (
                     default="fairsplit",
                 ),
             ),
-
             "USER": config(
                 "DATABASE_USER",
                 default=config(
@@ -591,7 +522,6 @@ elif (
                     default="fairsplit",
                 ),
             ),
-
             "PASSWORD": config(
                 "DATABASE_PASSWORD",
                 default=config(
@@ -599,9 +529,7 @@ elif (
                     default="fairsplit_password",
                 ),
             ),
-
             "HOST": db_host,
-
             "PORT": config(
                 "DATABASE_PORT",
                 default=config(
@@ -616,11 +544,8 @@ elif (
 else:
 
     DATABASES = {
-
         "default": {
-
             "ENGINE": "django.db.backends.sqlite3",
-
             "NAME": BASE_DIR / "db.sqlite3",
         }
     }
@@ -631,33 +556,17 @@ else:
 # ============================================================
 
 AUTH_PASSWORD_VALIDATORS = [
-
     {
-        "NAME": (
-            "django.contrib.auth.password_validation."
-            "UserAttributeSimilarityValidator"
-        ),
+        "NAME": ("django.contrib.auth.password_validation." "UserAttributeSimilarityValidator"),
     },
-
     {
-        "NAME": (
-            "django.contrib.auth.password_validation."
-            "MinimumLengthValidator"
-        ),
+        "NAME": ("django.contrib.auth.password_validation." "MinimumLengthValidator"),
     },
-
     {
-        "NAME": (
-            "django.contrib.auth.password_validation."
-            "CommonPasswordValidator"
-        ),
+        "NAME": ("django.contrib.auth.password_validation." "CommonPasswordValidator"),
     },
-
     {
-        "NAME": (
-            "django.contrib.auth.password_validation."
-            "NumericPasswordValidator"
-        ),
+        "NAME": ("django.contrib.auth.password_validation." "NumericPasswordValidator"),
     },
 ]
 
@@ -685,10 +594,7 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 
 STATICFILES_STORAGE = config(
     "STATICFILES_STORAGE",
-    default=(
-        "whitenoise.storage."
-        "CompressedManifestStaticFilesStorage"
-    ),
+    default=("whitenoise.storage." "CompressedManifestStaticFilesStorage"),
 )
 
 
@@ -718,77 +624,36 @@ LOG_LEVEL = config(
 
 
 LOGGING = {
-
     "version": 1,
-
     "disable_existing_loggers": False,
-
     "formatters": {
-
         "verbose": {
-
-            "format": (
-                "[%(asctime)s] "
-                "%(levelname)s "
-                "[%(name)s:%(lineno)s] "
-                "%(message)s"
-            ),
-
+            "format": ("[%(asctime)s] " "%(levelname)s " "[%(name)s:%(lineno)s] " "%(message)s"),
             "datefmt": "%Y-%m-%d %H:%M:%S",
         },
-
         "simple": {
-
-            "format": (
-                "%(levelname)s %(message)s"
-            ),
+            "format": ("%(levelname)s %(message)s"),
         },
     },
-
-
     "handlers": {
-
         "console": {
-
             "class": "logging.StreamHandler",
-
             "formatter": "verbose",
         },
     },
-
-
     "root": {
-
-        "handlers": [
-            "console"
-        ],
-
+        "handlers": ["console"],
         "level": LOG_LEVEL,
     },
-
-
     "loggers": {
-
         "django": {
-
-            "handlers": [
-                "console"
-            ],
-
+            "handlers": ["console"],
             "level": LOG_LEVEL,
-
             "propagate": False,
         },
-
-
         "django.request": {
-
-            "handlers": [
-                "console"
-            ],
-
+            "handlers": ["console"],
             "level": "WARNING",
-
             "propagate": False,
         },
     },
@@ -801,25 +666,16 @@ LOGGING = {
 
 raw_email_backend = config(
     "EMAIL_BACKEND",
-    default=(
-        "backend.email_backend."
-        "IPv4EmailBackend"
-    ),
+    default=("backend.email_backend." "IPv4EmailBackend"),
 )
 
 
 if raw_email_backend in [
-
     "django.core.mail.backends.smtp.EmailBackend",
-
     "backend.email_backend.IPv4EmailBackend",
-
 ]:
 
-    EMAIL_BACKEND = (
-        "backend.email_backend."
-        "IPv4EmailBackend"
-    )
+    EMAIL_BACKEND = "backend.email_backend." "IPv4EmailBackend"
 
 else:
 

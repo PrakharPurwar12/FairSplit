@@ -1,4 +1,4 @@
-Django==6.0.7
+Django==6.0.8
 djangorestframework
 djangorestframework-simplejwt
 django-cors-headers
@@ -6,7 +6,7 @@ psycopg2-binary
 python-decouple
 dj-database-url
 whitenoise
-Pillow==12.3.0
+Pillow==13.0.0
 pandas==3.0.3
 numpy==2.4.5
 scikit-learn
