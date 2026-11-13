@@ -1,0 +1,11 @@
+---
+# Restore role - defaults
+app_dir: /opt/fairsplit/app
+compose_file: docker-compose.yml
+postgres_service: postgres
+postgres_user: fairsplit
+postgres_db: fairsplit
+health_check_retries: 12
+health_check_delay: 10
+deploy_user: ubuntu
+backup_file: ""

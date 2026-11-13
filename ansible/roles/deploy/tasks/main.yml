@@ -1,0 +1,133 @@
+---
+# ansible/roles/deploy/tasks/main.yml
+# Deploy role: clone/pull repo, build/pull images, start services, migrate, collectstatic
+
+- name: Ensure /opt/fairsplit root directory exists
+  ansible.builtin.file:
+    path: /opt/fairsplit
+    state: directory
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_user }}"
+    mode: "0755"
+
+- name: Ensure application directory exists
+  ansible.builtin.file:
+    path: "{{ app_dir }}"
+    state: directory
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_user }}"
+    mode: "0755"
+
+- name: Ensure backups directory exists
+  ansible.builtin.file:
+    path: "{{ backup_dir }}"
+    state: directory
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_user }}"
+    mode: "0750"
+
+- name: Check if repo already cloned
+  ansible.builtin.stat:
+    path: "{{ app_dir }}/.git"
+  register: deploy_git_dir
+
+- name: Clone FairSplit repository
+  ansible.builtin.git:
+    repo: "{{ repo_url }}"
+    dest: "{{ app_dir }}"
+    version: "{{ repo_branch }}"
+    force: false
+  become_user: "{{ deploy_user }}"
+  when: not deploy_git_dir.stat.exists
+
+- name: Pull latest code from repository
+  ansible.builtin.git:
+    repo: "{{ repo_url }}"
+    dest: "{{ app_dir }}"
+    version: "{{ repo_branch }}"
+    update: true
+    force: false
+  become_user: "{{ deploy_user }}"
+  when: deploy_git_dir.stat.exists
+
+- name: Check if .env file exists
+  ansible.builtin.stat:
+    path: "{{ app_dir }}/.env"
+  register: deploy_env_file
+
+- name: Create placeholder .env if not present
+  ansible.builtin.copy:
+    dest: "{{ app_dir }}/.env"
+    content: |
+      # FairSplit Environment Configuration
+      # IMPORTANT: Populate all values before starting services
+      DJANGO_SECRET_KEY=changeme
+      DJANGO_DEBUG=False
+      DJANGO_ALLOWED_HOSTS=*
+      DB_NAME=fairsplit
+      DB_USER=fairsplit
+      DB_PASSWORD=changeme
+      DB_HOST=postgres
+      DB_PORT=5432
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_user }}"
+    mode: "0600"
+  when: not deploy_env_file.stat.exists
+
+- name: Notify operator to verify .env configuration
+  ansible.builtin.debug:
+    msg: "NOTICE: Verify .env at {{ app_dir }}/.env before production use."
+  when: not deploy_env_file.stat.exists
+
+- name: Pull Docker images
+  ansible.builtin.command:
+    cmd: "docker compose -f {{ compose_file }} pull"
+    chdir: "{{ app_dir }}"
+  become_user: "{{ deploy_user }}"
+  register: deploy_docker_pull
+  changed_when: "'Pull complete' in deploy_docker_pull.stdout or 'Downloaded' in deploy_docker_pull.stdout"
+  ignore_errors: true
+
+- name: Build Docker images if pull failed
+  ansible.builtin.command:
+    cmd: "docker compose -f {{ compose_file }} build"
+    chdir: "{{ app_dir }}"
+  become_user: "{{ deploy_user }}"
+  when: deploy_docker_pull is failed
+
+- name: Start application with Docker Compose
+  ansible.builtin.command:
+    cmd: "docker compose -f {{ compose_file }} up -d"
+    chdir: "{{ app_dir }}"
+  become_user: "{{ deploy_user }}"
+  notify: Verify deployment health
+
+- name: Wait for containers to be healthy
+  ansible.builtin.command:
+    cmd: "docker compose -f {{ compose_file }} ps"
+    chdir: "{{ app_dir }}"
+  become_user: "{{ deploy_user }}"
+  register: deploy_compose_ps
+  until: >
+    'unhealthy' not in deploy_compose_ps.stdout and
+    'starting' not in deploy_compose_ps.stdout and
+    'Exit' not in deploy_compose_ps.stdout
+  retries: "{{ health_check_retries }}"
+  delay: "{{ health_check_delay }}"
+  changed_when: false
+
+- name: Run Django database migrations
+  ansible.builtin.command:
+    cmd: "docker compose -f {{ compose_file }} exec -T backend python manage.py migrate --noinput"
+    chdir: "{{ app_dir }}"
+  become_user: "{{ deploy_user }}"
+  register: deploy_migrate
+  changed_when: "'Applying' in deploy_migrate.stdout"
+
+- name: Collect Django static files
+  ansible.builtin.command:
+    cmd: "docker compose -f {{ compose_file }} exec -T backend python manage.py collectstatic --noinput"
+    chdir: "{{ app_dir }}"
+  become_user: "{{ deploy_user }}"
+  register: deploy_collectstatic
+  changed_when: "'files copied' in deploy_collectstatic.stdout or 'post-processed' in deploy_collectstatic.stdout"

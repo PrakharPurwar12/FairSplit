@@ -1,0 +1,102 @@
+---
+- name: Application Rollback
+  hosts: app
+  become: true
+  gather_facts: true
+
+  vars:
+    compose_working_dir: "{{ app_dir }}"
+    rollback_commit: "{{ rollback_commit | default('HEAD~1') }}"
+    health_check_retries: 12
+    health_check_delay: 10
+    rollback_log: /opt/fairsplit/rollback.log
+
+  tasks:
+    - name: Get current commit hash before rollback
+      ansible.builtin.command:
+        cmd: git rev-parse HEAD
+        chdir: "{{ app_dir }}"
+      register: current_commit
+      become_user: ubuntu
+      changed_when: false
+
+    - name: Get timestamp
+      ansible.builtin.command:
+        cmd: date '+%Y-%m-%d %H:%M:%S'
+      register: timestamp
+      changed_when: false
+
+    - name: Log rollback start
+      ansible.builtin.lineinfile:
+        path: "{{ rollback_log }}"
+        line: "[{{ timestamp.stdout }}] ROLLBACK START: from={{ current_commit.stdout }} to={{ rollback_commit }}"
+        create: true
+        owner: ubuntu
+        group: ubuntu
+        mode: "0644"
+
+    - name: Checkout rollback commit in app directory
+      ansible.builtin.command:
+        cmd: "git checkout {{ rollback_commit }}"
+        chdir: "{{ app_dir }}"
+      become_user: ubuntu
+      register: git_checkout
+
+    - name: Get actual commit hash after checkout
+      ansible.builtin.command:
+        cmd: git rev-parse HEAD
+        chdir: "{{ app_dir }}"
+      register: rollback_actual_commit
+      become_user: ubuntu
+      changed_when: false
+
+    - name: Rebuild backend Docker image with rolled-back code
+      ansible.builtin.command:
+        cmd: docker compose -f "{{ compose_file }}" build backend
+        chdir: "{{ app_dir }}"
+      become_user: ubuntu
+      register: build_result
+
+    - name: Restart backend container with new image
+      ansible.builtin.command:
+        cmd: docker compose -f "{{ compose_file }}" up -d backend
+        chdir: "{{ app_dir }}"
+      become_user: ubuntu
+
+    - name: Wait for backend to be healthy after rollback
+      ansible.builtin.uri:
+        url: "http://{{ ansible_host }}/api/health/"
+        method: GET
+        status_code: [200]
+        timeout: 10
+      register: health_check
+      retries: "{{ health_check_retries }}"
+      delay: "{{ health_check_delay }}"
+      until: health_check.status == 200
+
+    - name: Get end timestamp
+      ansible.builtin.command:
+        cmd: date '+%Y-%m-%d %H:%M:%S'
+      register: end_timestamp
+      changed_when: false
+
+    - name: Log rollback completion
+      ansible.builtin.lineinfile:
+        path: "{{ rollback_log }}"
+        line: >-
+          [{{ end_timestamp.stdout }}] ROLLBACK COMPLETE:
+          from={{ current_commit.stdout }}
+          to={{ rollback_actual_commit.stdout }}
+          target={{ rollback_commit }}
+          health=OK
+        create: true
+        mode: "0644"
+
+    - name: Report rollback success
+      ansible.builtin.debug:
+        msg: >
+          Rollback completed successfully.
+          Rolled back from: {{ current_commit.stdout }}
+          Current commit:   {{ rollback_actual_commit.stdout }}
+          Backend is healthy at http://{{ ansible_host }}/api/health/
+          Log: {{ rollback_log }}

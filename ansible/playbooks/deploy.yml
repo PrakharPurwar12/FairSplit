@@ -1,0 +1,171 @@
+---
+- name: Deploy FairSplit Application
+  hosts: app
+  become: true
+  gather_facts: true
+
+  vars:
+    compose_working_dir: "{{ app_dir }}"
+    env_template_src: "{{ playbook_dir }}/../templates/.env.example"
+    env_dest: "{{ app_dir }}/.env"
+    health_check_retries: 15
+    health_check_delay: 10
+
+  tasks:
+    - name: Ensure /opt/fairsplit directory exists
+      ansible.builtin.file:
+        path: /opt/fairsplit
+        state: directory
+        owner: ubuntu
+        group: ubuntu
+        mode: "0755"
+
+    - name: Ensure application directory exists
+      ansible.builtin.file:
+        path: "{{ app_dir }}"
+        state: directory
+        owner: ubuntu
+        group: ubuntu
+        mode: "0755"
+
+    - name: Ensure backups directory exists
+      ansible.builtin.file:
+        path: "{{ backup_dir }}"
+        state: directory
+        owner: ubuntu
+        group: ubuntu
+        mode: "0755"
+
+    - name: Check if repo already cloned
+      ansible.builtin.stat:
+        path: "{{ app_dir }}/.git"
+      register: git_dir
+
+    - name: Clone FairSplit repository
+      ansible.builtin.git:
+        repo: "{{ repo_url }}"
+        dest: "{{ app_dir }}"
+        version: "{{ repo_branch }}"
+        force: false
+      become_user: ubuntu
+      when: not git_dir.stat.exists
+
+    - name: Pull latest code from repository
+      ansible.builtin.git:
+        repo: "{{ repo_url }}"
+        dest: "{{ app_dir }}"
+        version: "{{ repo_branch }}"
+        update: true
+        force: false
+      become_user: ubuntu
+      when: git_dir.stat.exists
+
+    - name: Check if .env file exists
+      ansible.builtin.stat:
+        path: "{{ env_dest }}"
+      register: env_file
+
+    - name: Copy .env template if .env does not exist
+      ansible.builtin.copy:
+        src: "{{ env_template_src }}"
+        dest: "{{ env_dest }}"
+        owner: ubuntu
+        group: ubuntu
+        mode: "0600"
+        remote_src: false
+      when: not env_file.stat.exists and env_template_src is file
+      ignore_errors: true
+
+    - name: Create placeholder .env if template not available
+      ansible.builtin.copy:
+        dest: "{{ env_dest }}"
+        content: |
+          # FairSplit Environment Configuration
+          # IMPORTANT: Populate all values before starting services
+          DJANGO_SECRET_KEY=changeme
+          DJANGO_DEBUG=False
+          DJANGO_ALLOWED_HOSTS=*
+          DB_NAME=fairsplit
+          DB_USER=fairsplit
+          DB_PASSWORD=changeme
+          DB_HOST=postgres
+          DB_PORT=5432
+        owner: ubuntu
+        group: ubuntu
+        mode: "0600"
+      when: not env_file.stat.exists
+
+    - name: Notify operator to verify .env configuration
+      ansible.builtin.debug:
+        msg: >
+          NOTICE: .env file has been created at {{ env_dest }}.
+          Please verify all values are correctly set before running this playbook
+          in production. Run: sudo nano {{ env_dest }}
+
+    - name: Pull Docker images
+      ansible.builtin.command:
+        cmd: docker compose -f "{{ compose_file }}" pull
+        chdir: "{{ app_dir }}"
+      become_user: ubuntu
+      register: docker_pull
+      changed_when: "'Pull complete' in docker_pull.stdout or 'Downloaded' in docker_pull.stdout"
+      ignore_errors: true
+
+    - name: Build Docker images if pull failed or not available
+      ansible.builtin.command:
+        cmd: docker compose -f "{{ compose_file }}" build
+        chdir: "{{ app_dir }}"
+      become_user: ubuntu
+      when: docker_pull is failed
+
+    - name: Start application with Docker Compose
+      ansible.builtin.command:
+        cmd: docker compose -f "{{ compose_file }}" up -d
+        chdir: "{{ app_dir }}"
+      become_user: ubuntu
+      register: compose_up
+
+    - name: Wait for all containers to be healthy
+      ansible.builtin.command:
+        cmd: docker compose -f "{{ compose_file }}" ps
+        chdir: "{{ app_dir }}"
+      become_user: ubuntu
+      register: compose_ps
+      until: >
+        'unhealthy' not in compose_ps.stdout and
+        'starting' not in compose_ps.stdout and
+        'Exit' not in compose_ps.stdout
+      retries: "{{ health_check_retries }}"
+      delay: "{{ health_check_delay }}"
+      changed_when: false
+
+    - name: Run Django database migrations
+      ansible.builtin.command:
+        cmd: docker compose -f "{{ compose_file }}" exec -T backend python manage.py migrate --noinput
+        chdir: "{{ app_dir }}"
+      become_user: ubuntu
+      register: migrate_result
+      changed_when: "'Applying' in migrate_result.stdout"
+
+    - name: Collect Django static files
+      ansible.builtin.command:
+        cmd: docker compose -f "{{ compose_file }}" exec -T backend python manage.py collectstatic --noinput
+        chdir: "{{ app_dir }}"
+      become_user: ubuntu
+      register: collectstatic_result
+      changed_when: "'files copied' in collectstatic_result.stdout or 'post-processed' in collectstatic_result.stdout"
+
+    - name: Get app node public IP
+      ansible.builtin.command:
+        cmd: curl -s http://169.254.169.254/latest/meta-data/public-ipv4
+      register: public_ip
+      changed_when: false
+      ignore_errors: true
+
+    - name: Print access URL
+      ansible.builtin.debug:
+        msg: >
+          FairSplit deployed successfully!
+          Access URL: http://{{ public_ip.stdout | default(ansible_host) }}/
+          API Health: http://{{ public_ip.stdout | default(ansible_host) }}/api/health/
+          Django Admin: http://{{ public_ip.stdout | default(ansible_host) }}/admin/

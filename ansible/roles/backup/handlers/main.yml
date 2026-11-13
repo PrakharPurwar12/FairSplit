@@ -1,0 +1,3 @@
+---
+# ansible/roles/backup/handlers/main.yml
+# No handlers needed for backup role

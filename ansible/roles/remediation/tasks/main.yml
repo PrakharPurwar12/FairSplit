@@ -1,0 +1,124 @@
+---
+# ansible/roles/remediation/tasks/main.yml
+# Remediation role: check container state, restart, verify health, escalate if needed
+
+- name: Validate service_name is set
+  ansible.builtin.fail:
+    msg: "Role variable 'service_name' must be set before using the remediation role."
+  when: service_name == ''
+
+- name: Get current timestamp
+  ansible.builtin.command:
+    cmd: date '+%Y-%m-%d %H:%M:%S'
+  register: remediation_start_ts
+  changed_when: false
+
+- name: Log remediation start
+  ansible.builtin.lineinfile:
+    path: "{{ remediation_log }}"
+    line: "[{{ remediation_start_ts.stdout }}] REMEDIATION START: service={{ service_name }} host={{ inventory_hostname }}"
+    create: true
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_user }}"
+    mode: "0644"
+
+- name: Inspect container running state
+  ansible.builtin.command:
+    cmd: "docker inspect --format='{{ '{{' }}.State.Running{{ '}}' }}' {{ service_name }}"
+  register: remediation_container_state
+  changed_when: false
+  failed_when: false
+
+- name: Log container state
+  ansible.builtin.lineinfile:
+    path: "{{ remediation_log }}"
+    line: "[{{ remediation_start_ts.stdout }}] Container {{ service_name }} running={{ remediation_container_state.stdout | default('unknown') }}"
+    create: true
+    mode: "0644"
+
+- name: Restart container if not running
+  ansible.builtin.command:
+    cmd: "docker compose -f {{ compose_file }} restart {{ service_name }}"
+    chdir: "{{ app_dir }}"
+  become_user: "{{ deploy_user }}"
+  when: remediation_container_state.stdout != 'true' or remediation_container_state.rc != 0
+  register: remediation_restart
+
+- name: Wait for container to stabilize
+  ansible.builtin.pause:
+    seconds: "{{ wait_after_restart }}"
+  when: remediation_restart is changed
+
+- name: Verify backend health endpoint
+  ansible.builtin.uri:
+    url: "http://{{ ansible_host }}/api/health/"
+    method: GET
+    status_code: [200]
+    timeout: 10
+  register: remediation_backend_health
+  retries: "{{ health_check_retries }}"
+  delay: "{{ health_check_delay }}"
+  until: remediation_backend_health.status == 200
+  ignore_errors: true
+  when: "'backend' in service_name"
+
+- name: Verify frontend health endpoint
+  ansible.builtin.uri:
+    url: "http://{{ ansible_host }}/"
+    method: GET
+    status_code: [200, 301, 302]
+    timeout: 10
+  register: remediation_frontend_health
+  retries: "{{ health_check_retries }}"
+  delay: "{{ health_check_delay }}"
+  until: remediation_frontend_health.status in [200, 301, 302]
+  ignore_errors: true
+  when: "'backend' not in service_name"
+
+- name: Determine overall health result
+  ansible.builtin.set_fact:
+    remediation_health_ok: >-
+      {{
+        (remediation_backend_health is defined and
+         remediation_backend_health.status is defined and
+         remediation_backend_health.status == 200) or
+        (remediation_frontend_health is defined and
+         remediation_frontend_health.status is defined and
+         remediation_frontend_health.status in [200, 301, 302])
+      }}
+
+- name: Get end timestamp
+  ansible.builtin.command:
+    cmd: date '+%Y-%m-%d %H:%M:%S'
+  register: remediation_end_ts
+  changed_when: false
+
+- name: Log remediation success
+  ansible.builtin.lineinfile:
+    path: "{{ remediation_log }}"
+    line: "[{{ remediation_end_ts.stdout }}] REMEDIATION SUCCESS: service={{ service_name }} is healthy"
+    create: true
+    mode: "0644"
+  when: remediation_health_ok | bool
+
+- name: Log remediation failure
+  ansible.builtin.lineinfile:
+    path: "{{ remediation_log }}"
+    line: "[{{ remediation_end_ts.stdout }}] REMEDIATION FAILED: service={{ service_name }} still unhealthy - escalating"
+    create: true
+    mode: "0644"
+  when: not (remediation_health_ok | bool)
+
+- name: Create escalation flag if remediation failed
+  ansible.builtin.copy:
+    dest: "{{ escalation_flag }}"
+    content: |
+      ESCALATION NEEDED
+      Timestamp: {{ remediation_end_ts.stdout }}
+      Service: {{ service_name }}
+      Host: {{ inventory_hostname }}
+      Automated remediation failed. Manual intervention required.
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_user }}"
+    mode: "0644"
+  when: not (remediation_health_ok | bool)

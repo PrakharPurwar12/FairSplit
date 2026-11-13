@@ -1,0 +1,5 @@
+---
+frontend_port: 80
+backend_port: 8000
+postgres_port: 5432
+docker_compose_project: fairsplit

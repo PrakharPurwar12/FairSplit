@@ -1,0 +1,3 @@
+---
+# ansible/roles/remediation/handlers/main.yml
+# No handlers needed for remediation role

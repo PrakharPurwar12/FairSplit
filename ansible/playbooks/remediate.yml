@@ -1,0 +1,147 @@
+---
+- name: Automated Service Remediation
+  hosts: app
+  become: true
+  gather_facts: true
+
+  vars:
+    service_name: "{{ service_name | default('') }}"
+    compose_working_dir: "{{ app_dir }}"
+    remediation_log: /opt/fairsplit/remediation.log
+    escalation_flag: /opt/fairsplit/ESCALATION_NEEDED
+    wait_after_restart: 30
+    health_check_retries: 6
+    health_check_delay: 10
+
+  pre_tasks:
+    - name: Validate service_name is provided
+      ansible.builtin.fail:
+        msg: "Variable 'service_name' is required. Pass it with -e service_name=<container_name>"
+      when: service_name == ''
+
+  tasks:
+    - name: Get current timestamp
+      ansible.builtin.command:
+        cmd: date '+%Y-%m-%d %H:%M:%S'
+      register: timestamp
+      changed_when: false
+
+    - name: Log remediation start
+      ansible.builtin.lineinfile:
+        path: "{{ remediation_log }}"
+        line: "[{{ timestamp.stdout }}] REMEDIATION START: service={{ service_name }} host={{ inventory_hostname }}"
+        create: true
+        owner: ubuntu
+        group: ubuntu
+        mode: "0644"
+
+    - name: Check if container is running
+      ansible.builtin.command:
+        cmd: "docker inspect --format='{{ '{{' }}.State.Running{{ '}}' }}' {{ service_name }}"
+      register: container_state
+      changed_when: false
+      failed_when: false
+
+    - name: Log container state
+      ansible.builtin.lineinfile:
+        path: "{{ remediation_log }}"
+        line: "[{{ timestamp.stdout }}] Container {{ service_name }} state: {{ container_state.stdout | default('unknown') }}"
+        create: true
+        mode: "0644"
+
+    - name: Restart container if not running
+      ansible.builtin.command:
+        cmd: docker compose -f "{{ compose_file }}" restart "{{ service_name }}"
+        chdir: "{{ app_dir }}"
+      become_user: ubuntu
+      when: container_state.stdout != 'true' or container_state.rc != 0
+      register: restart_result
+
+    - name: Wait for container to stabilize after restart
+      ansible.builtin.pause:
+        seconds: "{{ wait_after_restart }}"
+      when: restart_result is changed
+
+    - name: Verify backend health endpoint
+      ansible.builtin.uri:
+        url: "http://{{ ansible_host }}/api/health/"
+        method: GET
+        status_code: [200, 201]
+        timeout: 10
+      register: backend_health
+      retries: "{{ health_check_retries }}"
+      delay: "{{ health_check_delay }}"
+      until: backend_health.status == 200
+      ignore_errors: true
+      when: "'backend' in service_name"
+
+    - name: Verify frontend health endpoint
+      ansible.builtin.uri:
+        url: "http://{{ ansible_host }}/"
+        method: GET
+        status_code: [200, 301, 302]
+        timeout: 10
+      register: frontend_health
+      retries: "{{ health_check_retries }}"
+      delay: "{{ health_check_delay }}"
+      until: frontend_health.status in [200, 301, 302]
+      ignore_errors: true
+      when: "'backend' not in service_name"
+
+    - name: Set health check result fact
+      ansible.builtin.set_fact:
+        health_ok: >-
+          {{
+            (backend_health is defined and backend_health.status is defined and backend_health.status == 200) or
+            (frontend_health is defined and frontend_health.status is defined and frontend_health.status in [200, 301, 302])
+          }}
+
+    - name: Get timestamp for result
+      ansible.builtin.command:
+        cmd: date '+%Y-%m-%d %H:%M:%S'
+      register: end_timestamp
+      changed_when: false
+
+    - name: Log remediation success
+      ansible.builtin.lineinfile:
+        path: "{{ remediation_log }}"
+        line: "[{{ end_timestamp.stdout }}] REMEDIATION SUCCESS: service={{ service_name }} is healthy"
+        create: true
+        mode: "0644"
+      when: health_ok | bool
+
+    - name: Log remediation failure
+      ansible.builtin.lineinfile:
+        path: "{{ remediation_log }}"
+        line: "[{{ end_timestamp.stdout }}] REMEDIATION FAILED: service={{ service_name }} still unhealthy - escalating"
+        create: true
+        mode: "0644"
+      when: not (health_ok | bool)
+
+    - name: Create escalation flag file if still unhealthy
+      ansible.builtin.copy:
+        dest: "{{ escalation_flag }}"
+        content: |
+          ESCALATION NEEDED
+          Timestamp: {{ end_timestamp.stdout }}
+          Service: {{ service_name }}
+          Host: {{ inventory_hostname }}
+          Automated remediation failed. Manual intervention required.
+        owner: ubuntu
+        group: ubuntu
+        mode: "0644"
+      when: not (health_ok | bool)
+
+    - name: Alert on escalation needed
+      ansible.builtin.debug:
+        msg: >
+          ESCALATION NEEDED: Service {{ service_name }} on {{ inventory_hostname }}
+          could not be remediated automatically.
+          Flag file created at {{ escalation_flag }}.
+          Check {{ remediation_log }} for details.
+      when: not (health_ok | bool)
+
+    - name: Confirm remediation success
+      ansible.builtin.debug:
+        msg: "Service {{ service_name }} on {{ inventory_hostname }} is healthy. Remediation complete."
+      when: health_ok | bool

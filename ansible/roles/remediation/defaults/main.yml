@@ -1,0 +1,11 @@
+---
+# Remediation role - defaults
+app_dir: /opt/fairsplit/app
+compose_file: docker-compose.yml
+remediation_log: /opt/fairsplit/remediation.log
+escalation_flag: /opt/fairsplit/ESCALATION_NEEDED
+wait_after_restart: 30
+health_check_retries: 6
+health_check_delay: 10
+service_name: ""
+deploy_user: ubuntu

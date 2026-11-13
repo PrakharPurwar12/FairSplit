@@ -1,0 +1,14 @@
+---
+# ansible/roles/deploy/handlers/main.yml
+
+- name: Verify deployment health
+  ansible.builtin.uri:
+    url: "http://{{ ansible_host }}/api/health/"
+    method: GET
+    status_code: [200]
+    timeout: 15
+  register: deploy_health_check
+  retries: 10
+  delay: 10
+  until: deploy_health_check.status == 200
+  ignore_errors: true

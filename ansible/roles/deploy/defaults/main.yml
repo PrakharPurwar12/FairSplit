@@ -1,0 +1,10 @@
+---
+# Deploy role - defaults
+app_dir: /opt/fairsplit/app
+backup_dir: /opt/fairsplit/backups
+repo_url: "https://github.com/PrakharPurwar12/FairSplit.git"
+repo_branch: main
+compose_file: docker-compose.yml
+health_check_retries: 15
+health_check_delay: 10
+deploy_user: ubuntu

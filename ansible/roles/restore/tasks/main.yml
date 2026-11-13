@@ -1,0 +1,98 @@
+---
+# ansible/roles/restore/tasks/main.yml
+# Restore role: validate backup, stop backend, recreate DB, restore dump, restart backend, verify health, log
+
+- name: Validate backup_file variable is provided
+  ansible.builtin.fail:
+    msg: >
+      Variable 'backup_file' is required.
+      Pass it with: -e backup_file=/opt/fairsplit/backups/fairsplit_backup_YYYY-MM-DD.sql.gz
+  when: backup_file is not defined or backup_file == ''
+
+- name: Verify backup file exists on remote host
+  ansible.builtin.stat:
+    path: "{{ backup_file }}"
+  register: backup_stat
+
+- name: Fail if backup file missing or empty
+  ansible.builtin.fail:
+    msg: "Backup file {{ backup_file }} does not exist or is empty on {{ inventory_hostname }}"
+  when: not backup_stat.stat.exists or backup_stat.stat.size == 0
+
+- name: Get timestamp
+  ansible.builtin.command:
+    cmd: date '+%Y-%m-%d %H:%M:%S'
+  register: timestamp
+  changed_when: false
+
+- name: Log restore start
+  ansible.builtin.lineinfile:
+    path: /opt/fairsplit/restore.log
+    line: "[{{ timestamp.stdout }}] RESTORE START: backup_file={{ backup_file }}"
+    create: true
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_user }}"
+    mode: "0644"
+
+- name: Stop backend container before restore
+  ansible.builtin.command:
+    cmd: docker compose -f "{{ compose_file }}" stop backend
+  chdir: "{{ app_dir }}"
+  become_user: "{{ deploy_user }}"
+
+- name: Drop existing database
+  ansible.builtin.command:
+    cmd: >
+      docker compose -f "{{ compose_file }}" exec -T {{ postgres_service }}
+      psql -U {{ postgres_user }} -c "DROP DATABASE IF EXISTS {{ postgres_db }};"
+  chdir: "{{ app_dir }}"
+  become_user: "{{ deploy_user }}"
+
+- name: Recreate database
+  ansible.builtin.command:
+    cmd: >
+      docker compose -f "{{ compose_file }}" exec -T {{ postgres_service }}
+      psql -U {{ postgres_user }} -c "CREATE DATABASE {{ postgres_db }} OWNER {{ postgres_user }};"
+  chdir: "{{ app_dir }}"
+  become_user: "{{ deploy_user }}"
+
+- name: Restore database from backup
+  ansible.builtin.shell:
+    cmd: >
+      zcat "{{ backup_file }}" |
+      docker compose -f "{{ compose_file }}" exec -T {{ postgres_service }}
+      psql -U {{ postgres_user }} {{ postgres_db }}
+  chdir: "{{ app_dir }}"
+  become_user: "{{ deploy_user }}"
+
+- name: Start backend container after restore
+  ansible.builtin.command:
+    cmd: docker compose -f "{{ compose_file }}" start backend
+  chdir: "{{ app_dir }}"
+  become_user: "{{ deploy_user }}"
+
+- name: Wait for backend to be healthy after restore
+  ansible.builtin.uri:
+    url: "http://localhost/api/health/"
+    method: GET
+    status_code: [200]
+    timeout: 10
+  register: health_check
+  retries: "{{ health_check_retries }}"
+  delay: "{{ health_check_delay }}"
+  until: health_check.status == 200
+
+- name: Get end timestamp
+  ansible.builtin.command:
+    cmd: date '+%Y-%m-%d %H:%M:%S'
+  register: end_ts
+  changed_when: false
+
+- name: Log restore completion
+  ansible.builtin.lineinfile:
+    path: /opt/fairsplit/restore.log
+    line: "[{{ end_ts.stdout }}] RESTORE SUCCESS: backup_file={{ backup_file }}"
+    create: true
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_user }}"
+    mode: "0644"

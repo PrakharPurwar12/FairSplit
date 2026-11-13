@@ -1,0 +1,85 @@
+---
+# ansible/roles/backup/tasks/main.yml
+# Backup role: pg_dump via docker, verify, rotate old backups, log
+
+- name: Ensure backup directory exists
+  ansible.builtin.file:
+    path: "{{ backup_dir }}"
+    state: directory
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_user }}"
+    mode: "0750"
+
+- name: Set backup filename with current date
+  ansible.builtin.set_fact:
+    backup_role_filename: "fairsplit_backup_{{ ansible_date_time.date }}.sql.gz"
+
+- name: Set full backup path
+  ansible.builtin.set_fact:
+    backup_role_path: "{{ backup_dir }}/{{ backup_role_filename }}"
+
+- name: Get start timestamp
+  ansible.builtin.command:
+    cmd: date '+%Y-%m-%d %H:%M:%S'
+  register: backup_start_ts
+  changed_when: false
+
+- name: Log backup start
+  ansible.builtin.lineinfile:
+    path: "{{ backup_log }}"
+    line: "[{{ backup_start_ts.stdout }}] BACKUP START: file={{ backup_role_filename }}"
+    create: true
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_user }}"
+    mode: "0644"
+
+- name: Run pg_dump via Docker and compress output
+  ansible.builtin.shell:
+    cmd: >
+      docker compose -f "{{ compose_file }}" exec -T {{ postgres_service }}
+      pg_dump -U {{ postgres_user }} {{ postgres_db }} | gzip > "{{ backup_role_path }}"
+    chdir: "{{ app_dir }}"
+  become_user: "{{ deploy_user }}"
+
+- name: Verify backup file exists and is non-zero
+  ansible.builtin.stat:
+    path: "{{ backup_role_path }}"
+  register: backup_role_stat
+
+- name: Fail if backup file is missing or empty
+  ansible.builtin.fail:
+    msg: "Backup failed: {{ backup_role_path }} is missing or empty."
+  when: not backup_role_stat.stat.exists or backup_role_stat.stat.size == 0
+
+- name: Find backups older than retention period
+  ansible.builtin.find:
+    paths: "{{ backup_dir }}"
+    patterns: "fairsplit_backup_*.sql.gz"
+    age: "{{ backup_retention_days }}d"
+    age_stamp: mtime
+  register: backup_old_files
+
+- name: Remove old backup files
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    state: absent
+  loop: "{{ backup_old_files.files }}"
+  loop_control:
+    label: "{{ item.path }}"
+
+- name: Get end timestamp
+  ansible.builtin.command:
+    cmd: date '+%Y-%m-%d %H:%M:%S'
+  register: backup_end_ts
+  changed_when: false
+
+- name: Log backup completion
+  ansible.builtin.lineinfile:
+    path: "{{ backup_log }}"
+    line: >-
+      [{{ backup_end_ts.stdout }}] BACKUP COMPLETE:
+      file={{ backup_role_filename }}
+      size={{ backup_role_stat.stat.size }} bytes
+      rotated={{ backup_old_files.files | length }} old files
+    create: true
+    mode: "0644"

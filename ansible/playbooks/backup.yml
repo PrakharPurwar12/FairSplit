@@ -1,0 +1,105 @@
+---
+- name: Database Backup
+  hosts: app
+  become: true
+  gather_facts: true
+
+  vars:
+    compose_working_dir: "{{ app_dir }}"
+    backup_retention_days: 7
+    backup_log: /opt/fairsplit/backup.log
+    postgres_service: postgres
+    postgres_user: fairsplit
+    postgres_db: fairsplit
+
+  tasks:
+    - name: Ensure backup directory exists
+      ansible.builtin.file:
+        path: "{{ backup_dir }}"
+        state: directory
+        owner: ubuntu
+        group: ubuntu
+        mode: "0750"
+
+    - name: Set backup filename with date
+      ansible.builtin.set_fact:
+        backup_filename: "fairsplit_backup_{{ ansible_date_time.date }}.sql.gz"
+
+    - name: Set full backup path
+      ansible.builtin.set_fact:
+        backup_path: "{{ backup_dir }}/{{ backup_filename }}"
+
+    - name: Get timestamp for log
+      ansible.builtin.command:
+        cmd: date '+%Y-%m-%d %H:%M:%S'
+      register: start_timestamp
+      changed_when: false
+
+    - name: Log backup start
+      ansible.builtin.lineinfile:
+        path: "{{ backup_log }}"
+        line: "[{{ start_timestamp.stdout }}] BACKUP START: file={{ backup_filename }}"
+        create: true
+        owner: ubuntu
+        group: ubuntu
+        mode: "0644"
+
+    - name: Run pg_dump via Docker and compress
+      ansible.builtin.shell:
+        cmd: >
+          docker compose -f "{{ compose_file }}" exec -T {{ postgres_service }}
+          pg_dump -U {{ postgres_user }} {{ postgres_db }} | gzip > "{{ backup_path }}"
+        chdir: "{{ app_dir }}"
+      become_user: ubuntu
+      register: backup_result
+
+    - name: Verify backup file exists
+      ansible.builtin.stat:
+        path: "{{ backup_path }}"
+      register: backup_stat
+
+    - name: Fail if backup file missing or empty
+      ansible.builtin.fail:
+        msg: "Backup file {{ backup_path }} does not exist or is empty!"
+      when: not backup_stat.stat.exists or backup_stat.stat.size == 0
+
+    - name: Get timestamp for completion log
+      ansible.builtin.command:
+        cmd: date '+%Y-%m-%d %H:%M:%S'
+      register: end_timestamp
+      changed_when: false
+
+    - name: Remove backups older than retention period
+      ansible.builtin.find:
+        paths: "{{ backup_dir }}"
+        patterns: "fairsplit_backup_*.sql.gz"
+        age: "{{ backup_retention_days }}d"
+        age_stamp: mtime
+      register: old_backups
+
+    - name: Delete old backup files
+      ansible.builtin.file:
+        path: "{{ item.path }}"
+        state: absent
+      loop: "{{ old_backups.files }}"
+      loop_control:
+        label: "{{ item.path }}"
+
+    - name: Log backup completion
+      ansible.builtin.lineinfile:
+        path: "{{ backup_log }}"
+        line: >-
+          [{{ end_timestamp.stdout }}] BACKUP COMPLETE:
+          file={{ backup_filename }}
+          size={{ backup_stat.stat.size }} bytes
+          old_deleted={{ old_backups.files | length }}
+        create: true
+        mode: "0644"
+
+    - name: Report backup summary
+      ansible.builtin.debug:
+        msg: >
+          Backup completed successfully.
+          File: {{ backup_path }}
+          Size: {{ backup_stat.stat.size | human_readable }}
+          Old backups removed: {{ old_backups.files | length }}

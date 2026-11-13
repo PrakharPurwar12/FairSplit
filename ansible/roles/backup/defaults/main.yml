@@ -1,0 +1,11 @@
+---
+# Backup role - defaults
+backup_dir: /opt/fairsplit/backups
+app_dir: /opt/fairsplit/app
+compose_file: docker-compose.yml
+backup_retention_days: 7
+backup_log: /opt/fairsplit/backup.log
+postgres_service: postgres
+postgres_user: fairsplit
+postgres_db: fairsplit
+deploy_user: ubuntu

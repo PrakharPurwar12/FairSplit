@@ -1,0 +1,3 @@
+---
+# ansible/roles/restore/handlers/main.yml
+# No handlers needed for restore role
