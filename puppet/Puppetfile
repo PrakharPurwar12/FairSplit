@@ -1,0 +1,13 @@
+forge "https://forgeapi.puppet.com"
+
+# Standard library functions
+mod 'puppetlabs/stdlib', '9.6.0'
+
+# APT package management for Ubuntu/Debian
+mod 'puppetlabs/apt', '9.4.0'
+
+# Docker CE installation and management
+mod 'puppetlabs/docker', '9.1.0'
+
+# Swap file management (2 GB swap on ops node)
+mod 'saz/swap_file', '7.0.0'

@@ -1,0 +1,37 @@
+<%- | String $nagios_htpasswd | -%>
+##############################################################################
+# apache_nagios.conf.epp – Apache configuration for Nagios 4 CGI web UI
+# Managed by Puppet – do NOT edit manually.
+##############################################################################
+
+ScriptAlias /nagios4/cgi-bin /usr/lib/cgi-bin/nagios4
+
+<Directory /usr/lib/cgi-bin/nagios4>
+    Options ExecCGI
+    AllowOverride None
+
+    AuthType Basic
+    AuthName "Nagios Access"
+    AuthUserFile <%= $nagios_htpasswd %>
+    Require valid-user
+
+    # Security headers
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-Frame-Options "SAMEORIGIN"
+</Directory>
+
+Alias /nagios4 /usr/share/nagios4/htdocs
+
+<Directory /usr/share/nagios4/htdocs>
+    Options SymLinksIfOwnerMatch
+    DirectoryIndex index.php
+    AllowOverride None
+
+    AuthType Basic
+    AuthName "Nagios Access"
+    AuthUserFile <%= $nagios_htpasswd %>
+    Require valid-user
+</Directory>
+
+# Redirect bare /nagios to /nagios4
+RedirectMatch ^/nagios$ /nagios4

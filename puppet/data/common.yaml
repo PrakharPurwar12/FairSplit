@@ -1,0 +1,35 @@
+---
+# ---------------------------------------------------------------------------
+# FairSplit – Hiera common data
+# No secrets or hardcoded IPs stored here.
+# ---------------------------------------------------------------------------
+
+# Swap file: 2 GB on the ops node (/mnt/swap1)
+swap_file::files:
+  '/mnt/swap1':
+    ensure: present
+    swapfilesize: '2048000000'
+
+# FairSplit node hostnames (used in /etc/hosts management)
+fairsplit::ops_node_hostname: 'fairsplit-ops'
+fairsplit::app_node_hostname: 'fairsplit-app'
+
+# Timezone
+common::timezone: 'Asia/Kolkata'
+
+# Packages installed on every node
+common::packages:
+  - curl
+  - wget
+  - vim
+  - htop
+  - unzip
+  - git
+  - python3-pip
+
+# Security
+security::sysctl_settings:
+  'net.ipv4.tcp_syncookies':
+    value: '1'
+  'net.ipv4.ip_forward':
+    value: '1'

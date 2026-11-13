@@ -1,0 +1,102 @@
+<%- | String $nagios_objects_dir | -%>
+##############################################################################
+# nagios.cfg – Nagios Core 4 main configuration
+# Managed by Puppet – do NOT edit manually.
+##############################################################################
+
+# ---------------------------------------------------------------------------
+# Logging
+# ---------------------------------------------------------------------------
+log_file=/var/log/nagios4/nagios.log
+log_rotation_method=d
+log_archive_path=/var/log/nagios4/archives
+use_syslog=1
+log_notifications=1
+log_service_retries=1
+log_host_retries=1
+log_event_handlers=1
+log_initial_states=0
+log_current_states=1
+log_external_commands=1
+log_passive_checks=1
+
+# ---------------------------------------------------------------------------
+# Directories
+# ---------------------------------------------------------------------------
+cfg_dir=<%= $nagios_objects_dir %>
+object_cache_file=/var/cache/nagios4/objects.cache
+precached_object_file=/var/cache/nagios4/objects.precache
+resource_file=/etc/nagios4/resource.cfg
+temp_file=/var/cache/nagios4/nagios.tmp
+temp_path=/tmp
+lock_file=/var/run/nagios4/nagios4.pid
+state_retention_file=/var/lib/nagios4/retention.dat
+comment_file=/var/lib/nagios4/comments.dat
+downtime_file=/var/lib/nagios4/downtime.dat
+
+# ---------------------------------------------------------------------------
+# External commands
+# ---------------------------------------------------------------------------
+check_external_commands=1
+command_check_interval=-1
+command_file=/var/lib/nagios4/rw/nagios.cmd
+external_command_buffer_slots=4096
+
+# ---------------------------------------------------------------------------
+# CGI / web UI
+# ---------------------------------------------------------------------------
+physical_html_path=/usr/share/nagios4/htdocs
+url_html_path=/nagios4
+http_charset=utf-8
+
+# ---------------------------------------------------------------------------
+# Performance tuning
+# ---------------------------------------------------------------------------
+max_concurrent_checks=0
+check_result_path=/var/lib/nagios4/spool/checkresults
+max_check_result_file_age=3600
+max_check_result_reaper_time=30
+sleep_time=0.25
+service_inter_check_delay_method=s
+host_inter_check_delay_method=s
+interval_length=60
+
+# ---------------------------------------------------------------------------
+# Host/service check settings
+# ---------------------------------------------------------------------------
+execute_service_checks=1
+accept_passive_service_checks=1
+execute_host_checks=1
+accept_passive_host_checks=1
+enable_notifications=1
+enable_event_handlers=1
+obsess_over_services=0
+obsess_over_hosts=0
+check_for_orphaned_services=1
+check_for_orphaned_hosts=1
+check_service_freshness=1
+service_freshness_check_interval=60
+check_host_freshness=0
+freshness_check_interval=60
+
+# ---------------------------------------------------------------------------
+# Misc
+# ---------------------------------------------------------------------------
+enable_flap_detection=1
+low_service_flap_threshold=5.0
+high_service_flap_threshold=20.0
+low_host_flap_threshold=5.0
+high_host_flap_threshold=20.0
+date_format=iso8601
+illegal_object_name_chars=`~!$%^&*|'"<>?,()=
+illegal_macro_output_chars=`~$&|'"<>
+use_regexp_matching=0
+use_true_regexp_matching=0
+admin_email=nagios@localhost
+admin_pager=pagenagios@localhost
+daemon_dumps_core=0
+use_large_installation_tweaks=0
+enable_embedded_perl=0
+use_embedded_perl_implicitly=0
+p1_file=/usr/lib/nagios4/p1.pl
+event_profiling_enabled=0
