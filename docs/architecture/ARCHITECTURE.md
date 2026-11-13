@@ -151,3 +151,4 @@ sequenceDiagram
 ### 4. Nagios Core (`nagios/`)
 - Monitored services: Host ping, SSH, Disk utilization (`check_disk.sh`), Docker container health (`check_docker_container.sh`), and HTTP end-to-end API health (`check_fairsplit.sh`).
 - Event handlers integrated directly with Ansible remediation scripts.
+

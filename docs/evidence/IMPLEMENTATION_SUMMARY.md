@@ -26,17 +26,29 @@ All milestones have been incrementally verified, formatted, and committed using 
 | `8ea32a1` | **Ansible** | `feat(ansible): implement application deployment, remediation, backup, and restore playbooks` |
 | `8b38731` | **Remediation** | `feat(remediation): implement event handlers, failure validation, and recovery logging` |
 | `3fdde7b` | **Scripts** | `feat(scripts): add automated node bootstrap and validation test suites` |
+| `fc53d31` | **Documentation** | `docs(devops): add comprehensive architecture, deployment, runbook, and capstone audit specifications` |
 
 ---
 
 ## Validation & Verification Evidence
 
-### 1. Terraform Static Checks
+### 1. Terraform Static Checks & Actual Plan Resource Count
 - `terraform fmt -check -recursive`: **PASSED** (Exit code: 0)
 - `terraform validate`: **PASSED** (`Success! The configuration is valid.`)
-- Speculative `terraform plan`: **PASSED** (`Plan: 14 to add, 0 to change, 0 to destroy.`)
+- Live speculative `terraform plan`: **PASSED**
+  - **Actual Derived Resource Count**: **14 to add, 0 to change, 0 to destroy**
+  - Resource breakdown:
+    - 2 EC2 Compute Instances (`module.compute.aws_instance.ops_node`, `module.compute.aws_instance.app_node`)
+    - 2 Security Groups (`module.security.aws_security_group.ops_sg`, `module.security.aws_security_group.app_sg`)
+    - 9 Security Group Rules (discrete ingress/egress for SSH, HTTP, Puppet, NRPE)
+    - 1 Local Inventory File (`local_file.ansible_inventory` generating `ansible/inventory/hosts.ini`)
 
-### 2. Secret & Sensitive Data Audit
+### 2. EC2 Key Pair Policy
+- Dedicated key pair `fairsplit-dev-key` must **only be used after its creation and verification** in AWS:
+  `aws ec2 create-key-pair --key-name fairsplit-dev-key --region ap-south-1` followed by `aws ec2 describe-key-pairs`.
+- Existing verified fallback key: `terra-server-key` (already present in the AWS account).
+
+### 3. Secret & Sensitive Data Audit
 - Verified `.gitignore` excludes: `*.tfvars`, `*.tfstate`, `*.pem`, `*.pub`, `.terraform/`.
 - No AWS access keys, secret keys, or private SSH keys are stored in version control.
 - `terraform.tfvars.example` contains only RFC 5737 documentation IPs (`203.0.113.25/32`).
@@ -50,3 +62,4 @@ All milestones have been incrementally verified, formatted, and committed using 
 - Continuous (24/7): ~$40.07/month
 - Intermittent testing (50 hours): ~$4.98/month
 - Current AWS credits ($100 credit pool) absorb all current storage and test charges.
+

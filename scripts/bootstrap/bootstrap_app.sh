@@ -218,3 +218,4 @@ echo "       sudo /opt/puppetlabs/bin/puppet agent -t"
 echo "  3. On Ops Node: Deploy FairSplit via Ansible:"
 echo "       ansible-playbook -i inventory/hosts.ini playbooks/deploy.yml"
 echo ""
+

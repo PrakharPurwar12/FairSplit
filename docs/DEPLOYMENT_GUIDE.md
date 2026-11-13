@@ -95,13 +95,19 @@ Render uses the included `render.yaml` or manual Web Service creation.
 
 ## 5. Platform 4: AWS EC2 Deployment
 
-### Steps:
+FairSplit provides two deployment approaches on AWS:
+1. **Automated Infrastructure-as-Code & DevOps (Recommended)**: Complete 2-node automated architecture using Terraform, Puppet 8, Ansible, and Nagios Core 4. See the full [FairSplit-Ops End-to-End Deployment Guide](file:///f:/Prakhar/Prakhar/Projects/FairSplit/docs/deployment/DEPLOYMENT.md).
+   - Provisions 14 Terraform resources (2x `t3.small` EC2 instances, discrete Security Groups, and Ansible inventory).
+   - Use the dedicated `fairsplit-dev-key` only after creating and verifying it (`aws ec2 create-key-pair --key-name fairsplit-dev-key --region ap-south-1` followed by `aws ec2 describe-key-pairs`), or fall back to the existing verified `terra-server-key`.
+2. **Single-Instance Manual Deployment**: Quick standalone deployment on a single Ubuntu 24.04 instance.
+
+### Single-Instance Manual Steps:
 1. Launch an Amazon EC2 Instance (Ubuntu 24.04 LTS, t3.small or larger).
 2. Configure Security Group:
-   - Allow Port `22` (SSH)
-   - Allow Port `80` (HTTP)
-   - Allow Port `443` (HTTPS)
-   - Allow Port `8000` (Optional / Proxy)
+   - Allow Port `22` (SSH from admin IP)
+   - Allow Port `80` (HTTP public)
+   - Allow Port `443` (HTTPS public)
+   - Do NOT expose Port `5432` or `8000` publicly.
 3. SSH into instance and install Docker:
    ```bash
    sudo apt update

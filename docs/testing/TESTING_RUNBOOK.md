@@ -122,3 +122,4 @@ aws ec2 start-instances --instance-ids <ops_instance_id> <app_instance_id> --reg
 cd terraform
 terraform destroy -auto-approve
 ```
+
