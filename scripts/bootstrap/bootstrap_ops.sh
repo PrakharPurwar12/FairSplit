@@ -176,6 +176,8 @@ if [ -d "$REPO_DIR/remediation" ] && [ ! -L /opt/fairsplit/remediation/scripts ]
   cp -r "$REPO_DIR/remediation/." /opt/fairsplit/remediation/
   chmod +x /opt/fairsplit/remediation/scripts/*.sh
   chmod +x /opt/fairsplit/remediation/event_handlers/*.sh
+  sudo mkdir -p /etc/nagios4/scripts
+  sudo ln -sf /opt/fairsplit/remediation/event_handlers/nagios_event_handler.sh /etc/nagios4/scripts/remediate.sh
   success "Remediation scripts installed"
 fi
 
