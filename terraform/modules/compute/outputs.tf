@@ -28,3 +28,24 @@ output "app_private_ip" {
   value       = aws_instance.app_node.private_ip
 }
 
+output "ops_iam_role_arn" {
+  description = "ARN of the IAM role attached to the Ops Node"
+  value       = aws_iam_role.ops_ssm_role.arn
+}
+
+output "ops_iam_role_name" {
+  description = "Name of the IAM role attached to the Ops Node"
+  value       = aws_iam_role.ops_ssm_role.name
+}
+
+output "ops_iam_instance_profile_name" {
+  description = "Name of the IAM instance profile attached to the Ops Node"
+  value       = aws_iam_instance_profile.ops_instance_profile.name
+}
+
+output "ops_iam_instance_profile_arn" {
+  description = "ARN of the IAM instance profile attached to the Ops Node"
+  value       = aws_iam_instance_profile.ops_instance_profile.arn
+}
+
+

@@ -58,3 +58,34 @@ output "ssh_app_command" {
   value       = "ssh -i ${var.ssh_key_path} ubuntu@${module.compute.app_public_ip}"
 }
 
+output "ops_iam_role_arn" {
+  description = "ARN of the IAM role attached to the Ops Node"
+  value       = module.compute.ops_iam_role_arn
+}
+
+output "ops_iam_role_name" {
+  description = "Name of the IAM role attached to the Ops Node"
+  value       = module.compute.ops_iam_role_name
+}
+
+output "ops_iam_instance_profile_name" {
+  description = "Name of the IAM instance profile attached to the Ops Node"
+  value       = module.compute.ops_iam_instance_profile_name
+}
+
+output "ops_iam_instance_profile_arn" {
+  description = "ARN of the IAM instance profile attached to the Ops Node"
+  value       = module.compute.ops_iam_instance_profile_arn
+}
+
+output "ssm_ops_command" {
+  description = "AWS CLI Systems Manager Session Manager command to connect to the Ops Node"
+  value       = "aws ssm start-session --target ${module.compute.ops_instance_id} --region ${var.aws_region}"
+}
+
+output "ssm_ops_ssh_command" {
+  description = "Convenience SSH-over-SSM command to securely connect to the Ops Node without direct public IP reachability"
+  value       = "ssh -i ${var.ssh_key_path} -o ProxyCommand=\"aws ssm start-session --target %h --document-name AWS-StartSSHSession --parameters 'portNumber=%p' --region ${var.aws_region}\" ubuntu@${module.compute.ops_instance_id}"
+}
+
+

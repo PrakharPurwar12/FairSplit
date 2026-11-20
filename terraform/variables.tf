@@ -17,9 +17,19 @@ variable "environment" {
 }
 
 variable "admin_ip_cidr" {
-  description = "CIDR block of administrator IP allowed for SSH (port 22) and Nagios UI (port 80). Example: '203.0.113.50/32'"
+  description = "CIDR block of administrator IP allowed for SSH (port 22) and Nagios UI (port 80). Example: '203.0.113.50/32'. Must NOT be 0.0.0.0/0."
   type        = string
-  default     = "0.0.0.0/0"
+  default     = "127.0.0.1/32"
+
+  validation {
+    condition     = var.admin_ip_cidr != "0.0.0.0/0"
+    error_message = "admin_ip_cidr must not be 0.0.0.0/0 to prevent public inbound exposure on administrative ports."
+  }
+
+  validation {
+    condition     = can(cidrnetmask(var.admin_ip_cidr))
+    error_message = "admin_ip_cidr must be a valid IPv4 CIDR block (e.g. 203.0.113.50/32)."
+  }
 }
 
 variable "vpc_id" {

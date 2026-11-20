@@ -65,6 +65,43 @@ sudo apt-get install -y curl wget gnupg2 lsb-release apt-transport-https ca-cert
 success "System packages updated"
 
 # ─────────────────────────────────────────────────
+# 2b. Verify and configure AWS Systems Manager (SSM) Agent
+# ─────────────────────────────────────────────────
+info "Verifying AWS Systems Manager (SSM) Agent status..."
+if systemctl is-active --quiet snap.amazon-ssm-agent.amazon-ssm-agent.service; then
+  success "SSM Agent (snap) is running"
+elif systemctl is-active --quiet amazon-ssm-agent; then
+  success "SSM Agent (systemd) is running"
+else
+  info "SSM Agent not active. Ensuring installation and startup..."
+  if command -v snap &>/dev/null; then
+    sudo snap install amazon-ssm-agent --classic || true
+    sudo systemctl enable snap.amazon-ssm-agent.amazon-ssm-agent.service || true
+    sudo systemctl start snap.amazon-ssm-agent.amazon-ssm-agent.service || true
+  fi
+  if ! systemctl is-active --quiet snap.amazon-ssm-agent.amazon-ssm-agent.service && ! systemctl is-active --quiet amazon-ssm-agent; then
+    IMDS_TOKEN=$(curl -s -f -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 60" 2>/dev/null || true)
+    if [ -n "$IMDS_TOKEN" ]; then
+      REGION=$(curl -s -f -H "X-aws-ec2-metadata-token: $IMDS_TOKEN" http://169.254.169.254/latest/meta-data/placement/region 2>/dev/null || echo "ap-south-1")
+    else
+      REGION=$(curl -s -f http://169.254.169.254/latest/meta-data/placement/region 2>/dev/null || echo "ap-south-1")
+    fi
+    mkdir -p /tmp/ssm_install
+    if curl -s -f -L "https://amazon-ssm-${REGION}.s3.${REGION}.amazonaws.com/latest/debian_amd64/amazon-ssm-agent.deb" -o /tmp/ssm_install/amazon-ssm-agent.deb; then
+      sudo dpkg -i /tmp/ssm_install/amazon-ssm-agent.deb || sudo apt-get install -f -y || true
+      sudo systemctl enable amazon-ssm-agent || true
+      sudo systemctl start amazon-ssm-agent || true
+    fi
+    rm -rf /tmp/ssm_install
+  fi
+  if systemctl is-active --quiet snap.amazon-ssm-agent.amazon-ssm-agent.service || systemctl is-active --quiet amazon-ssm-agent; then
+    success "SSM Agent is active and running"
+  else
+    warn "SSM Agent failed to start automatically; please verify system logs"
+  fi
+fi
+
+# ─────────────────────────────────────────────────
 # 3. Install Puppet 8 Server
 # ─────────────────────────────────────────────────
 info "Adding Puppet 8 apt repository..."
@@ -85,16 +122,16 @@ else
 fi
 
 # ─────────────────────────────────────────────────
-# 4. Configure Puppet Server JVM heap (512m for t3.small)
+# 4. Configure Puppet Server Java 17 & JVM heap (512m for t3.small)
 # ─────────────────────────────────────────────────
-info "Configuring Puppet Server JVM heap (Xms512m Xmx512m)..."
+info "Installing OpenJDK 17 and configuring Puppet Server JVM heap (Xms512m Xmx512m)..."
+sudo apt-get install -y openjdk-17-jre-headless
 PUPPET_JAVA_ARGS_FILE="/etc/default/puppetserver"
-if [ -f "$PUPPET_JAVA_ARGS_FILE" ]; then
-  sudo sed -i 's/JAVA_ARGS=.*/JAVA_ARGS="-Xms512m -Xmx512m"/' "$PUPPET_JAVA_ARGS_FILE"
-else
-  echo 'JAVA_ARGS="-Xms512m -Xmx512m"' | sudo tee "$PUPPET_JAVA_ARGS_FILE" > /dev/null
-fi
-success "JVM heap set to 512m"
+sudo tee "$PUPPET_JAVA_ARGS_FILE" > /dev/null <<'EOF'
+JAVA_BIN="/usr/lib/jvm/java-17-openjdk-amd64/bin/java"
+JAVA_ARGS="-Xms512m -Xmx512m"
+EOF
+success "Puppet Server pinned to Java 17 with 512m heap"
 
 # ─────────────────────────────────────────────────
 # 5. Configure puppet.conf
@@ -181,6 +218,33 @@ if [ -d "$REPO_DIR/remediation" ] && [ ! -L /opt/fairsplit/remediation/scripts ]
   success "Remediation scripts installed"
 fi
 
+# Set up dedicated Ed25519 deployment key for Ansible and remediation
+info "Setting up dedicated Ops deployment key (~/.ssh/id_ed25519)..."
+mkdir -p /home/ubuntu/.ssh
+chmod 700 /home/ubuntu/.ssh
+if [ ! -f /home/ubuntu/.ssh/id_ed25519 ]; then
+  ssh-keygen -t ed25519 -f /home/ubuntu/.ssh/id_ed25519 -N "" -C "fairsplit-ops-deploy"
+  chmod 400 /home/ubuntu/.ssh/id_ed25519
+  chmod 644 /home/ubuntu/.ssh/id_ed25519.pub
+  chown -R ubuntu:ubuntu /home/ubuntu/.ssh
+  success "Dedicated Ed25519 deployment key generated"
+else
+  success "Dedicated Ed25519 deployment key already exists"
+fi
+
+# Install Nagios remediation sudoers privilege boundary
+if [ -f "$REPO_DIR/remediation/sudoers/99-nagios-remediation" ]; then
+  info "Installing Nagios remediation sudoers privilege boundary..."
+  sudo cp "$REPO_DIR/remediation/sudoers/99-nagios-remediation" /etc/sudoers.d/99-nagios-remediation
+  sudo chmod 0440 /etc/sudoers.d/99-nagios-remediation
+  sudo chown root:root /etc/sudoers.d/99-nagios-remediation
+  if sudo visudo -cf /etc/sudoers.d/99-nagios-remediation &>/dev/null; then
+    success "Sudoers drop-in installed and validated via visudo"
+  else
+    warn "visudo syntax check failed on /etc/sudoers.d/99-nagios-remediation"
+  fi
+fi
+
 # ─────────────────────────────────────────────────
 # 9. Install Nagios 4
 # ─────────────────────────────────────────────────
@@ -223,8 +287,14 @@ fi
 
 # Install custom nagios config from repo if present
 if [ -d "$REPO_DIR/nagios" ]; then
-  sudo cp -r "$REPO_DIR/nagios/conf.d/." /etc/nagios4/conf.d/ 2>/dev/null || true
-  success "Custom Nagios configs installed from repo"
+  sudo mkdir -p /etc/nagios4/conf.d
+  sudo cp "$REPO_DIR/nagios/objects/"*.cfg /etc/nagios4/conf.d/ 2>/dev/null || true
+  sudo cp "$REPO_DIR/nagios/nagios.cfg" /etc/nagios4/nagios.cfg 2>/dev/null || true
+  sudo cp "$REPO_DIR/nagios/cgi.cfg" /etc/nagios4/cgi.cfg 2>/dev/null || true
+  sudo mkdir -p /usr/lib/nagios/plugins
+  sudo cp "$REPO_DIR/nagios/plugins/"*.sh /usr/lib/nagios/plugins/ 2>/dev/null || true
+  sudo chmod +x /usr/lib/nagios/plugins/*.sh 2>/dev/null || true
+  success "Custom Nagios configs and plugins installed from repo"
 fi
 
 # Enable Nagios Apache config (nagios4 package usually drops one)
@@ -273,7 +343,12 @@ success "Log rotation configured"
 # ─────────────────────────────────────────────────
 # 13. Summary and next steps
 # ─────────────────────────────────────────────────
-PUBLIC_IP=$(curl -sf --max-time 5 http://169.254.169.254/latest/meta-data/public-ipv4 2>/dev/null || echo "<public-ip>")
+IMDS_TOKEN_PUB=$(curl -s -f -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 60" 2>/dev/null || true)
+if [ -n "$IMDS_TOKEN_PUB" ]; then
+  PUBLIC_IP=$(curl -sf --max-time 5 -H "X-aws-ec2-metadata-token: $IMDS_TOKEN_PUB" http://169.254.169.254/latest/meta-data/public-ipv4 2>/dev/null || echo "<public-ip>")
+else
+  PUBLIC_IP=$(curl -sf --max-time 5 http://169.254.169.254/latest/meta-data/public-ipv4 2>/dev/null || echo "<public-ip>")
+fi
 
 echo ""
 echo -e "${GREEN}════════════════════════════════════════════════════════════${NC}"
@@ -288,6 +363,11 @@ for svc in puppetserver nagios4 apache2; do
     echo -e "  ${RED}✗${NC} $svc (check: journalctl -u $svc)"
   fi
 done
+if sudo systemctl is-active --quiet snap.amazon-ssm-agent.amazon-ssm-agent.service || sudo systemctl is-active --quiet amazon-ssm-agent; then
+  echo -e "  ${GREEN}✓${NC} amazon-ssm-agent"
+else
+  echo -e "  ${YELLOW}?${NC} amazon-ssm-agent (check: sudo systemctl status amazon-ssm-agent)"
+fi
 echo ""
 echo "Next steps:"
 echo "  1. Sign App Node certificate:"

@@ -37,6 +37,7 @@ resource "aws_instance" "ops_node" {
   subnet_id                   = var.subnet_id
   vpc_security_group_ids      = [var.ops_security_group_id]
   key_name                    = local.resolved_key_name
+  iam_instance_profile        = aws_iam_instance_profile.ops_instance_profile.name
   associate_public_ip_address = true
 
   root_block_device {
@@ -62,6 +63,30 @@ resource "aws_instance" "ops_node" {
                   mkswap /swapfile
                   swapon /swapfile
                   echo '/swapfile none swap sw 0 0' >> /etc/fstab
+              fi
+
+              # Ensure AWS Systems Manager (SSM) Agent is installed and running
+              if ! systemctl is-active --quiet snap.amazon-ssm-agent.amazon-ssm-agent.service && ! systemctl is-active --quiet amazon-ssm-agent; then
+                  if command -v snap >/dev/null 2>&1; then
+                      snap install amazon-ssm-agent --classic || true
+                      systemctl enable snap.amazon-ssm-agent.amazon-ssm-agent.service || true
+                      systemctl start snap.amazon-ssm-agent.amazon-ssm-agent.service || true
+                  fi
+                  if ! systemctl is-active --quiet snap.amazon-ssm-agent.amazon-ssm-agent.service && ! systemctl is-active --quiet amazon-ssm-agent; then
+                      IMDS_TOKEN="$(curl -s -f -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 60" 2>/dev/null || true)"
+                      if [ -n "$IMDS_TOKEN" ]; then
+                          REGION="$(curl -s -f -H "X-aws-ec2-metadata-token: $IMDS_TOKEN" http://169.254.169.254/latest/meta-data/placement/region 2>/dev/null || echo 'ap-south-1')"
+                      else
+                          REGION="$(curl -s -f http://169.254.169.254/latest/meta-data/placement/region 2>/dev/null || echo 'ap-south-1')"
+                      fi
+                      mkdir -p /tmp/ssm_install
+                      if curl -s -f -L "https://amazon-ssm-$REGION.s3.$REGION.amazonaws.com/latest/debian_amd64/amazon-ssm-agent.deb" -o /tmp/ssm_install/amazon-ssm-agent.deb; then
+                          dpkg -i /tmp/ssm_install/amazon-ssm-agent.deb || apt-get install -f -y || true
+                          systemctl enable amazon-ssm-agent || true
+                          systemctl start amazon-ssm-agent || true
+                      fi
+                      rm -rf /tmp/ssm_install
+                  fi
               fi
               EOF
 

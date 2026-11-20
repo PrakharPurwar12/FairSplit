@@ -24,11 +24,11 @@ resource "aws_security_group" "app" {
 # Ops Node Security Group Rules
 # ==============================================================================
 
-# SSH (22) restricted to administrator IP
+# SSH (22) restricted to administrator IP (temporary fallback until SSM is tested)
 resource "aws_security_group_rule" "ops_ingress_ssh" {
   type              = "ingress"
   security_group_id = aws_security_group.ops.id
-  description       = "SSH access to Ops Node restricted to administrator IP"
+  description       = "SSH access to Ops Node restricted to administrator IP (temporary fallback until SSM tested)"
   from_port         = 22
   to_port           = 22
   protocol          = "tcp"
@@ -57,11 +57,11 @@ resource "aws_security_group_rule" "ops_ingress_puppet" {
   source_security_group_id = aws_security_group.app.id
 }
 
-# Ops Node Outbound: All allowed
+# Ops Node Outbound: All allowed (including HTTPS 443 to AWS Systems Manager endpoints via IGW)
 resource "aws_security_group_rule" "ops_egress_all" {
   type              = "egress"
   security_group_id = aws_security_group.ops.id
-  description       = "Allow all outbound traffic from Ops Node"
+  description       = "Allow all outbound traffic from Ops Node including HTTPS 443 to SSM endpoints"
   from_port         = 0
   to_port           = 0
   protocol          = "-1"
