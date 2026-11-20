@@ -2,15 +2,16 @@
 # Architecture: Ops Node & App Node
 
 [ops]
-ops-node ansible_host=${ops_public_ip} ansible_user=ubuntu private_ip=${ops_private_ip}
+ops-node ansible_host=127.0.0.1 ansible_connection=local ansible_user=ubuntu private_ip=${ops_private_ip} public_ip=${ops_public_ip}
 
 [app]
-app-node ansible_host=${app_public_ip} ansible_user=ubuntu private_ip=${app_private_ip}
+app-node ansible_host=${app_private_ip} ansible_user=ubuntu private_ip=${app_private_ip} public_ip=${app_public_ip}
+
+[fairsplit:children]
+ops
+app
 
 [all:vars]
-ansible_ssh_common_args='-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'
+ansible_ssh_common_args='-o StrictHostKeyChecking=yes -o UserKnownHostsFile=~/.ssh/known_hosts'
 ansible_python_interpreter=/usr/bin/python3
-%{ if ssh_key_path != "" ~}
-ansible_ssh_private_key_file=${ssh_key_path}
-%{ endif ~}
-
+ansible_ssh_private_key_file=~/.ssh/id_ed25519

@@ -1,48 +1,87 @@
 #!/bin/bash
-# Validate that a container failure is genuine (not a transient blip)
-# Usage: validate_failure.sh <container_name> [retries] [delay_seconds]
+# Validate that a container failure is genuine before executing remediation.
 #
-# Returns:
+# Execution Context Awareness:
+# - If running locally on App Node: executes local 'docker inspect'.
+# - If running on Ops Node: queries App Node via check_nrpe.
+# - If neither tool is directly accessible: relies on Nagios HARD failure signal and proceeds.
+#
+# Usage:
+#   validate_failure.sh <container_name> [retries] [delay_seconds] [remote_app_host]
+#
+# Exit codes:
 #   0 - Container is running (healthy)
-#   1 - Container confirmed not running (genuine failure)
+#   1 - Container confirmed failing / not running
 
-set -uo pipefail
+set -euo pipefail
 
-CONTAINER=${1:-"fairsplit_backend"}
-RETRIES=${2:-3}
-DELAY=${3:-5}
+CONTAINER="${1:-"fairsplit_backend"}"
+RETRIES="${2:-3}"
+DELAY="${3:-5}"
+APP_HOST="${4:-""}"
 
 TIMESTAMP=$(date '+%Y-%m-%d %H:%M:%S')
 
-# Verify docker is available
-if ! command -v docker &>/dev/null; then
-  echo "[$TIMESTAMP] ERROR: docker command not found" >&2
-  exit 2
+# If APP_HOST is not passed, attempt discovery from inventory file
+if [ -z "$APP_HOST" ] && [ -f /opt/fairsplit/ansible/inventory/hosts.ini ]; then
+  APP_HOST=$(grep -E '^[[:space:]]*app-node' /opt/fairsplit/ansible/inventory/hosts.ini 2>/dev/null | \
+    sed -n 's/.*ansible_host=\([0-9.]*\).*/\1/p' | head -1 || true)
 fi
 
-echo "[$TIMESTAMP] Validating container '$CONTAINER' (retries=$RETRIES, delay=${DELAY}s)"
+echo "[$TIMESTAMP] Validating failure status for '$CONTAINER' (retries=$RETRIES, delay=${DELAY}s)"
 
-for i in $(seq 1 "$RETRIES"); do
-  STATUS=$(docker inspect --format='{{.State.Running}}' "$CONTAINER" 2>/dev/null)
-  EXIT_CODE=$?
+# ─────────────────────────────────────────────────────────────────────────────
+# Path A: Local Docker Execution (When running directly on App Node)
+# ─────────────────────────────────────────────────────────────────────────────
+if command -v docker &>/dev/null && docker ps &>/dev/null; then
+  for i in $(seq 1 "$RETRIES"); do
+    STATUS=$(docker inspect --format='{{.State.Running}}' "$CONTAINER" 2>/dev/null || echo "false")
+    HEALTH=$(docker inspect --format='{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}' "$CONTAINER" 2>/dev/null || echo "unknown")
 
-  if [ $EXIT_CODE -ne 0 ]; then
-    echo "[$TIMESTAMP] WARNING: Container '$CONTAINER' does not exist or cannot be inspected (check $i/$RETRIES)"
-  elif [ "$STATUS" = "true" ]; then
-    echo "[$TIMESTAMP] OK: $CONTAINER is running (check $i/$RETRIES)"
-    exit 0
-  else
-    # Container exists but is not running - check exit code for more context
-    EXIT_STATUS=$(docker inspect --format='{{.State.ExitCode}}' "$CONTAINER" 2>/dev/null || echo "unknown")
-    RESTART_COUNT=$(docker inspect --format='{{.RestartCount}}' "$CONTAINER" 2>/dev/null || echo "unknown")
-    echo "[$TIMESTAMP] FAIL: $CONTAINER is NOT running (check $i/$RETRIES, exit_code=$EXIT_STATUS, restarts=$RESTART_COUNT)"
-  fi
+    if [ "$STATUS" = "true" ] && [ "$HEALTH" != "unhealthy" ]; then
+      echo "[$TIMESTAMP] OK: Container $CONTAINER is running and healthy locally (check $i/$RETRIES)"
+      exit 0
+    else
+      echo "[$TIMESTAMP] FAIL: Container $CONTAINER status=$STATUS health=$HEALTH (check $i/$RETRIES)"
+    fi
 
-  if [ "$i" -lt "$RETRIES" ]; then
-    echo "[$TIMESTAMP] Waiting ${DELAY}s before retry..."
-    sleep "$DELAY"
-  fi
-done
+    if [ "$i" -lt "$RETRIES" ]; then
+      sleep "$DELAY"
+    fi
+  done
 
-echo "[$TIMESTAMP] CONFIRMED FAILURE: $CONTAINER not running after $RETRIES checks"
+  echo "[$TIMESTAMP] CONFIRMED FAILURE: $CONTAINER confirmed not running/healthy after $RETRIES checks"
+  exit 1
+fi
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Path B: Remote NRPE Check from Ops Node
+# ─────────────────────────────────────────────────────────────────────────────
+NRPE_BIN="/usr/lib/nagios/plugins/check_nrpe"
+if [ -n "$APP_HOST" ] && [ -x "$NRPE_BIN" ]; then
+  for i in $(seq 1 "$RETRIES"); do
+    NRPE_OUT=$("$NRPE_BIN" -H "$APP_HOST" -c check_docker_container -a "$CONTAINER" 2>/dev/null || true)
+    NRPE_RC=$?
+
+    if [ "$NRPE_RC" -eq 0 ]; then
+      echo "[$TIMESTAMP] OK: NRPE check reports $CONTAINER is healthy on $APP_HOST (check $i/$RETRIES)"
+      exit 0
+    else
+      echo "[$TIMESTAMP] FAIL: NRPE check reports failure for $CONTAINER on $APP_HOST (RC=$NRPE_RC: $NRPE_OUT)"
+    fi
+
+    if [ "$i" -lt "$RETRIES" ]; then
+      sleep "$DELAY"
+    fi
+  done
+
+  echo "[$TIMESTAMP] CONFIRMED FAILURE: $CONTAINER failed NRPE checks on $APP_HOST"
+  exit 1
+fi
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Path C: Fallback to Nagios Hard State Alert
+# ─────────────────────────────────────────────────────────────────────────────
+echo "[$TIMESTAMP] Local Docker and check_nrpe not directly executable in current context."
+echo "[$TIMESTAMP] Proceeding with remediation based on Nagios HARD failure trigger."
 exit 1

@@ -17,6 +17,7 @@ myenv/
 # Scratch & Debug
 scratch/
 *.scratch
+*.bak
 
 # Python
 __pycache__/
@@ -45,4 +46,13 @@ backend/media/
 # AI and Agents
 .agents/
 .codex/
+
+# Terraform plan files
+terraform/tfplan
+*.plan
+*.tfplan
+tfplan
+
+# Backup files
+*.bak
 

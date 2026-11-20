@@ -1,0 +1,13 @@
+# /etc/sudoers.d/99-nagios-remediation
+# Privilege boundary for FairSplit Nagios automated self-healing remediation.
+#
+# Constraints:
+# 1. User 'nagios' may ONLY execute the specific event handler script.
+# 2. Execution is restricted to target user 'ubuntu' (denies elevation to root).
+# 3. No shell or arbitrary binary execution permitted.
+# 4. Sudo resets environment variables (Defaults env_reset, secure_path).
+#
+# Permissions: Must be mode 0440, owned by root:root.
+# Validation: visudo -cf /etc/sudoers.d/99-nagios-remediation
+
+nagios ALL=(ubuntu) NOPASSWD: /opt/fairsplit/remediation/event_handlers/nagios_event_handler.sh

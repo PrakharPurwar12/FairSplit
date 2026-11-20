@@ -28,6 +28,7 @@ error()   { echo -e "${RED}[ERROR]${NC} $*" >&2; exit 1; }
 # Parse arguments
 # ─────────────────────────────────────────────────
 OPS_IP=""
+OPS_PUBKEY=""
 CERTNAME="fairsplit-app"
 
 while [[ $# -gt 0 ]]; do
@@ -36,12 +37,16 @@ while [[ $# -gt 0 ]]; do
       OPS_IP="$2"
       shift 2
       ;;
+    --ops-pubkey)
+      OPS_PUBKEY="$2"
+      shift 2
+      ;;
     --certname)
       CERTNAME="$2"
       shift 2
       ;;
     *)
-      error "Unknown parameter: $1. Usage: bash bootstrap_app.sh --ops-ip <OPS_PRIVATE_IP> [--certname <name>]"
+      error "Unknown parameter: $1. Usage: bash bootstrap_app.sh --ops-ip <OPS_PRIVATE_IP> [--ops-pubkey '<PUBKEY>'] [--certname <name>]"
       ;;
   esac
 done
@@ -194,7 +199,34 @@ sudo chmod 750 /opt/fairsplit/backups
 success "Directories created with appropriate ownership"
 
 # ─────────────────────────────────────────────────
-# 8. Summary and Next Steps
+# 8. Authorize Ops Node Ed25519 Deployment Public Key
+# ─────────────────────────────────────────────────
+if [ -n "$OPS_PUBKEY" ]; then
+  info "Authorizing Ops deployment public key..."
+  # Strict format validation: must be valid OpenSSH Ed25519 public key format
+  if echo "$OPS_PUBKEY" | grep -qE '^ssh-ed25519 [A-Za-z0-9+/=]+( .*)?$'; then
+    mkdir -p /home/ubuntu/.ssh
+    chmod 700 /home/ubuntu/.ssh
+    touch /home/ubuntu/.ssh/authorized_keys
+    chmod 600 /home/ubuntu/.ssh/authorized_keys
+
+    # Idempotent addition: only append if not already present
+    if ! grep -qxF "$OPS_PUBKEY" /home/ubuntu/.ssh/authorized_keys; then
+      echo "$OPS_PUBKEY" >> /home/ubuntu/.ssh/authorized_keys
+      success "Ops deployment public key appended to authorized_keys"
+    else
+      success "Ops deployment public key already authorized in authorized_keys"
+    fi
+    chown -R ubuntu:ubuntu /home/ubuntu/.ssh
+  else
+    error "Invalid or malformed Ed25519 public key provided: '$OPS_PUBKEY'"
+  fi
+else
+  warn "No --ops-pubkey supplied. Ops-to-App Ansible automation will require manual public-key authorization."
+fi
+
+# ─────────────────────────────────────────────────
+# 9. Summary and Next Steps
 # ─────────────────────────────────────────────────
 echo ""
 echo -e "${GREEN}════════════════════════════════════════════════════════════${NC}"

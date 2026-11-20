@@ -30,3 +30,12 @@ terraform.rc
 *.pem
 *.pub
 
+# Plan files
+terraform/tfplan
+*.plan
+*.tfplan
+tfplan
+
+# Backup files
+*.bak
+
