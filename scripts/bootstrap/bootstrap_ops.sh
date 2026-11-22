@@ -23,15 +23,56 @@ warn()    { echo -e "${YELLOW}[WARN]${NC} $*"; }
 error()   { echo -e "${RED}[ERROR]${NC} $*" >&2; exit 1; }
 
 # ─────────────────────────────────────────────────
-# Parse args
+# Parse args & Secure Nagios Password Ingestion
 # ─────────────────────────────────────────────────
-NAGIOS_PASSWORD="${NAGIOS_PASSWORD:-fairsplit-nagios}"
+NAGIOS_PASSWORD="${NAGIOS_PASSWORD:-}"
+NAGIOS_PASSWORD_FILE=""
+APP_IP="${APP_IP:-172.31.14.13}"
+
 while [[ $# -gt 0 ]]; do
   case $1 in
-    --nagios-password) NAGIOS_PASSWORD="$2"; shift 2 ;;
+    --nagios-password-file) NAGIOS_PASSWORD_FILE="$2"; shift 2 ;;
+    --app-ip) APP_IP="$2"; shift 2 ;;
     *) error "Unknown argument: $1" ;;
   esac
 done
+
+if [ -n "$NAGIOS_PASSWORD_FILE" ]; then
+  if [ ! -r "$NAGIOS_PASSWORD_FILE" ]; then
+    error "Specified Nagios password file is missing or unreadable: $NAGIOS_PASSWORD_FILE"
+  fi
+  NAGIOS_PASSWORD=$(head -n 1 "$NAGIOS_PASSWORD_FILE" | tr -d '\r\n')
+fi
+
+if [ -z "$NAGIOS_PASSWORD" ]; then
+  if [ -t 0 ]; then
+    info "No Nagios password provided via NAGIOS_PASSWORD or --nagios-password-file."
+    read -r -s -p "Enter password for nagiosadmin: " NAGIOS_PASSWORD
+    echo ""
+    read -r -s -p "Confirm password for nagiosadmin: " NAGIOS_PASSWORD_CONFIRM
+    echo ""
+    if [ "$NAGIOS_PASSWORD" != "$NAGIOS_PASSWORD_CONFIRM" ]; then
+      unset NAGIOS_PASSWORD NAGIOS_PASSWORD_CONFIRM
+      error "Passwords do not match. Aborting bootstrap."
+    fi
+    unset NAGIOS_PASSWORD_CONFIRM
+  elif [ -f /etc/nagios4/.nagiosadmin_credential ]; then
+    NAGIOS_PASSWORD=$(sudo cat /etc/nagios4/.nagiosadmin_credential)
+  else
+    # Auto-generate secure 24-character credential for non-interactive execution
+    NAGIOS_PASSWORD=$(openssl rand -base64 24 | tr -dc 'A-Za-z0-9' | head -c 24)
+    sudo mkdir -p /etc/nagios4
+    printf '%s\n' "$NAGIOS_PASSWORD" | sudo tee /etc/nagios4/.nagiosadmin_credential >/dev/null
+    sudo chmod 0600 /etc/nagios4/.nagiosadmin_credential
+    sudo chown root:root /etc/nagios4/.nagiosadmin_credential
+    info "Generated secure random nagiosadmin credentials in /etc/nagios4/.nagiosadmin_credential"
+  fi
+fi
+
+if [ ${#NAGIOS_PASSWORD} -lt 12 ]; then
+  unset NAGIOS_PASSWORD
+  error "Nagios admin password must be at least 12 characters long."
+fi
 
 # ─────────────────────────────────────────────────
 # 1. Pre-flight checks
@@ -249,57 +290,103 @@ fi
 # 9. Install Nagios 4
 # ─────────────────────────────────────────────────
 info "Installing Nagios 4 and plugins..."
-# Pre-answer debconf for nagios3 (suppress prompts)
 echo "postfix postfix/mailname string fairsplit-ops" | sudo debconf-set-selections
 echo "postfix postfix/main_mailer_type string 'No configuration'" | sudo debconf-set-selections
 
 sudo DEBIAN_FRONTEND=noninteractive apt-get install -y \
   nagios4 \
   nagios-nrpe-plugin \
-  nagios-plugins-extra \
-  nagios-plugins-contrib
+  apache2 \
+  apache2-utils \
+  monitoring-plugins-basic \
+  monitoring-plugins-standard \
+  jq
+
+# Ensure systemd alias so both 'systemctl is-active nagios' and 'nagios4' work
+if [ -f /lib/systemd/system/nagios4.service ]; then
+  if ! grep -q 'Alias=nagios.service' /lib/systemd/system/nagios4.service; then
+    sudo sed -i '/^WantedBy=/a Alias=nagios.service' /lib/systemd/system/nagios4.service
+    sudo systemctl daemon-reload
+  fi
+fi
+sudo systemctl enable nagios4
 success "Nagios 4 installed"
 
 # ─────────────────────────────────────────────────
 # 10. Install Apache2 for Nagios web UI
 # ─────────────────────────────────────────────────
-info "Installing and configuring Apache2..."
-sudo apt-get install -y apache2 libapache2-mod-php php
-sudo a2enmod cgi rewrite
+info "Configuring Apache2..."
+sudo a2enmod cgi rewrite auth_basic authn_file authz_user >/dev/null 2>&1 || true
 sudo systemctl enable apache2
 sudo systemctl start apache2
-success "Apache2 installed and started"
+success "Apache2 configured and started"
 
 # ─────────────────────────────────────────────────
 # 11. Configure Nagios
 # ─────────────────────────────────────────────────
 info "Configuring Nagios..."
 
-# Set nagiosadmin password
-if command -v htpasswd &>/dev/null; then
-  sudo htpasswd -cb /etc/nagios4/htpasswd.users nagiosadmin "$NAGIOS_PASSWORD"
-  success "nagiosadmin password set via htpasswd"
-else
-  sudo apt-get install -y apache2-utils
-  sudo htpasswd -cb /etc/nagios4/htpasswd.users nagiosadmin "$NAGIOS_PASSWORD"
-  success "nagiosadmin password set via htpasswd"
+sudo mkdir -p /etc/nagios4
+HTPASSWD_FILE="/etc/nagios4/htpasswd.users"
+
+if [ -n "$NAGIOS_PASSWORD" ]; then
+  printf '%s\n' "$NAGIOS_PASSWORD" | sudo htpasswd -ci "$HTPASSWD_FILE" nagiosadmin >/dev/null 2>&1
+  sudo chmod 640 "$HTPASSWD_FILE"
+  sudo chown root:www-data "$HTPASSWD_FILE" 2>/dev/null || sudo chown root:nagios "$HTPASSWD_FILE" 2>/dev/null || true
+  unset NAGIOS_PASSWORD
+  success "nagiosadmin credential successfully configured"
 fi
+
+# Configure Apache nagios4-cgi.conf for Basic Authentication
+sudo tee /etc/apache2/conf-available/nagios4-cgi.conf > /dev/null <<'EOF'
+ScriptAlias /cgi-bin/nagios4 /usr/lib/cgi-bin/nagios4
+ScriptAlias /nagios4/cgi-bin /usr/lib/cgi-bin/nagios4
+
+Alias /nagios4/stylesheets /etc/nagios4/stylesheets
+Alias /nagios4 /usr/share/nagios4/htdocs
+
+<DirectoryMatch (/usr/share/nagios4/htdocs|/usr/lib/cgi-bin/nagios4|/etc/nagios4/stylesheets)>
+    Options FollowSymLinks
+    DirectoryIndex index.php index.html
+    AllowOverride AuthConfig
+
+    AuthName "Nagios Core Access"
+    AuthType Basic
+    AuthUserFile /etc/nagios4/htpasswd.users
+    Require valid-user
+</DirectoryMatch>
+
+<Directory /usr/share/nagios4/htdocs>
+    Options +ExecCGI
+</Directory>
+EOF
+
+sudo a2enconf nagios4-cgi >/dev/null 2>&1 || true
+
+# Configure CGI settings
+sudo sed -i 's/^use_authentication=.*/use_authentication=1/' /etc/nagios4/cgi.cfg 2>/dev/null || true
+sudo sed -i 's/^default_user_name=.*/default_user_name=nagiosadmin/' /etc/nagios4/cgi.cfg 2>/dev/null || true
+sudo sed -i 's/^authorized_for_system_information=.*/authorized_for_system_information=nagiosadmin/' /etc/nagios4/cgi.cfg 2>/dev/null || true
+sudo sed -i 's/^authorized_for_configuration_information=.*/authorized_for_configuration_information=nagiosadmin/' /etc/nagios4/cgi.cfg 2>/dev/null || true
+sudo sed -i 's/^authorized_for_system_commands=.*/authorized_for_system_commands=nagiosadmin/' /etc/nagios4/cgi.cfg 2>/dev/null || true
+sudo sed -i 's/^authorized_for_all_services=.*/authorized_for_all_services=nagiosadmin/' /etc/nagios4/cgi.cfg 2>/dev/null || true
+sudo sed -i 's/^authorized_for_all_hosts=.*/authorized_for_all_hosts=nagiosadmin/' /etc/nagios4/cgi.cfg 2>/dev/null || true
+sudo sed -i 's/^authorized_for_all_service_commands=.*/authorized_for_all_service_commands=nagiosadmin/' /etc/nagios4/cgi.cfg 2>/dev/null || true
+sudo sed -i 's/^authorized_for_all_host_commands=.*/authorized_for_all_host_commands=nagiosadmin/' /etc/nagios4/cgi.cfg 2>/dev/null || true
 
 # Install custom nagios config from repo if present
 if [ -d "$REPO_DIR/nagios" ]; then
   sudo mkdir -p /etc/nagios4/conf.d
-  sudo cp "$REPO_DIR/nagios/objects/"*.cfg /etc/nagios4/conf.d/ 2>/dev/null || true
-  sudo cp "$REPO_DIR/nagios/nagios.cfg" /etc/nagios4/nagios.cfg 2>/dev/null || true
-  sudo cp "$REPO_DIR/nagios/cgi.cfg" /etc/nagios4/cgi.cfg 2>/dev/null || true
+  sudo cp "$REPO_DIR/nagios/objects/commands.cfg" /etc/nagios4/conf.d/fairsplit_commands.cfg 2>/dev/null || true
+  sudo cp "$REPO_DIR/nagios/objects/hosts.cfg" /etc/nagios4/conf.d/fairsplit_hosts.cfg 2>/dev/null || true
+  sudo cp "$REPO_DIR/nagios/objects/services.cfg" /etc/nagios4/conf.d/fairsplit_services.cfg 2>/dev/null || true
+  if [ -n "$APP_IP" ] && [ -f /etc/nagios4/conf.d/fairsplit_hosts.cfg ]; then
+    sudo sed -i "s/address[[:space:]]*[0-9.]*/address                 ${APP_IP}/" /etc/nagios4/conf.d/fairsplit_hosts.cfg
+  fi
   sudo mkdir -p /usr/lib/nagios/plugins
   sudo cp "$REPO_DIR/nagios/plugins/"*.sh /usr/lib/nagios/plugins/ 2>/dev/null || true
   sudo chmod +x /usr/lib/nagios/plugins/*.sh 2>/dev/null || true
   success "Custom Nagios configs and plugins installed from repo"
-fi
-
-# Enable Nagios Apache config (nagios4 package usually drops one)
-if [ -f /etc/apache2/conf-available/nagios4.conf ]; then
-  sudo a2enconf nagios4
 fi
 
 # Validate nagios config
@@ -312,7 +399,7 @@ fi
 
 # Start and enable nagios4
 sudo systemctl enable nagios4
-sudo systemctl start nagios4 || sudo systemctl restart nagios4
+sudo systemctl restart nagios4
 if sudo systemctl is-active --quiet nagios4; then
   success "nagios4 is running"
 else
@@ -373,7 +460,7 @@ echo "Next steps:"
 echo "  1. Sign App Node certificate:"
 echo "       sudo puppetserver ca sign --certname fairsplit-app"
 echo "  2. Access Nagios web UI:"
-echo "       http://${PUBLIC_IP}/nagios4  (user: nagiosadmin, password: <set above>)"
+echo "       http://${PUBLIC_IP}/nagios4  (user: nagiosadmin, password: [configured during bootstrap])"
 echo "  3. Set up Ansible inventory:"
 echo "       /opt/fairsplit/ansible/inventory/hosts.ini"
 echo "  4. Configure Nagios hosts/services for App Node"

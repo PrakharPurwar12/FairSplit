@@ -172,7 +172,18 @@ sudo apt-get install -y \
 sudo mkdir -p /usr/lib/nagios/plugins
 sudo chmod 755 /usr/lib/nagios/plugins
 
-# Configure NRPE allowed_hosts
+# Add nagios user to docker group to inspect container status
+sudo usermod -aG docker nagios
+
+# Copy custom plugins from repo if present
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_DIR="$(cd "${SCRIPT_DIR}/../.." && pwd)"
+if [ -d "${REPO_DIR}/nagios/plugins" ]; then
+  sudo cp "${REPO_DIR}/nagios/plugins/"*.sh /usr/lib/nagios/plugins/ 2>/dev/null || true
+  sudo chmod 755 /usr/lib/nagios/plugins/check_*.sh 2>/dev/null || true
+fi
+
+# Configure NRPE allowed_hosts and strict security (no command arguments)
 NRPE_CFG="/etc/nagios/nrpe.cfg"
 if [ -f "$NRPE_CFG" ]; then
   ALLOWED_HOSTS="127.0.0.1,::1"
@@ -183,6 +194,21 @@ if [ -f "$NRPE_CFG" ]; then
   sudo sed -i "s/^dont_blame_nrpe=.*/dont_blame_nrpe=0/" "$NRPE_CFG"
 fi
 
+# Define explicit permitted NRPE commands
+sudo tee /etc/nagios/nrpe_local.cfg > /dev/null <<'EOF'
+command[check_disk]=/usr/lib/nagios/plugins/check_disk -w 20% -c 10% -p /
+command[check_load]=/usr/lib/nagios/plugins/check_load -r -w 5.0,4.0,3.0 -c 10.0,8.0,6.0
+command[check_mem]=/usr/lib/nagios/plugins/check_mem.sh 80 90
+command[check_docker_frontend]=/usr/lib/nagios/plugins/check_docker_container.sh fairsplit_frontend
+command[check_docker_backend]=/usr/lib/nagios/plugins/check_docker_container.sh fairsplit_backend
+command[check_docker_postgres]=/usr/lib/nagios/plugins/check_docker_container.sh fairsplit_postgres
+command[check_fairsplit]=/usr/lib/nagios/plugins/check_fairsplit.sh 127.0.0.1 80 /api/health/ 10
+EOF
+
+if ! grep -q 'nrpe_local.cfg' /etc/nagios/nrpe.cfg 2>/dev/null; then
+  echo 'include=/etc/nagios/nrpe_local.cfg' | sudo tee -a /etc/nagios/nrpe.cfg >/dev/null
+fi
+
 sudo systemctl enable nagios-nrpe-server
 sudo systemctl restart nagios-nrpe-server
 success "NRPE server configured and restarted"
@@ -191,9 +217,13 @@ success "NRPE server configured and restarted"
 # 7. Create application directories & permissions
 # ─────────────────────────────────────────────────
 info "Creating application directory tree under /opt/fairsplit..."
-sudo mkdir -p /opt/fairsplit/app
 sudo mkdir -p /opt/fairsplit/backups
 sudo mkdir -p /opt/fairsplit/logs
+if [ -d /opt/fairsplit/repo ] && [ ! -d /opt/fairsplit/app ] && [ ! -L /opt/fairsplit/app ]; then
+  sudo ln -sf /opt/fairsplit/repo /opt/fairsplit/app
+elif [ ! -d /opt/fairsplit/app ]; then
+  sudo mkdir -p /opt/fairsplit/app
+fi
 sudo chown -R ubuntu:ubuntu /opt/fairsplit
 sudo chmod 750 /opt/fairsplit/backups
 success "Directories created with appropriate ownership"

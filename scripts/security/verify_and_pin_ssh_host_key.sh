@@ -11,7 +11,7 @@
 # 6. Enables StrictHostKeyChecking=yes for all subsequent connections.
 #
 # Usage:
-#   bash verify_and_pin_ssh_host_key.sh --instance-id <INSTANCE_ID> --host-ip <PRIVATE_IP> [--region <REGION>] [--dry-run]
+#   bash verify_and_pin_ssh_host_key.sh --instance-id <INSTANCE_ID> --host-ip <PRIVATE_IP> [--expected-fingerprint <FP>] [--region <REGION>] [--dry-run]
 
 set -euo pipefail
 
@@ -32,6 +32,7 @@ HOST_IP=""
 AWS_REGION="${AWS_REGION:-ap-south-1}"
 KNOWN_HOSTS_FILE="${HOME}/.ssh/known_hosts"
 KEY_TYPE="ed25519"
+EXPECTED_FINGERPRINT_PARAM=""
 DRY_RUN=false
 MAX_RETRIES=12
 RETRY_DELAY=10
@@ -43,13 +44,14 @@ while [[ $# -gt 0 ]]; do
     --region)      AWS_REGION="$2"; shift 2 ;;
     --known-hosts) KNOWN_HOSTS_FILE="$2"; shift 2 ;;
     --key-type)    KEY_TYPE="$2"; shift 2 ;;
+    --expected-fingerprint) EXPECTED_FINGERPRINT_PARAM="$2"; shift 2 ;;
     --dry-run)     DRY_RUN=true; shift ;;
     *) error "Unknown parameter: $1" ;;
   esac
 done
 
 if [ -z "$INSTANCE_ID" ] || [ -z "$HOST_IP" ]; then
-  error "Missing required arguments. Usage: $0 --instance-id <ID> --host-ip <IP> [--region <REGION>] [--dry-run]"
+  error "Missing required arguments. Usage: $0 --instance-id <ID> --host-ip <IP> [--expected-fingerprint <FP>] [--region <REGION>] [--dry-run]"
 fi
 
 info "=== FairSplit SSH Host-Key Authenticated Pinning ==="
@@ -59,39 +61,44 @@ info "AWS Region         : $AWS_REGION"
 info "Key Algorithm      : $KEY_TYPE"
 
 # ─────────────────────────────────────────────────────────────────────────────
-# 1. Retrieve Authoritative Host-Key Fingerprint from AWS Control-Plane
+# 1. Retrieve Authoritative Host-Key Fingerprint
 # ─────────────────────────────────────────────────────────────────────────────
-info "Step 1: Querying AWS EC2 console output for authoritative host-key fingerprints..."
-
 EXPECTED_FINGERPRINT=""
-ATTEMPT=1
 
-while [ $ATTEMPT -le $MAX_RETRIES ]; do
-  # Retrieve console log through AWS control-plane API (requires ec2:GetConsoleOutput)
-  CONSOLE_OUTPUT=$(aws ec2 get-console-output --instance-id "$INSTANCE_ID" --region "$AWS_REGION" --output text 2>/dev/null || true)
+if [ -n "$EXPECTED_FINGERPRINT_PARAM" ]; then
+  EXPECTED_FINGERPRINT="$EXPECTED_FINGERPRINT_PARAM"
+  success "Using administrator-supplied authoritative fingerprint: $EXPECTED_FINGERPRINT"
+else
+  info "Step 1: Querying AWS EC2 console output for authoritative host-key fingerprints..."
 
-  if [ -n "$CONSOLE_OUTPUT" ] && echo "$CONSOLE_OUTPUT" | grep -q "BEGIN SSH HOST KEY FINGERPRINTS"; then
-    # Extract line matching requested key type (e.g. ED25519, RSA, ECDSA)
-    EXPECTED_LINE=$(echo "$CONSOLE_OUTPUT" | grep -A 6 "BEGIN SSH HOST KEY FINGERPRINTS" | grep -i "(${KEY_TYPE})" | head -1 || true)
-    if [ -n "$EXPECTED_LINE" ]; then
-      # Fingerprint token format: SHA256:xxxxxxxxxxxx
-      EXPECTED_FINGERPRINT=$(echo "$EXPECTED_LINE" | grep -oE "SHA256:[A-Za-z0-9+/=]+" || true)
-      if [ -n "$EXPECTED_FINGERPRINT" ]; then
-        break
+  ATTEMPT=1
+  while [ $ATTEMPT -le $MAX_RETRIES ]; do
+    # Retrieve console log through AWS control-plane API (requires ec2:GetConsoleOutput)
+    CONSOLE_OUTPUT=$(aws ec2 get-console-output --instance-id "$INSTANCE_ID" --region "$AWS_REGION" --output text 2>/dev/null || true)
+
+    if [ -n "$CONSOLE_OUTPUT" ] && echo "$CONSOLE_OUTPUT" | grep -q "BEGIN SSH HOST KEY FINGERPRINTS"; then
+      # Extract line matching requested key type (e.g. ED25519, RSA, ECDSA)
+      EXPECTED_LINE=$(echo "$CONSOLE_OUTPUT" | grep -A 6 "BEGIN SSH HOST KEY FINGERPRINTS" | grep -i "(${KEY_TYPE})" | head -1 || true)
+      if [ -n "$EXPECTED_LINE" ]; then
+        # Fingerprint token format: SHA256:xxxxxxxxxxxx
+        EXPECTED_FINGERPRINT=$(echo "$EXPECTED_LINE" | grep -oE "SHA256:[A-Za-z0-9+/=]+" || true)
+        if [ -n "$EXPECTED_FINGERPRINT" ]; then
+          break
+        fi
       fi
     fi
+
+    info "Waiting for cloud-init to publish host-key fingerprints to console ($ATTEMPT/$MAX_RETRIES)..."
+    sleep "$RETRY_DELAY"
+    ATTEMPT=$((ATTEMPT + 1))
+  done
+
+  if [ -z "$EXPECTED_FINGERPRINT" ]; then
+    error "Failed to retrieve authoritative ${KEY_TYPE} host-key fingerprint from EC2 console output for $INSTANCE_ID after $MAX_RETRIES attempts."
   fi
 
-  info "Waiting for cloud-init to publish host-key fingerprints to console ($ATTEMPT/$MAX_RETRIES)..."
-  sleep "$RETRY_DELAY"
-  ATTEMPT=$((ATTEMPT + 1))
-done
-
-if [ -z "$EXPECTED_FINGERPRINT" ]; then
-  error "Failed to retrieve authoritative ${KEY_TYPE} host-key fingerprint from EC2 console output for $INSTANCE_ID after $MAX_RETRIES attempts."
+  success "Authoritative Expected Fingerprint (from AWS control-plane): $EXPECTED_FINGERPRINT"
 fi
-
-success "Authoritative Expected Fingerprint (from AWS control-plane): $EXPECTED_FINGERPRINT"
 
 # ─────────────────────────────────────────────────────────────────────────────
 # 2. Scan Candidate Public Key from Target Host
