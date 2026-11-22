@@ -2,41 +2,46 @@
 - name: Automated Service Remediation
   hosts: app
   become: true
-  gather_facts: true
+  gather_facts: false
 
   vars:
     service_name: "{{ service_name | default('') }}"
-    compose_working_dir: "{{ app_dir }}"
+    app_dir: /opt/fairsplit/repo
     compose_file: docker-compose.yml
     remediation_log: /opt/fairsplit/remediation.log
     escalation_flag: /opt/fairsplit/ESCALATION_NEEDED
-    wait_after_restart: 30
+    wait_after_restart: 15
     health_check_retries: 6
-    health_check_delay: 10
+    health_check_delay: 5
 
     # Service name to container name bidirectional mapping
     service_to_container:
       backend: fairsplit_backend
       fairsplit_backend: fairsplit_backend
-      postgres: fairsplit_postgres
-      fairsplit_postgres: fairsplit_postgres
       frontend: fairsplit_frontend
       fairsplit_frontend: fairsplit_frontend
+      postgres: fairsplit_postgres
+      fairsplit_postgres: fairsplit_postgres
 
     # Container name to docker-compose service name mapping
     service_to_compose_service:
       backend: backend
       fairsplit_backend: backend
-      postgres: postgres
-      fairsplit_postgres: postgres
       frontend: frontend
       fairsplit_frontend: frontend
+      postgres: postgres
+      fairsplit_postgres: postgres
 
   pre_tasks:
     - name: Validate service_name is provided
       ansible.builtin.fail:
         msg: "Variable 'service_name' is required. Pass it with -e service_name=<service_or_container>"
       when: service_name == ''
+
+    - name: Safety check - Prevent automatic PostgreSQL restart
+      ansible.builtin.fail:
+        msg: "Automatic remediation of PostgreSQL is prohibited to protect database integrity. Manual investigation required."
+      when: service_name in ['postgres', 'fairsplit_postgres']
 
     - name: Resolve target container and compose service names
       ansible.builtin.set_fact:
@@ -59,9 +64,9 @@
         group: ubuntu
         mode: "0644"
 
-    - name: Check container running state
+    - name: Check container running and health state
       ansible.builtin.command:
-        cmd: "docker inspect --format='{{ '{{' }}.State.Running{{ '}}' }}' {{ resolved_container }}"
+        cmd: "docker inspect --format='{{ '{{' }}.State.Running{{ '}}' }} {{ '{{' }}if .State.Health{{ '}}' }}{{ '{{' }}.State.Health.Status{{ '}}' }}{{ '{{' }}else{{ '}}' }}no-health{{ '{{' }}end{{ '}}' }}' {{ resolved_container }}"
       register: container_state
       changed_when: false
       failed_when: false
@@ -69,56 +74,49 @@
     - name: Log container state
       ansible.builtin.lineinfile:
         path: "{{ remediation_log }}"
-        line: "[{{ timestamp.stdout }}] Container {{ resolved_container }} running: {{ container_state.stdout | default('not_found') }}"
+        line: "[{{ timestamp.stdout }}] Container {{ resolved_container }} state: {{ container_state.stdout | default('not_found') }}"
         create: true
         mode: "0644"
 
-    - name: Restart service via Docker Compose
+    - name: Restart service via Docker Compose in /opt/fairsplit/repo
       ansible.builtin.command:
-        cmd: docker compose -f "{{ compose_file }}" restart "{{ resolved_compose_service }}"
+        cmd: "docker compose -f {{ compose_file }} restart {{ resolved_compose_service }}"
         chdir: "{{ app_dir }}"
-      become_user: ubuntu
-      when: container_state.stdout != 'true' or container_state.rc != 0
       register: restart_result
-
-    - name: Fallback to direct docker restart if compose restart did not trigger
-      ansible.builtin.command:
-        cmd: "docker restart {{ resolved_container }}"
-      when: (container_state.stdout != 'true' or container_state.rc != 0) and (restart_result is not defined or restart_result.rc != 0)
-      register: fallback_restart
-      failed_when: false
+      when: "'true healthy' not in container_state.stdout"
 
     - name: Wait for service to stabilize after restart
       ansible.builtin.pause:
         seconds: "{{ wait_after_restart }}"
-      when: (restart_result is defined and restart_result is changed) or (fallback_restart is defined and fallback_restart is changed)
+      when: restart_result is changed
 
     - name: Verify backend health endpoint if backend was remediated
       ansible.builtin.uri:
         url: "http://127.0.0.1/api/health/"
         method: GET
-        status_code: [200, 201]
+        status_code: [200]
         timeout: 10
-      register: health_check
+      register: backend_health
       retries: "{{ health_check_retries }}"
       delay: "{{ health_check_delay }}"
-      until: health_check.status in [200, 201]
+      until: backend_health.status == 200
       when: resolved_compose_service == 'backend'
 
-    - name: Verify postgres readiness if postgres was remediated
-      ansible.builtin.command:
-        cmd: docker compose -f "{{ compose_file }}" exec -T postgres pg_isready -U fairsplit -d fairsplit
-        chdir: "{{ app_dir }}"
-      become_user: ubuntu
-      register: pg_check
-      retries: 5
-      delay: 5
-      until: pg_check.rc == 0
-      when: resolved_compose_service == 'postgres'
+    - name: Verify frontend health endpoint if frontend was remediated
+      ansible.builtin.uri:
+        url: "http://127.0.0.1/"
+        method: GET
+        status_code: [200]
+        timeout: 10
+      register: frontend_health
+      retries: "{{ health_check_retries }}"
+      delay: "{{ health_check_delay }}"
+      until: frontend_health.status == 200
+      when: resolved_compose_service == 'frontend'
 
     - name: Log remediation success
       ansible.builtin.lineinfile:
         path: "{{ remediation_log }}"
-        line: "[{{ timestamp.stdout }}] REMEDIATION SUCCESS: service={{ resolved_compose_service }} container={{ resolved_container }} restored to healthy"
+        line: "[{{ timestamp.stdout }}] REMEDIATION SUCCESS: service={{ resolved_compose_service }} container={{ resolved_container }} verified operational"
         create: true
         mode: "0644"

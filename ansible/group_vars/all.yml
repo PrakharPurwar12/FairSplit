@@ -2,7 +2,7 @@
 ansible_user: ubuntu
 ansible_python_interpreter: /usr/bin/python3
 project_name: fairsplit
-app_dir: /opt/fairsplit/app
+app_dir: /opt/fairsplit/repo
 backup_dir: /opt/fairsplit/backups
 repo_url: "https://github.com/PrakharPurwar12/FairSplit.git"
 repo_branch: main

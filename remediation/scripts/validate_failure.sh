@@ -16,15 +16,15 @@
 set -euo pipefail
 
 CONTAINER="${1:-"fairsplit_backend"}"
-RETRIES="${2:-3}"
-DELAY="${3:-5}"
-APP_HOST="${4:-""}"
+RETRIES="${2:-2}"
+DELAY="${3:-3}"
+APP_HOST="${4:-"172.31.14.13"}"
 
 TIMESTAMP=$(date '+%Y-%m-%d %H:%M:%S')
 
-# If APP_HOST is not passed, attempt discovery from inventory file
+# If APP_HOST is not passed or empty, attempt discovery from inventory file
 if [ -z "$APP_HOST" ] && [ -f /opt/fairsplit/ansible/inventory/hosts.ini ]; then
-  APP_HOST=$(grep -E '^[[:space:]]*app-node' /opt/fairsplit/ansible/inventory/hosts.ini 2>/dev/null | \
+  APP_HOST=$(grep -E '^[[:space:]]*(fairsplit-app|app-node)' /opt/fairsplit/ansible/inventory/hosts.ini 2>/dev/null | \
     sed -n 's/.*ansible_host=\([0-9.]*\).*/\1/p' | head -1 || true)
 fi
 
@@ -57,13 +57,22 @@ fi
 # ─────────────────────────────────────────────────────────────────────────────
 # Path B: Remote NRPE Check from Ops Node
 # ─────────────────────────────────────────────────────────────────────────────
+case "$CONTAINER" in
+  fairsplit_frontend|frontend) NRPE_CMD="check_docker_frontend" ;;
+  fairsplit_backend|backend)   NRPE_CMD="check_docker_backend" ;;
+  fairsplit_postgres|postgres) NRPE_CMD="check_docker_postgres" ;;
+  *) NRPE_CMD="check_docker_${CONTAINER}" ;;
+esac
+
 NRPE_BIN="/usr/lib/nagios/plugins/check_nrpe"
 if [ -n "$APP_HOST" ] && [ -x "$NRPE_BIN" ]; then
   for i in $(seq 1 "$RETRIES"); do
-    NRPE_OUT=$("$NRPE_BIN" -H "$APP_HOST" -c check_docker_container -a "$CONTAINER" 2>/dev/null || true)
+    set +e
+    NRPE_OUT=$("$NRPE_BIN" -H "$APP_HOST" -c "$NRPE_CMD" 2>&1)
     NRPE_RC=$?
+    set -e
 
-    if [ "$NRPE_RC" -eq 0 ]; then
+    if [ "$NRPE_RC" -eq 0 ] && echo "$NRPE_OUT" | grep -q "OK:"; then
       echo "[$TIMESTAMP] OK: NRPE check reports $CONTAINER is healthy on $APP_HOST (check $i/$RETRIES)"
       exit 0
     else

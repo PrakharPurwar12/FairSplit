@@ -4,14 +4,12 @@
 #
 # Security & Privilege Confinement:
 # 1. Invoked via scoped sudoers: nagios ALL=(ubuntu) NOPASSWD: /opt/fairsplit/remediation/event_handlers/nagios_event_handler.sh
-# 2. Rejects invalid argument counts (strictly requires 4 positional arguments).
-# 3. Environment sanitization: enforces clean PATH and unsets dynamic loader variables.
-# 4. Strict whitelist mapping: binds service descriptions to static, hardcoded container and service names.
-# 5. Lock-file protection: prevents concurrent remediation race conditions.
-# 6. Failure validation before dispatch: verifies failure is genuine before executing Ansible.
-#
-# Usage:
-#   nagios_event_handler.sh <STATE> <STATE_TYPE> <ATTEMPT> <SERVICE_DESC>
+# 2. Strict positional argument validation (4 arguments).
+# 3. Clean environment (strict PATH, unset loader variables).
+# 4. Strict whitelist mapping (only frontend and backend allowed to restart).
+# 5. Database safety: PostgreSQL automatic restarts are explicitly prohibited.
+# 6. Lock-file protection: prevents concurrent remediation races.
+# 7. Post-remediation verification and structured logging.
 
 set -euo pipefail
 
@@ -22,7 +20,7 @@ export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 unset LD_PRELOAD LD_LIBRARY_PATH
 
 # ─────────────────────────────────────────────────
-# 2. Strict Positional Argument Validation
+# 2. Positional Argument Validation
 # ─────────────────────────────────────────────────
 if [ "$#" -ne 4 ]; then
   echo "ERROR: nagios_event_handler.sh requires exactly 4 arguments: <STATE> <STATE_TYPE> <ATTEMPT> <SERVICE_DESC>" >&2
@@ -39,13 +37,12 @@ LOGFILE="/opt/fairsplit/remediation.log"
 TIMESTAMP=$(date '+%Y-%m-%d %H:%M:%S')
 ANSIBLE_DIR="/opt/fairsplit/ansible"
 LOCK_DIR="/tmp/fairsplit-remediation"
-VALIDATE_SCRIPT="/opt/fairsplit/remediation/scripts/validate_failure.sh"
 RECOVERY_LOG="/opt/fairsplit/remediation/scripts/recovery_log.sh"
 
 mkdir -p "$(dirname "$LOGFILE")"
 
 # ─────────────────────────────────────────────────
-# 3. State Gate: Only Remediate on HARD Failures
+# 3. State Gate: Only Remediate on HARD CRITICAL Failures
 # ─────────────────────────────────────────────────
 if [ "$STATE_TYPE" != "HARD" ]; then
   echo "[$TIMESTAMP] SKIP: $SERVICE_DESC is $STATE (SOFT state, attempt $ATTEMPT)" >> "$LOGFILE"
@@ -60,23 +57,29 @@ if [ "$STATE" = "OK" ] || [ "$STATE" = "RECOVERY" ]; then
   exit 0
 fi
 
+if [ "$STATE" != "CRITICAL" ]; then
+  echo "[$TIMESTAMP] SKIP: $SERVICE_DESC is $STATE (only CRITICAL triggers remediation)" >> "$LOGFILE"
+  exit 0
+fi
+
 # ─────────────────────────────────────────────────
-# 4. Strict Service-to-Container Whitelist Mapping
+# 4. Strict Service Whitelist & Database Protection
 # ─────────────────────────────────────────────────
-# Maps exact approved Nagios service identifiers to Docker Compose service name and container name.
-# Rejects any unlisted string to prevent arbitrary service execution.
 case "$SERVICE_DESC" in
   "Docker Container fairsplit_backend"|"FairSplit API Health"|"fairsplit_backend"|"backend")
     SERVICE="backend"
     CONTAINER="fairsplit_backend"
     ;;
-  "Docker Container fairsplit_postgres"|"fairsplit_postgres"|"postgres")
-    SERVICE="postgres"
-    CONTAINER="fairsplit_postgres"
-    ;;
   "Docker Container fairsplit_frontend"|"FairSplit Frontend"|"fairsplit_frontend"|"frontend")
     SERVICE="frontend"
     CONTAINER="fairsplit_frontend"
+    ;;
+  "Docker Container fairsplit_postgres"|"PostgreSQL Database"|"fairsplit_postgres"|"postgres")
+    echo "[$TIMESTAMP] ALERT: Automatic remediation of PostgreSQL is prohibited to protect database integrity. Manual intervention required." >> "$LOGFILE"
+    if [ -x "$RECOVERY_LOG" ]; then
+      "$RECOVERY_LOG" "escalate" "fairsplit_postgres" "manual_intervention_required" "Automatic DB restart disallowed" || true
+    fi
+    exit 0
     ;;
   *)
     echo "[$TIMESTAMP] UNKNOWN: Service '$SERVICE_DESC' not in remediation whitelist" >> "$LOGFILE"
@@ -84,7 +87,7 @@ case "$SERVICE_DESC" in
     ;;
 esac
 
-echo "[$TIMESTAMP] REMEDIATION TRIGGERED: $SERVICE_DESC -> service=$SERVICE container=$CONTAINER ($STATE HARD)" >> "$LOGFILE"
+echo "[$TIMESTAMP] REMEDIATION TRIGGERED: $SERVICE_DESC -> service=$SERVICE container=$CONTAINER ($STATE $STATE_TYPE attempt $ATTEMPT)" >> "$LOGFILE"
 
 # ─────────────────────────────────────────────────
 # 5. Lock-File Protection (Prevents Concurrent Runs)
@@ -101,37 +104,40 @@ fi
 touch "$LOCK_FILE"
 
 # ─────────────────────────────────────────────────
-# 6. Failure Validation Before Ansible Dispatch
-# ─────────────────────────────────────────────────
-if [ -x "$VALIDATE_SCRIPT" ]; then
-  if "$VALIDATE_SCRIPT" "$CONTAINER" 3 5 >> "$LOGFILE" 2>&1; then
-    echo "[$TIMESTAMP] VALIDATE: $CONTAINER is running/healthy - skipping remediation" >> "$LOGFILE"
-    rm -f "$LOCK_FILE"
-    exit 0
-  fi
-  echo "[$TIMESTAMP] VALIDATE: $CONTAINER confirmed failing - proceeding with remediation" >> "$LOGFILE"
-fi
-
-# ─────────────────────────────────────────────────
-# 7. Structured Recovery Log
+# 6. Structured Recovery Log
 # ─────────────────────────────────────────────────
 if [ -x "$RECOVERY_LOG" ]; then
   "$RECOVERY_LOG" "restart" "$CONTAINER" "triggered" "ansible-playbook dispatched for service=$SERVICE" || true
 fi
 
 # ─────────────────────────────────────────────────
-# 8. Asynchronous Ansible Playbook Dispatch
+# 7. Execute Ansible Remediation Playbook
 # ─────────────────────────────────────────────────
+echo "[$TIMESTAMP] Executing ansible remediation for service=$SERVICE container=$CONTAINER..." >> "$LOGFILE"
+
+set +e
 ansible-playbook \
   -i /opt/fairsplit/ansible/inventory/hosts.ini \
   /opt/fairsplit/ansible/playbooks/remediate.yml \
   -e "service_name=$SERVICE" \
-  >> "$LOGFILE" 2>&1 &
+  >> "$LOGFILE" 2>&1
+ANSIBLE_RC=$?
+set -e
 
-ANSIBLE_PID=$!
-echo "[$TIMESTAMP] Ansible remediation dispatched for service=$SERVICE container=$CONTAINER (PID: $ANSIBLE_PID)" >> "$LOGFILE"
+END_TS=$(date '+%Y-%m-%d %H:%M:%S')
+if [ $ANSIBLE_RC -eq 0 ]; then
+  echo "[$END_TS] REMEDIATION SUCCESS: Ansible completed remediation for $CONTAINER (RC=0)" >> "$LOGFILE"
+  if [ -x "$RECOVERY_LOG" ]; then
+    "$RECOVERY_LOG" "restart" "$CONTAINER" "success" "Service restored and verified" || true
+  fi
+else
+  echo "[$END_TS] REMEDIATION FAILED: Ansible playbook failed for $CONTAINER (RC=$ANSIBLE_RC)" >> "$LOGFILE"
+  if [ -x "$RECOVERY_LOG" ]; then
+    "$RECOVERY_LOG" "escalate" "$CONTAINER" "failure" "Ansible failed with RC=$ANSIBLE_RC" || true
+  fi
+fi
 
-# Clean up lock file asynchronously after reasonable completion window
-( sleep 300 && rm -f "$LOCK_FILE" ) >/dev/null 2>&1 &
+# Clean up lock file
+rm -f "$LOCK_FILE"
 
-exit 0
+exit $ANSIBLE_RC
